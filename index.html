@@ -883,7 +883,7 @@ async function boot() {
           DATA.push({ name:m.name, realm:m.realm, class:m.class||null, active_spec_role:m.role||'DPS', active_spec_name:'—',
             gear:{item_level_equipped:0}, mythic_plus_scores_by_season:[{scores:{all:0,dps:0,healer:0,tank:0}}],
             mythic_plus_best_runs:[], mythic_plus_highest_level_runs:[],
-            raid_progression:{}, guild:{name:'Think Twice'}, profile_url:null, _failedRIO:true });
+            raid_progression:{}, guild:{name:'Think Twice'}, profile_url:null, _noRaiderIO:true });
         } else {
           if(DATA.length===0) console.log("🔍 gear structure:", JSON.stringify(j.gear||{},null,2));
           DATA.push(j);
@@ -3994,15 +3994,14 @@ async function fetchAndRenderTalents(p) {
   const cls      = (p.class_name||(typeof p.class==='string'?p.class:'')).toLowerCase().replace(/\s+/g,'-');
   const realm    = (p.realm||'khaz-modan').toLowerCase();
   const charName = p.name || '';
-  const rioUrl   = p.profile_url ? p.profile_url+'#talents' : null;
 
-  // ── Afficher loader ──
+  // Loader
   loading.style.display = 'block';
   loading.innerHTML = '⏳ Récupération des talents depuis Raider.IO…';
   visual.style.display = 'none';
   if(actions) actions.style.display = 'none';
 
-  // ── Toujours tenter Raider.IO, même si profil vide au chargement initial ──
+  // Tenter Raider.IO à chaque fois, sans exception
   let code     = p.talent_loadout_code || null;
   let specName = (p.active_spec_name && p.active_spec_name !== '—') ? p.active_spec_name : '';
 
@@ -4014,10 +4013,10 @@ async function fetchAndRenderTalents(p) {
       `&fields=talent_loadout_code,active_spec_name`
     );
     if(rioRes.ok) {
-      const rioJson = await rioRes.json();
-      if(!rioJson.statusCode || rioJson.statusCode === 200) {
-        if(rioJson.talent_loadout_code) { code = rioJson.talent_loadout_code; p.talent_loadout_code = code; }
-        if(rioJson.active_spec_name)    { specName = rioJson.active_spec_name; p.active_spec_name = specName; }
+      const j = await rioRes.json();
+      if(!j.statusCode || j.statusCode === 200) {
+        if(j.talent_loadout_code) { code = j.talent_loadout_code; p.talent_loadout_code = code; }
+        if(j.active_spec_name)    { specName = j.active_spec_name; p.active_spec_name = specName; }
       }
     }
   } catch(e) {}
@@ -4025,26 +4024,28 @@ async function fetchAndRenderTalents(p) {
   loading.style.display = 'none';
   visual.style.display  = 'block';
 
-  const spec      = specName.toLowerCase().replace(/\s+/g,'-');
-  const whClass   = WH_CLASS[cls]||cls;
-  const whSpec    = WH_SPEC[spec]||spec;
-  const clsColor  = CLASS_COLORS[cls] || '#f0c040';
-  const clsIcon   = CLS_ICON[cls] || '';
-  const clsLabel  = cls.replace(/-/g,' ').replace(/\b\w/g,c=>c.toUpperCase());
-  const specLabel = specName || spec.replace(/-/g,' ').replace(/\b\w/g,c=>c.toUpperCase()) || '—';
-  const whUrl     = code ? `https://www.wowhead.com/talent-calc/${whClass}/${whSpec}/${code}` : null;
-  const rioPageUrl = rioUrl || `https://raider.io/characters/${REGION}/${encodeURIComponent(realm)}/${encodeURIComponent(charName)}#talents`;
+  const spec     = specName.toLowerCase().replace(/\s+/g,'-');
+  const whClass  = WH_CLASS[cls]||cls;
+  const whSpec   = WH_SPEC[spec]||spec;
+  const clsColor = CLASS_COLORS[cls] || '#f0c040';
+  const clsIcon  = CLS_ICON[cls] || '';
+  const clsLabel = cls.replace(/-/g,' ').replace(/\b\w/g,c=>c.toUpperCase());
+  const specLabel= specName || spec.replace(/-/g,' ').replace(/\b\w/g,c=>c.toUpperCase()) || '—';
+  const whUrl    = code ? `https://www.wowhead.com/talent-calc/${whClass}/${whSpec}/${code}` : null;
+  const rioPageUrl = p.profile_url
+    ? p.profile_url+'#talents'
+    : `https://raider.io/characters/${REGION}/${encodeURIComponent(realm)}/${encodeURIComponent(charName)}#talents`;
 
   let html = `<div style="background:linear-gradient(160deg,#08090f 0%,#0d0f1a 60%,#050608 100%);
-    border-radius:6px;border:1px solid rgba(255,255,255,.06);padding:1rem;overflow:hidden">`;
+    border-radius:6px;border:1px solid rgba(255,255,255,.06);padding:1.2rem;overflow:hidden">`;
 
-  // ── En-tête ──
-  html += `<div style="display:flex;align-items:center;gap:.8rem;margin-bottom:1rem;flex-wrap:wrap">`;
-  if(clsIcon) html += `<img src="${clsIcon}" style="width:40px;height:40px;border-radius:8px;
+  // En-tête
+  html += `<div style="display:flex;align-items:center;gap:.9rem;margin-bottom:1.1rem;flex-wrap:wrap">`;
+  if(clsIcon) html += `<img src="${clsIcon}" style="width:42px;height:42px;border-radius:8px;
     border:2px solid ${clsColor};box-shadow:0 0 16px ${clsColor}66" onerror="this.style.display='none'">`;
   html += `<div style="flex:1;min-width:100px">
-    <div style="font-family:'Cinzel',serif;font-size:1rem;color:${clsColor};text-shadow:0 0 14px ${clsColor}88">${clsLabel}</div>
-    <div style="font-size:.75rem;color:rgba(200,216,232,.6);margin-top:.15rem">${specLabel}</div>
+    <div style="font-family:'Cinzel',serif;font-size:1rem;color:${clsColor};text-shadow:0 0 14px ${clsColor}88">${charName}</div>
+    <div style="font-size:.75rem;color:rgba(200,216,232,.55);margin-top:.15rem">${clsLabel}${specLabel && specLabel!=='—'?' · '+specLabel:''}</div>
   </div>
   <div style="display:flex;gap:.5rem;flex-wrap:wrap">
     ${whUrl?`<a href="${whUrl}" target="_blank" class="talent-btn talent-btn-wh" style="font-size:.7rem">🔮 Wowhead</a>`:''}
@@ -4052,13 +4053,13 @@ async function fetchAndRenderTalents(p) {
   </div></div>`;
 
   if(code) {
-    // ══ Talents réels du joueur récupérés depuis Raider.IO ══
+    // ══ Talents RIO disponibles ══
     html += `<div style="margin-bottom:.9rem;display:flex;align-items:center;gap:.6rem;flex-wrap:wrap;
       background:rgba(0,0,0,.3);border:1px solid rgba(255,255,255,.07);border-radius:5px;padding:.55rem .9rem">
       <span style="font-family:'Cinzel',serif;font-size:.58rem;color:rgba(200,216,232,.35);
         letter-spacing:.1em;text-transform:uppercase;white-space:nowrap">Code talent :</span>
       <code style="background:rgba(0,0,0,.5);border:1px solid rgba(255,255,255,.08);border-radius:4px;
-        padding:.2rem .55rem;font-size:.66rem;color:${clsColor};flex:1;min-width:100px;
+        padding:.2rem .55rem;font-size:.66rem;color:${clsColor};flex:1;min-width:80px;
         word-break:break-all;font-family:monospace">${code}</code>
       <button onclick="copyTalentCode(this)" data-code="${encodeURIComponent(code)}"
         class="talent-btn talent-btn-copy" style="font-size:.65rem;padding:.22rem .65rem;white-space:nowrap">
@@ -4067,7 +4068,7 @@ async function fetchAndRenderTalents(p) {
     </div>
 
     <div style="display:flex;flex-direction:column;align-items:center;gap:1.1rem;padding:1.3rem;
-      background:rgba(0,0,0,.25);border:1px solid rgba(255,255,255,.06);border-radius:6px">
+      background:rgba(0,0,0,.22);border:1px solid rgba(255,255,255,.06);border-radius:6px">
 
       <div style="display:flex;align-items:center;gap:.9rem">
         <div style="width:52px;height:52px;border-radius:50%;border:2.5px solid ${clsColor};
@@ -4075,9 +4076,9 @@ async function fetchAndRenderTalents(p) {
           <img src="${clsIcon}" style="width:100%;height:100%;object-fit:cover" onerror="this.style.display='none'">
         </div>
         <div>
-          <div style="font-family:'Cinzel',serif;font-size:.9rem;color:${clsColor}">${charName}</div>
-          <div style="font-size:.68rem;color:rgba(200,216,232,.45);margin-top:.2rem">${clsLabel} · ${specLabel}</div>
-          <div style="font-size:.62rem;color:#4fc3f7;margin-top:.15rem">✅ Talents récupérés depuis Raider.IO</div>
+          <div style="font-family:'Cinzel',serif;font-size:.88rem;color:${clsColor}">${charName}</div>
+          <div style="font-size:.68rem;color:rgba(200,216,232,.45);margin-top:.15rem">${clsLabel} · ${specLabel}</div>
+          <div style="font-size:.62rem;color:#4fc3f7;margin-top:.12rem">✅ Talents récupérés depuis Raider.IO · TWW S3</div>
         </div>
       </div>
 
@@ -4090,60 +4091,56 @@ async function fetchAndRenderTalents(p) {
           box-shadow:0 0 24px rgba(180,100,30,.25);transition:all .2s"
         onmouseenter="this.style.background='linear-gradient(135deg,rgba(180,100,30,.5),rgba(180,100,30,.25))';this.style.boxShadow='0 0 36px rgba(180,100,30,.5)'"
         onmouseleave="this.style.background='linear-gradient(135deg,rgba(180,100,30,.3),rgba(180,100,30,.12))';this.style.boxShadow='0 0 24px rgba(180,100,30,.25)'">
-        🔮 Voir l'arbre de talents sur Wowhead
+        🔮 Visualiser l'arbre complet sur Wowhead
       </a>
 
-      <div style="font-size:.62rem;color:rgba(200,216,232,.28);text-align:center;line-height:1.7;max-width:380px">
-        Talents actuellement équipés par ce joueur en TWW Saison 3.<br>
-        Clique sur Wowhead pour visualiser l'arbre complet et interactif.
+      <div style="font-size:.62rem;color:rgba(200,216,232,.28);text-align:center;line-height:1.7">
+        Talents actifs de ce joueur en TWW Saison 3 — arbre interactif sur Wowhead
       </div>
     </div>`;
 
   } else {
-    // ══ Pas de profil RIO — arbre statique de référence ══
-    const specKey    = cls+'-'+spec;
-    const talentData = SPEC_TALENTS_FLAT[specKey];
+    // ══ Pas de profil RIO public → liens directs seulement, PAS d'arbre générique ══
+    html += `<div style="display:flex;flex-direction:column;align-items:center;gap:1.2rem;
+      padding:2rem 1rem;background:rgba(0,0,0,.22);border:1px solid rgba(255,255,255,.06);border-radius:6px;
+      text-align:center">
 
-    html += `<div style="background:rgba(240,160,40,.05);border:1px solid rgba(240,160,40,.18);
-      border-radius:4px;padding:.45rem .9rem;margin-bottom:.85rem;
-      font-size:.7rem;color:rgba(240,180,60,.6);font-family:'Cinzel',serif;letter-spacing:.04em">
-      ⚠️ Ce joueur n'a pas de profil Raider.IO public — arbre générique affiché
-      · <a href="${rioPageUrl}" target="_blank" style="color:var(--blue)">Voir sur RIO</a>
-    </div>`;
+      <div style="width:60px;height:60px;border-radius:50%;border:2px solid ${clsColor}55;
+        overflow:hidden;background:#000;opacity:.6">
+        <img src="${clsIcon}" style="width:100%;height:100%;object-fit:cover" onerror="this.style.display='none'">
+      </div>
 
-    if(talentData) {
-      const clsNodes  = buildTreeNodes(talentData.cls  || [], 0);
-      const specNodes = buildTreeNodes(talentData.spec || [], 1000);
-
-      html += `<div style="display:flex;gap:2rem;overflow-x:auto;padding-bottom:.5rem;align-items:flex-start">`;
-      html += `<div style="flex-shrink:0">
-        <div style="font-family:'Cinzel',serif;font-size:.6rem;letter-spacing:.14em;text-transform:uppercase;
-          color:${clsColor};opacity:.7;margin-bottom:.8rem;text-align:center">${clsLabel}</div>
-        ${renderTalentTree(clsNodes, clsColor, 'cls_'+Date.now())}
-      </div>`;
-      html += `<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;
-        padding-top:2rem;flex-shrink:0;gap:.5rem">
-        <div style="font-family:'Cinzel',serif;font-size:.5rem;color:rgba(200,216,232,.3);
-          text-transform:uppercase;text-align:center;max-width:56px;letter-spacing:.08em">Porte-mort</div>
-        <div style="width:60px;height:60px;border-radius:50%;border:2.5px solid ${clsColor};
-          box-shadow:0 0 20px ${clsColor}77;overflow:hidden;background:#000">
-          <img src="${clsIcon}" style="width:100%;height:100%" onerror="this.style.display='none'">
+      <div>
+        <div style="font-size:.82rem;color:rgba(200,216,232,.5);margin-bottom:.4rem">
+          Aucun profil <strong style="color:#4fc3f7">Raider.IO</strong> public trouvé pour ce joueur.
         </div>
-      </div>`;
-      html += `<div style="flex-shrink:0">
-        <div style="font-family:'Cinzel',serif;font-size:.6rem;letter-spacing:.14em;text-transform:uppercase;
-          color:${clsColor};opacity:.7;margin-bottom:.8rem;text-align:center">${specLabel}</div>
-        ${renderTalentTree(specNodes, clsColor, 'spec_'+Date.now())}
-      </div>`;
-      html += `</div>`;
-    } else {
-      html += `<div style="text-align:center;padding:2.5rem 1rem;display:flex;flex-direction:column;
-        align-items:center;gap:1rem">
-        <div style="font-size:2rem">🎯</div>
-        <div style="font-size:.8rem;color:rgba(200,216,232,.4)">Aucun talent disponible.</div>
-        <a href="${rioPageUrl}" target="_blank" class="talent-btn talent-btn-rio">🔗 Voir sur Raider.IO</a>
-      </div>`;
-    }
+        <div style="font-size:.7rem;color:rgba(200,216,232,.3);line-height:1.6">
+          Les talents ne peuvent pas être récupérés automatiquement.<br>
+          Consulte directement son profil Raider.IO ou Wowhead Armory.
+        </div>
+      </div>
+
+      <div style="display:flex;gap:.7rem;flex-wrap:wrap;justify-content:center">
+        <a href="${rioPageUrl}" target="_blank"
+          style="display:inline-flex;align-items:center;gap:.5rem;padding:.65rem 1.4rem;
+            background:rgba(64,144,224,.12);border:1px solid rgba(64,144,224,.4);border-radius:4px;
+            color:var(--blue);font-family:'Cinzel',serif;font-size:.75rem;text-decoration:none;
+            transition:all .2s"
+          onmouseenter="this.style.background='rgba(64,144,224,.22)'"
+          onmouseleave="this.style.background='rgba(64,144,224,.12)'">
+          🔗 Profil Raider.IO
+        </a>
+        <a href="https://www.wowhead.com/talent-calc/${whClass}/${whSpec}" target="_blank"
+          style="display:inline-flex;align-items:center;gap:.5rem;padding:.65rem 1.4rem;
+            background:rgba(180,100,30,.12);border:1px solid rgba(180,100,30,.4);border-radius:4px;
+            color:#e8a060;font-family:'Cinzel',serif;font-size:.75rem;text-decoration:none;
+            transition:all .2s"
+          onmouseenter="this.style.background='rgba(180,100,30,.22)'"
+          onmouseleave="this.style.background='rgba(180,100,30,.12)'">
+          🔮 Calculateur de talents Wowhead
+        </a>
+      </div>
+    </div>`;
   }
 
   html += `</div>`;
