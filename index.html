@@ -320,7 +320,7 @@ nav button.admin-nav:hover,nav button.admin-nav.active{background:rgba(255,107,5
       <div class="live-badge"><div class="live-dot"></div>Raider.IO Live</div>
       <div class="user-badge-hdr" id="hdr-user"></div>
       <button class="hdr-btn" onclick="refresh()">↺ Actualiser</button>
-      <button class="hdr-btn" onclick="openChangePwd()" title="Changer mon mot de passe">🔑 Mot de passe</button>
+      <button class="hdr-btn" onclick="openChangePwd()">🔑 Mot de passe</button>
       <button class="hdr-btn logout" onclick="doLogout()">Déconnexion</button>
     </div>
   </header>
@@ -1248,28 +1248,14 @@ async function loadMDTRoutes() {
         MDT_ROUTES = snap.exists ? (snap.data() || {}) : {};
         renderMDTRoutes();
         resolve();
-      }, (err) => {
-        console.error('[MDT] erreur:', err);
-        MDT_ROUTES = {};
-        renderMDTRoutes();
-        resolve();
-      });
-    } catch(e) {
-      console.error('[MDT] erreur:', e);
-      MDT_ROUTES = {};
-      renderMDTRoutes();
-      resolve();
-    }
+      }, (err) => { MDT_ROUTES = {}; renderMDTRoutes(); resolve(); });
+    } catch(e) { MDT_ROUTES = {}; renderMDTRoutes(); resolve(); }
   });
 }
 
 async function saveMDTRoutes() {
-  try {
-    await db.collection('guild').doc('mdt_routes').set(MDT_ROUTES);
-  } catch(e) {
-    console.error('[MDT] Erreur sauvegarde:', e);
-    toast('❌ Erreur sauvegarde Firebase');
-  }
+  try { await db.collection('guild').doc('mdt_routes').set(MDT_ROUTES); }
+  catch(e) { toast('❌ Erreur sauvegarde Firebase'); }
 }
 
 function renderMDTRoutes() {
@@ -1454,14 +1440,14 @@ function openKSGPreview(name) {
   const copyCall = idx >= 0 ? 'copyMDTCode(window._mdtRouteNames['+idx+'])' : 'copyMDTCode(\''+name.replace(/'/g,"\\'")+ '\')';
   const imgBlock = r.imageUrl
     ? '<div style="padding:0 1.25rem;position:relative">' +
-        '<div id="ksg-img-container" style="overflow:hidden;border-radius:6px;border:1px solid var(--border);background:#0a0c10;cursor:zoom-in;position:relative;max-height:380px;display:flex;align-items:center;justify-content:center" onclick="toggleKSGZoom(this)">' +
-          '<img id="ksg-route-img" src="'+r.imageUrl+'" style="width:100%;max-height:380px;object-fit:contain;display:block;transition:transform .3s ease;transform-origin:center center" draggable="false" alt="Carte de la route">' +
+        '<div id="ksg-img-container" style="overflow:hidden;border-radius:6px;border:1px solid var(--border);background:#0a0c10;cursor:zoom-in;position:relative;max-height:580px;display:flex;align-items:center;justify-content:center" onclick="toggleKSGZoom(this)">' +
+          '<img id="ksg-route-img" src="'+r.imageUrl+'" style="width:100%;max-height:580px;object-fit:contain;display:block;transition:transform .3s ease;transform-origin:center center" draggable="false" alt="Carte de la route">' +
         '</div>' +
         '<div style="font-size:.6rem;color:var(--text-dim);text-align:center;margin-top:.3rem">🔍 Cliquer pour zoomer · Molette pour agrandir</div>' +
       '</div>'
     : '';
   modal.innerHTML =
-    '<div class="ksg-modal-inner" style="max-width:720px;max-height:92vh;overflow:hidden;display:flex;flex-direction:column">' +
+    '<div class="ksg-modal-inner" style="max-width:920px;max-height:95vh;overflow:hidden;display:flex;flex-direction:column">' +
       '<div class="ksg-modal-header">' +
         '<div class="ksg-modal-title">\uD83D\uDDFA\uFE0F ' + name + '</div>' +
         '<button class="ksg-close" onclick="document.getElementById(\'ksg-modal\').remove()">\u2715</button>' +
@@ -1480,12 +1466,6 @@ function openKSGPreview(name) {
         '<div style="display:flex;gap:.75rem;flex-wrap:wrap">' +
           '<button class="mdt-btn mdt-btn-copy" style="font-size:.72rem;padding:.55rem 1.1rem" onclick="'+copyCall+';this.textContent=\'\u2705 Copié !\';setTimeout(()=>this.textContent=\'\uD83D\uDCCB Copier le code MDT\',2000)">\uD83D\uDCCB Copier le code MDT</button>' +
           '<a href="' + url + '" target="_blank" class="mdt-btn mdt-btn-ksg" style="font-size:.72rem;padding:.55rem 1.1rem;text-decoration:none">\u2197 Ouvrir dans Keystone.guru</a>' +
-        '</div>' +
-        '<div style="font-size:.63rem;color:var(--text-dim);line-height:1.6;padding:.6rem .8rem;background:rgba(255,255,255,.03);border-radius:4px;border:1px solid var(--border)">' +
-          '<strong style="color:var(--text)">\uD83D\uDCA1 Comment utiliser</strong><br>' +
-          '1. Copie le code MDT ci-dessus<br>' +
-          '2. Dans WoW, ouvre l\'addon <strong>MythicDungeon Tools</strong><br>' +
-          '3. Clique sur <em>Import</em> et colle le code' +
         '</div>' +
       '</div>' +
     '</div>';
@@ -4808,7 +4788,7 @@ function promptResetPassword(name) {
 function openChangePwd() {
   if (!currentUser) return;
   resetPwdTarget = currentUser.login;
-  document.getElementById('reset-pwd-target').innerHTML = `Changer votre mot de passe : <strong style="color:var(--gold)">${currentUser.name || currentUser.login}</strong>`;
+  document.getElementById('reset-pwd-target').innerHTML = 'Changer votre mot de passe : <strong style="color:var(--gold)">' + (currentUser.name || currentUser.login) + '</strong>';
   document.getElementById('reset-pwd-new').value = '';
   document.getElementById('reset-pwd-confirm').value = '';
   document.getElementById('reset-pwd-alert').style.display = 'none';
