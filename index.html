@@ -5446,13 +5446,14 @@ async function uploadAddonFile() {
     const { data: urlData } = sbClient.storage.from('addons').getPublicUrl(path);
     const url = urlData.publicUrl;
     progressBar.style.width = '95%';
-    const user = JSON.parse(localStorage.getItem('tt_session') || '{}');
+    const session = JSON.parse(localStorage.getItem('tt_session') || '{}');
+    const uploader = currentUser?.name || currentUser?.login || session.username || 'Inconnu';
     await db.collection('addons').add({
       name, desc, url,
       path,
       filename: file.name,
       size: file.size,
-      uploader: user.username || 'Inconnu',
+      uploader,
       uploadedAt: new Date().toISOString()
     });
     progressBar.style.width = '100%';
@@ -5525,10 +5526,12 @@ async function loadAddons() {
       el.style.justifyContent = 'space-between';
       el.style.alignItems = 'center';
       el.style.gap = '.6rem';
+      const descLine = a.desc ? `<span style="color:var(--text);font-size:.8rem;display:block;margin:.2rem 0 .15rem">${a.desc}</span>` : '';
       el.innerHTML = `
         <div style="flex:1;min-width:0">
           <strong style="color:var(--gold)">${a.name}</strong>
-          <span style="color:var(--text-dim);font-size:.78rem;display:block">${a.desc || ''} · ${kb} · par ${a.uploader} · ${date}</span>
+          ${descLine}
+          <span style="color:var(--text-dim);font-size:.72rem;display:block">${kb} · par <strong style="color:var(--gold-dim)">${a.uploader}</strong> · ${date}</span>
         </div>
         <div style="display:flex;gap:.4rem;align-items:center">
           <a href="${a.url}" target="_blank" download="${a.filename || a.name}" style="background:var(--blue);color:#fff;border:none;border-radius:2px;padding:.4rem .9rem;font-size:.8rem;cursor:pointer;text-decoration:none;white-space:nowrap">⬇️ Télécharger</a>
