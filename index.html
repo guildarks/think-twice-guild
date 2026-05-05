@@ -654,7 +654,7 @@ select option{background:#0d1118;color:#c8d8e8;}
 
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-storage-compat.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
 // Aliases pour compatibilité avec le code existant
 const initializeApp = (cfg) => firebase.initializeApp(cfg);
@@ -865,7 +865,10 @@ const firebaseConfig = {
 
 const fbApp = initializeApp(firebaseConfig);
 const db = getFirestore(fbApp);
-const storage = firebase.storage();
+const sbClient = supabase.createClient(
+  'https://vsdilelwuvapjibldvev.supabase.co',
+  'sb_publishable_rkhuICFuSxQMjNB_ROaPcg_4SJbf2e2'
+);
 
 let USERS = {};
 let firebaseReady = false;
@@ -5364,17 +5367,17 @@ async function uploadAddonFile() {
   const progressBar  = document.getElementById('addon-progress-bar');
   const progressTxt  = document.getElementById('addon-progress-txt');
   progressWrap.style.display = 'block';
+  progressBar.style.width = '10%';
+  progressTxt.textContent = 'Envoi…';
 
   try {
-    const ref = storage.ref('addons/' + Date.now() + '_' + file.name);
-    const task = ref.put(file);
-    task.on('state_changed', snap => {
-      const pct = Math.round(snap.bytesTransferred / snap.totalBytes * 100);
-      progressBar.style.width = pct + '%';
-      progressTxt.textContent = pct + '%';
-    });
-    await task;
-    const url = await ref.getDownloadURL();
+    const path = Date.now() + '_' + file.name;
+    const { error: upErr } = await sbClient.storage.from('addons').upload(path, file, { cacheControl: '3600', upsert: false });
+    if (upErr) throw upErr;
+    progressBar.style.width = '80%';
+    const { data: urlData } = sbClient.storage.from('addons').getPublicUrl(path);
+    const url = urlData.publicUrl;
+    progressBar.style.width = '95%';
     const user = JSON.parse(localStorage.getItem('tt_session') || '{}');
     await db.collection('addons').add({
       name, desc, url,
@@ -5383,15 +5386,16 @@ async function uploadAddonFile() {
       uploader: user.username || 'Inconnu',
       uploadedAt: new Date().toISOString()
     });
+    progressBar.style.width = '100%';
+    progressTxt.textContent = '100%';
     toast('✅ Addon déposé avec succès !');
     document.getElementById('addon-upload-name').value = '';
     document.getElementById('addon-upload-desc').value = '';
     fileInput.value = '';
-    progressWrap.style.display = 'none';
-    progressBar.style.width = '0%';
+    setTimeout(() => { progressWrap.style.display = 'none'; progressBar.style.width = '0%'; }, 1000);
     loadAddons();
   } catch(e) {
-    toast('❌ Erreur upload : ' + e.message, true);
+    toast('❌ Erreur upload : ' + (e.message || e), true);
     progressWrap.style.display = 'none';
   }
 }
