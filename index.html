@@ -499,25 +499,8 @@ select option{background:#0d1118;color:#c8d8e8;}
             <h3 style="color:var(--purple)">⚔️ Builds Conseillés</h3>
           </div>
           <div class="admin-panel-body">
-            <p style="color:var(--text-dim);font-size:.85rem;margin-bottom:1rem">Builds optimisés pour le contenu actuel (The War Within).</p>
-            <div style="display:flex;flex-direction:column;gap:.8rem">
-              <div class="addon-card">
-                <strong style="color:var(--green)">Tank</strong>
-                <span style="color:var(--text-dim);font-size:.8rem;display:block">Protection Paladin • Guerrier Protection • Moine Brasseur</span>
-              </div>
-              <div class="addon-card">
-                <strong style="color:var(--red)">DPS Mêlée</strong>
-                <span style="color:var(--text-dim);font-size:.8rem;display:block">Démoniste Destruction • Démoniste Affliction</span>
-              </div>
-              <div class="addon-card">
-                <strong style="color:var(--blue)">DPS Distance</strong>
-                <span style="color:var(--text-dim);font-size:.8rem;display:block">Mage Feu • Chasseur Survie • Voleur Subtilité</span>
-              </div>
-              <div class="addon-card">
-                <strong style="color:var(--mythic-color)">Heal</strong>
-                <span style="color:var(--text-dim);font-size:.8rem;display:block">Prêtre Discipline • Druide Restauration • Chaman Restauration</span>
-              </div>
-            </div>
+            <p style="color:var(--text-dim);font-size:.85rem;margin-bottom:1rem">Builds optimisés pour le contenu actuel. Clique sur un rôle pour voir toutes les spés.</p>
+            <div id="builds-list" style="display:flex;flex-direction:column;gap:.8rem"></div>
           </div>
         </div>
       </div>
@@ -5333,7 +5316,7 @@ function showPage(id,btn){
   if(id==='admin')buildAdminPage();
   if(id==='mythic' && !_mdtUnsubscribe) loadMDTRoutes();
   if(id==='feedback') loadFeedbacks();
-  if(id==='guides') loadAddons();
+  if(id==='guides') { loadAddons(); loadBuilds(); }
 }
 function setBar(p){document.getElementById('bar').style.width=p+'%';}
 function setStatus(t){document.getElementById('load-status').textContent=t;}
@@ -5359,6 +5342,10 @@ window.showPage = showPage;
 window.uploadAddonFile = uploadAddonFile;
 window.setAddonMode = setAddonMode;
 window.deleteAddon = deleteAddon;
+window.toggleBuildRole = toggleBuildRole;
+window.toggleBuildSpec = toggleBuildSpec;
+window.addBuildGuide = addBuildGuide;
+window.deleteBuildGuide = deleteBuildGuide;
 
 // ════════════════════════════════════════════
 // ADDONS — UPLOAD & DOWNLOAD
@@ -5492,6 +5479,176 @@ async function deleteAddon(id, path) {
       loadAddons();
     } catch(e) {
       toast('❌ Erreur suppression : ' + (e.message || e), true);
+    }
+  });
+}
+
+// ════════════════════════════════════════════
+// BUILDS — guides postés par les membres
+// ════════════════════════════════════════════
+const BUILD_ROLES = {
+  tank:   { label: 'Tank',         icon: '🛡️', color: 'var(--green)',         specs: ['Paladin Protection','Guerrier Protection','Moine Brasseur','Druide Gardien','CDM Sang','DH Vengeance'] },
+  melee:  { label: 'DPS Mêlée',    icon: '⚔️', color: 'var(--red)',           specs: ['Guerrier Armes','Guerrier Fureur','Paladin Vindicte','Voleur Assassinat','Voleur Hors-la-loi','Voleur Subtilité','Chaman Amélioration','CDM Givre','CDM Profane','Druide Farouche','Moine Marche-vent','DH Havoc','Chasseur Survie'] },
+  ranged: { label: 'DPS Distance', icon: '🏹', color: 'var(--blue)',          specs: ['Mage Arcane','Mage Feu','Mage Givre','Prêtre Ombre','Chasseur Maîtrise des bêtes','Chasseur Précision','Démoniste Affliction','Démoniste Démonologie','Démoniste Destruction','Druide Équilibre','Chaman Élémentaire','Évoker Dévastation','Évoker Augmentation'] },
+  heal:   { label: 'Heal',         icon: '💚', color: 'var(--mythic-color)',  specs: ['Prêtre Discipline','Prêtre Sacré','Druide Restauration','Chaman Restauration','Paladin Sacré','Moine Tisse-brume','Évoker Préservation'] }
+};
+let BUILDS_CACHE = [];
+let BUILDS_OPEN_ROLE = null;
+let BUILDS_OPEN_SPEC = null;
+
+async function loadBuilds() {
+  const root = document.getElementById('builds-list');
+  if (!root) return;
+  try {
+    const snap = await db.collection('build_guides').orderBy('createdAt','desc').get();
+    BUILDS_CACHE = [];
+    snap.forEach(d => BUILDS_CACHE.push({ id: d.id, ...d.data() }));
+  } catch(e) {
+    BUILDS_CACHE = [];
+  }
+  renderBuilds();
+}
+
+function renderBuilds() {
+  const root = document.getElementById('builds-list');
+  if (!root) return;
+  root.innerHTML = '';
+  Object.entries(BUILD_ROLES).forEach(([key, role]) => {
+    const count = BUILDS_CACHE.filter(g => g.role === key).length;
+    const card = document.createElement('div');
+    card.className = 'addon-card';
+    card.style.cursor = 'pointer';
+    card.innerHTML = `
+      <div onclick="toggleBuildRole('${key}')" style="display:flex;justify-content:space-between;align-items:center">
+        <div>
+          <strong style="color:${role.color}">${role.icon} ${role.label}</strong>
+          <span style="color:var(--text-dim);font-size:.75rem;display:block;margin-top:.2rem">${role.specs.length} spés · ${count} guide(s)</span>
+        </div>
+        <span style="color:var(--text-dim);font-size:.9rem">${BUILDS_OPEN_ROLE === key ? '▼' : '▶'}</span>
+      </div>`;
+    if (BUILDS_OPEN_ROLE === key) {
+      const specsWrap = document.createElement('div');
+      specsWrap.style.marginTop = '.7rem';
+      specsWrap.style.display = 'flex';
+      specsWrap.style.flexDirection = 'column';
+      specsWrap.style.gap = '.4rem';
+      role.specs.forEach(spec => {
+        const guides = BUILDS_CACHE.filter(g => g.role === key && g.spec === spec);
+        const isOpen = BUILDS_OPEN_SPEC === key + '|' + spec;
+        const specEl = document.createElement('div');
+        specEl.style.background = 'rgba(255,255,255,.02)';
+        specEl.style.border = '1px solid var(--border)';
+        specEl.style.borderRadius = '3px';
+        specEl.style.padding = '.5rem .7rem';
+        specEl.innerHTML = `
+          <div onclick="toggleBuildSpec('${key}','${spec.replace(/'/g,"\\'")}')" style="display:flex;justify-content:space-between;align-items:center;cursor:pointer">
+            <span style="color:var(--text);font-size:.82rem">${spec}</span>
+            <span style="color:var(--text-dim);font-size:.7rem">${guides.length} guide(s) ${isOpen ? '▼' : '▶'}</span>
+          </div>`;
+        if (isOpen) {
+          const sub = document.createElement('div');
+          sub.style.marginTop = '.5rem';
+          sub.style.display = 'flex';
+          sub.style.flexDirection = 'column';
+          sub.style.gap = '.5rem';
+          if (guides.length === 0) {
+            sub.innerHTML = '<span style="color:var(--text-dim);font-size:.75rem;font-style:italic">Aucun guide pour cette spé. Sois le premier !</span>';
+          } else {
+            const session = JSON.parse(localStorage.getItem('tt_session') || '{}');
+            const role2 = (currentUser?.role || session.role || '').toLowerCase();
+            const isAdmin = role2 === 'admin' || role2 === 'moderator';
+            const me = (currentUser?.name || currentUser?.login || session.username || '').toLowerCase();
+            guides.forEach(g => {
+              const date = g.createdAt ? new Date(g.createdAt).toLocaleDateString('fr-FR') : '';
+              const canDel = isAdmin || (g.author && g.author.toLowerCase() === me);
+              const linkBtn = g.link ? `<a href="${g.link}" target="_blank" rel="noopener" style="color:var(--blue);font-size:.72rem;text-decoration:none">🔗 Voir le guide</a>` : '';
+              const delBtn = canDel ? `<button onclick="deleteBuildGuide('${g.id}')" style="background:transparent;color:var(--red);border:1px solid rgba(224,80,64,.3);border-radius:2px;padding:.15rem .45rem;font-size:.65rem;cursor:pointer">🗑️</button>` : '';
+              const guideEl = document.createElement('div');
+              guideEl.style.background = 'var(--bg-card)';
+              guideEl.style.border = '1px solid var(--border)';
+              guideEl.style.borderRadius = '3px';
+              guideEl.style.padding = '.55rem .7rem';
+              guideEl.innerHTML = `
+                <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:.5rem">
+                  <strong style="color:var(--gold);font-size:.8rem">${g.title || 'Sans titre'}</strong>
+                  ${delBtn}
+                </div>
+                ${g.content ? `<div style="color:var(--text);font-size:.75rem;margin:.3rem 0;white-space:pre-wrap;line-height:1.4">${g.content.replace(/</g,'&lt;')}</div>` : ''}
+                <div style="display:flex;justify-content:space-between;align-items:center;gap:.5rem;margin-top:.3rem">
+                  ${linkBtn}
+                  <span style="color:var(--text-dim);font-size:.65rem">par <strong style="color:var(--gold-dim)">${g.author || 'Anonyme'}</strong> · ${date}</span>
+                </div>`;
+              sub.appendChild(guideEl);
+            });
+          }
+          const formId = 'bg-' + key + '-' + spec.replace(/\W/g,'_');
+          const form = document.createElement('div');
+          form.style.marginTop = '.4rem';
+          form.style.padding = '.5rem';
+          form.style.background = 'rgba(64,200,128,.04)';
+          form.style.border = '1px solid rgba(64,200,128,.2)';
+          form.style.borderRadius = '3px';
+          form.innerHTML = `
+            <div style="font-size:.7rem;color:var(--green);margin-bottom:.35rem">✏️ Poste ton guide pour ${spec}</div>
+            <input type="text" id="${formId}-title" placeholder="Titre (ex: Build M+ +15)" style="width:100%;background:rgba(255,255,255,.04);border:1px solid var(--border);border-radius:2px;padding:.35rem .5rem;color:var(--text);font-size:.75rem;margin-bottom:.3rem;outline:none">
+            <textarea id="${formId}-content" placeholder="Conseils, priorités stats, rotation, talents…" rows="3" style="width:100%;background:rgba(255,255,255,.04);border:1px solid var(--border);border-radius:2px;padding:.35rem .5rem;color:var(--text);font-size:.75rem;margin-bottom:.3rem;outline:none;resize:vertical;font-family:inherit"></textarea>
+            <input type="url" id="${formId}-link" placeholder="Lien externe (Wowhead, Icy Veins…)" style="width:100%;background:rgba(255,255,255,.04);border:1px solid var(--border);border-radius:2px;padding:.35rem .5rem;color:var(--text);font-size:.75rem;margin-bottom:.3rem;outline:none">
+            <button onclick="addBuildGuide('${key}','${spec.replace(/'/g,"\\'")}','${formId}')" style="background:var(--green);color:#fff;border:none;border-radius:2px;padding:.3rem .8rem;font-size:.72rem;cursor:pointer">📨 Publier</button>`;
+          sub.appendChild(form);
+          specEl.appendChild(sub);
+        }
+        specsWrap.appendChild(specEl);
+      });
+      card.appendChild(specsWrap);
+    }
+    root.appendChild(card);
+  });
+}
+
+function toggleBuildRole(key) {
+  BUILDS_OPEN_ROLE = (BUILDS_OPEN_ROLE === key) ? null : key;
+  BUILDS_OPEN_SPEC = null;
+  renderBuilds();
+}
+
+function toggleBuildSpec(roleKey, spec) {
+  const id = roleKey + '|' + spec;
+  BUILDS_OPEN_SPEC = (BUILDS_OPEN_SPEC === id) ? null : id;
+  renderBuilds();
+}
+
+async function addBuildGuide(roleKey, spec, formId) {
+  const title = document.getElementById(formId + '-title').value.trim();
+  const content = document.getElementById(formId + '-content').value.trim();
+  const link = document.getElementById(formId + '-link').value.trim();
+  if (!title) { toast('❌ Donne un titre', true); return; }
+  if (!content && !link) { toast('❌ Ajoute du contenu ou un lien', true); return; }
+  if (link && !/^https?:\/\//i.test(link)) { toast('❌ Le lien doit commencer par http(s)://', true); return; }
+  const session = JSON.parse(localStorage.getItem('tt_session') || '{}');
+  const author = currentUser?.name || currentUser?.login || session.username || 'Anonyme';
+  try {
+    await db.collection('build_guides').add({
+      role: roleKey, spec, title, content, link, author,
+      createdAt: new Date().toISOString()
+    });
+    toast('✅ Guide publié !');
+    document.getElementById(formId + '-title').value = '';
+    document.getElementById(formId + '-content').value = '';
+    document.getElementById(formId + '-link').value = '';
+    loadBuilds();
+  } catch(e) {
+    toast('❌ Erreur : ' + (e.message || e), true);
+  }
+}
+
+async function deleteBuildGuide(id) {
+  openModal('Supprimer ce guide', 'Cette action est irréversible.', async () => {
+    try {
+      await db.collection('build_guides').doc(id).delete();
+      toast('🗑️ Guide supprimé.');
+      loadBuilds();
+    } catch(e) {
+      toast('❌ Erreur : ' + (e.message || e), true);
     }
   });
 }
