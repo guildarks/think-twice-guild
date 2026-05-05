@@ -523,6 +523,52 @@ select option{background:#0d1118;color:#c8d8e8;}
       </div>
 
     </div>
+
+    <!-- UPLOAD & TÉLÉCHARGEMENT -->
+    <div style="margin-top:1.4rem;display:grid;grid-template-columns:1fr 1fr;gap:1.4rem">
+
+      <!-- UPLOAD -->
+      <div class="admin-panel" style="border-color:var(--border-glow)">
+        <div class="admin-panel-header" style="background:rgba(64,200,128,.06);border-color:rgba(64,200,128,.2)">
+          <h3 style="color:var(--green)">⬆️ Déposer un Addon</h3>
+        </div>
+        <div class="admin-panel-body">
+          <p style="color:var(--text-dim);font-size:.82rem;margin-bottom:1rem">Partage un addon ou un profil WeakAuras avec la guilde (.zip, .lua, .rar — max 20 Mo).</p>
+          <div class="form-group">
+            <label>Nom de l'addon</label>
+            <input type="text" id="addon-upload-name" placeholder="Ex: WeakAuras Raid Midnight" style="width:100%;background:rgba(255,255,255,.04);border:1px solid var(--border-glow);border-radius:2px;padding:.65rem .9rem;color:var(--text);font-family:'Exo 2',sans-serif;font-size:.9rem;outline:none;">
+          </div>
+          <div class="form-group">
+            <label>Description</label>
+            <input type="text" id="addon-upload-desc" placeholder="Ex: Auras pour le boss X" style="width:100%;background:rgba(255,255,255,.04);border:1px solid var(--border-glow);border-radius:2px;padding:.65rem .9rem;color:var(--text);font-family:'Exo 2',sans-serif;font-size:.9rem;outline:none;">
+          </div>
+          <div class="form-group">
+            <label>Fichier</label>
+            <input type="file" id="addon-upload-file" accept=".zip,.lua,.rar,.7z" style="color:var(--text);font-size:.85rem;">
+          </div>
+          <div id="addon-upload-progress" style="display:none;margin-bottom:.8rem">
+            <div style="background:var(--border);border-radius:4px;height:6px;overflow:hidden">
+              <div id="addon-progress-bar" style="height:100%;width:0%;background:var(--green);transition:width .3s"></div>
+            </div>
+            <span id="addon-progress-txt" style="font-size:.75rem;color:var(--text-dim)">0%</span>
+          </div>
+          <button class="btn-login" onclick="uploadAddonFile()" style="margin-top:.5rem">⬆️ Envoyer</button>
+        </div>
+      </div>
+
+      <!-- TÉLÉCHARGEMENTS -->
+      <div class="admin-panel" style="border-color:var(--border-glow)">
+        <div class="admin-panel-header" style="background:rgba(240,192,64,.06);border-color:rgba(240,192,64,.2)">
+          <h3 style="color:var(--gold)">📦 Addons de la Guilde</h3>
+        </div>
+        <div class="admin-panel-body">
+          <div id="addon-download-list" style="display:flex;flex-direction:column;gap:.7rem">
+            <span style="color:var(--text-dim);font-size:.85rem">Chargement…</span>
+          </div>
+        </div>
+      </div>
+
+    </div>
   </div>
 
   <!-- FEEDBACK PAGE -->
@@ -608,6 +654,7 @@ select option{background:#0d1118;color:#c8d8e8;}
 
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-storage-compat.js"></script>
 <script>
 // Aliases pour compatibilité avec le code existant
 const initializeApp = (cfg) => firebase.initializeApp(cfg);
@@ -818,6 +865,7 @@ const firebaseConfig = {
 
 const fbApp = initializeApp(firebaseConfig);
 const db = getFirestore(fbApp);
+const storage = firebase.storage();
 
 let USERS = {};
 let firebaseReady = false;
@@ -5275,6 +5323,7 @@ function showPage(id,btn){
   if(id==='admin')buildAdminPage();
   if(id==='mythic' && !_mdtUnsubscribe) loadMDTRoutes();
   if(id==='feedback') loadFeedbacks();
+  if(id==='guides') loadAddons();
 }
 function setBar(p){document.getElementById('bar').style.width=p+'%';}
 function setStatus(t){document.getElementById('load-status').textContent=t;}
@@ -5297,6 +5346,87 @@ window.doResetPassword = doResetPassword;
 window.openModal = openModal;
 window.closeModal = closeModal;
 window.showPage = showPage;
+window.uploadAddonFile = uploadAddonFile;
+
+// ════════════════════════════════════════════
+// ADDONS — UPLOAD & DOWNLOAD
+// ════════════════════════════════════════════
+async function uploadAddonFile() {
+  const name = document.getElementById('addon-upload-name').value.trim();
+  const desc = document.getElementById('addon-upload-desc').value.trim();
+  const fileInput = document.getElementById('addon-upload-file');
+  const file = fileInput.files[0];
+  if (!name) { toast('❌ Donne un nom à l\'addon', true); return; }
+  if (!file)  { toast('❌ Sélectionne un fichier', true); return; }
+  if (file.size > 20 * 1024 * 1024) { toast('❌ Fichier trop lourd (max 20 Mo)', true); return; }
+
+  const progressWrap = document.getElementById('addon-upload-progress');
+  const progressBar  = document.getElementById('addon-progress-bar');
+  const progressTxt  = document.getElementById('addon-progress-txt');
+  progressWrap.style.display = 'block';
+
+  try {
+    const ref = storage.ref('addons/' + Date.now() + '_' + file.name);
+    const task = ref.put(file);
+    task.on('state_changed', snap => {
+      const pct = Math.round(snap.bytesTransferred / snap.totalBytes * 100);
+      progressBar.style.width = pct + '%';
+      progressTxt.textContent = pct + '%';
+    });
+    await task;
+    const url = await ref.getDownloadURL();
+    const user = JSON.parse(localStorage.getItem('tt_session') || '{}');
+    await db.collection('addons').add({
+      name, desc, url,
+      filename: file.name,
+      size: file.size,
+      uploader: user.username || 'Inconnu',
+      uploadedAt: new Date().toISOString()
+    });
+    toast('✅ Addon déposé avec succès !');
+    document.getElementById('addon-upload-name').value = '';
+    document.getElementById('addon-upload-desc').value = '';
+    fileInput.value = '';
+    progressWrap.style.display = 'none';
+    progressBar.style.width = '0%';
+    loadAddons();
+  } catch(e) {
+    toast('❌ Erreur upload : ' + e.message, true);
+    progressWrap.style.display = 'none';
+  }
+}
+
+async function loadAddons() {
+  const list = document.getElementById('addon-download-list');
+  if (!list) return;
+  try {
+    const snap = await db.collection('addons').orderBy('uploadedAt','desc').get();
+    if (snap.empty) {
+      list.innerHTML = '<span style="color:var(--text-dim);font-size:.85rem">Aucun addon déposé pour l\'instant.</span>';
+      return;
+    }
+    list.innerHTML = '';
+    snap.forEach(d => {
+      const a = d.data();
+      const kb = a.size > 1024*1024 ? (a.size/1024/1024).toFixed(1)+' Mo' : Math.round(a.size/1024)+' Ko';
+      const date = new Date(a.uploadedAt).toLocaleDateString('fr-FR');
+      const el = document.createElement('div');
+      el.className = 'addon-card';
+      el.style.display = 'flex';
+      el.style.justifyContent = 'space-between';
+      el.style.alignItems = 'center';
+      el.innerHTML = `
+        <div>
+          <strong style="color:var(--gold)">${a.name}</strong>
+          <span style="color:var(--text-dim);font-size:.78rem;display:block">${a.desc || ''} · ${kb} · par ${a.uploader} · ${date}</span>
+        </div>
+        <a href="${a.url}" target="_blank" download style="background:var(--blue);color:#fff;border:none;border-radius:2px;padding:.4rem .9rem;font-size:.8rem;cursor:pointer;text-decoration:none;white-space:nowrap">⬇️ Télécharger</a>`;
+      list.appendChild(el);
+    });
+  } catch(e) {
+    list.innerHTML = '<span style="color:var(--red);font-size:.85rem">Erreur chargement addons.</span>';
+  }
+}
 window.goProfile = goProfile;
 window.refresh = refresh;
 function showAffixTip(el){
