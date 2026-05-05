@@ -5358,6 +5358,7 @@ window.closeModal = closeModal;
 window.showPage = showPage;
 window.uploadAddonFile = uploadAddonFile;
 window.setAddonMode = setAddonMode;
+window.deleteAddon = deleteAddon;
 
 // ════════════════════════════════════════════
 // ADDONS — UPLOAD & DOWNLOAD
@@ -5448,6 +5449,7 @@ async function uploadAddonFile() {
     const user = JSON.parse(localStorage.getItem('tt_session') || '{}');
     await db.collection('addons').add({
       name, desc, url,
+      path,
       filename: file.name,
       size: file.size,
       uploader: user.username || 'Inconnu',
@@ -5468,6 +5470,22 @@ async function uploadAddonFile() {
   }
 }
 
+async function deleteAddon(id, path) {
+  openModal('Supprimer cet addon', 'Le fichier sera définitivement supprimé du stockage. Continuer ?', async () => {
+    try {
+      if (path) {
+        const { error } = await sbClient.storage.from('addons').remove([path]);
+        if (error) console.warn('Suppression Supabase:', error.message);
+      }
+      await db.collection('addons').doc(id).delete();
+      toast('🗑️ Addon supprimé.');
+      loadAddons();
+    } catch(e) {
+      toast('❌ Erreur suppression : ' + (e.message || e), true);
+    }
+  });
+}
+
 async function loadAddons() {
   const list = document.getElementById('addon-download-list');
   if (!list) return;
@@ -5478,21 +5496,31 @@ async function loadAddons() {
       return;
     }
     list.innerHTML = '';
+    const isAdmin = currentUser?.role === 'admin' || currentUser?.role === 'moderator';
+    const me = (currentUser?.name || currentUser?.login || JSON.parse(localStorage.getItem('tt_session') || '{}').username || '').toLowerCase();
     snap.forEach(d => {
       const a = d.data();
       const kb = a.size > 1024*1024 ? (a.size/1024/1024).toFixed(1)+' Mo' : Math.round(a.size/1024)+' Ko';
       const date = new Date(a.uploadedAt).toLocaleDateString('fr-FR');
+      const canDelete = isAdmin || (a.uploader && a.uploader.toLowerCase() === me);
+      const delBtn = canDelete
+        ? `<button onclick="deleteAddon('${d.id}', ${JSON.stringify(a.path || '')})" style="background:transparent;color:var(--red);border:1px solid rgba(224,80,64,.4);border-radius:2px;padding:.4rem .7rem;font-size:.75rem;cursor:pointer;white-space:nowrap" title="Supprimer">🗑️</button>`
+        : '';
       const el = document.createElement('div');
       el.className = 'addon-card';
       el.style.display = 'flex';
       el.style.justifyContent = 'space-between';
       el.style.alignItems = 'center';
+      el.style.gap = '.6rem';
       el.innerHTML = `
-        <div>
+        <div style="flex:1;min-width:0">
           <strong style="color:var(--gold)">${a.name}</strong>
           <span style="color:var(--text-dim);font-size:.78rem;display:block">${a.desc || ''} · ${kb} · par ${a.uploader} · ${date}</span>
         </div>
-        <a href="${a.url}" target="_blank" download style="background:var(--blue);color:#fff;border:none;border-radius:2px;padding:.4rem .9rem;font-size:.8rem;cursor:pointer;text-decoration:none;white-space:nowrap">⬇️ Télécharger</a>`;
+        <div style="display:flex;gap:.4rem;align-items:center">
+          <a href="${a.url}" target="_blank" download style="background:var(--blue);color:#fff;border:none;border-radius:2px;padding:.4rem .9rem;font-size:.8rem;cursor:pointer;text-decoration:none;white-space:nowrap">⬇️ Télécharger</a>
+          ${delBtn}
+        </div>`;
       list.appendChild(el);
     });
   } catch(e) {
