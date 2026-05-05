@@ -91,6 +91,9 @@ nav button.admin-nav:hover,nav button.admin-nav.active{background:rgba(255,107,5
 .section-title{font-family:'Cinzel Decorative',serif;font-size:1.2rem;color:var(--gold);text-shadow:0 0 20px rgba(240,192,64,.3);margin-bottom:1.4rem;display:flex;align-items:center;gap:1rem;}
 .section-title::after{content:'';flex:1;height:1px;background:linear-gradient(to right,var(--gold-dim),transparent);}
 
+.addon-card{background:var(--bg-panel);border:1px solid var(--border);border-radius:4px;padding:.9rem 1.1rem;transition:border-color .2s,transform .2s;}
+.addon-card:hover{border-color:var(--gold-dim);transform:translateY(-2px);}
+
 .stat-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(175px,1fr));gap:1rem;margin-bottom:1.8rem;}
 .stat-card{background:var(--bg-card);border:1px solid var(--border);border-radius:4px;padding:1.1rem 1.4rem;position:relative;overflow:hidden;transition:border-color .3s,transform .2s;}
 .stat-card:hover{border-color:var(--gold-dim);transform:translateY(-2px);}
@@ -315,6 +318,7 @@ select option{background:#0d1118;color:#c8d8e8;}
       <button onclick="showPage('mythic',this)">Mythique+</button>
       <button onclick="showPage('raid',this)">Raid</button>
       <button onclick="showPage('profile',this)">Profil</button>
+      <button onclick="showPage('guides',this)">📖 Addons & Builds</button>
       <button id="admin-nav-btn" class="admin-nav" onclick="showPage('admin',this)" style="display:none">⚙️ Admin</button>
       <button onclick="showPage('feedback',this)">💬 Feedback</button>
     </nav>
@@ -449,6 +453,78 @@ select option{background:#0d1118;color:#c8d8e8;}
       </div>
     </div>
   </div>
+  <!-- GUIDES PAGE -->
+  <div class="page" id="page-guides">
+    <div class="section-title">📖 Addons & Builds</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:1.4rem">
+
+      <!-- ADDONS -->
+      <div>
+        <div class="admin-panel" style="border-color:var(--border-glow)">
+          <div class="admin-panel-header" style="background:rgba(64,144,224,.06);border-color:rgba(64,144,224,.2)">
+            <h3 style="color:var(--blue)">🧩 Addons Recommandés</h3>
+          </div>
+          <div class="admin-panel-body">
+            <p style="color:var(--text-dim);font-size:.85rem;margin-bottom:1rem">Les addons essentiels utilisés par la guilde Think Twice.</p>
+            <div id="addons-list" style="display:flex;flex-direction:column;gap:.8rem">
+              <div class="addon-card">
+                <strong style="color:var(--gold)">WeakAuras 2</strong>
+                <span style="color:var(--text-dim);font-size:.8rem;display:block">Alertes et auras personnalisées pour les boss.</span>
+              </div>
+              <div class="addon-card">
+                <strong style="color:var(--gold)">Details! Damage Meter</strong>
+                <span style="color:var(--text-dim);font-size:.8rem;display:block">Suivi des DPS/HPS en temps réel.</span>
+              </div>
+              <div class="addon-card">
+                <strong style="color:var(--gold)">BigWigs / LittleWigs</strong>
+                <span style="color:var(--text-dim);font-size:.8rem;display:block">Timers de boss pour raid et donjon.</span>
+              </div>
+              <div class="addon-card">
+                <strong style="color:var(--gold)">Method Raid Tools</strong>
+                <span style="color:var(--text-dim);font-size:.8rem;display:block">Gestion de raid, marqueurs et CD.</span>
+              </div>
+              <div class="addon-card">
+                <strong style="color:var(--gold)">Mythic Dungeon Tools</strong>
+                <span style="color:var(--text-dim);font-size:.8rem;display:block">Planification de routes Mythique+.</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- BUILDS -->
+      <div>
+        <div class="admin-panel" style="border-color:var(--border-glow)">
+          <div class="admin-panel-header" style="background:rgba(144,96,224,.06);border-color:rgba(144,96,224,.2)">
+            <h3 style="color:var(--purple)">⚔️ Builds Conseillés</h3>
+          </div>
+          <div class="admin-panel-body">
+            <p style="color:var(--text-dim);font-size:.85rem;margin-bottom:1rem">Builds optimisés pour le contenu actuel (The War Within).</p>
+            <div style="display:flex;flex-direction:column;gap:.8rem">
+              <div class="addon-card">
+                <strong style="color:var(--green)">Tank</strong>
+                <span style="color:var(--text-dim);font-size:.8rem;display:block">Protection Paladin • Guerrier Protection • Moine Brasseur</span>
+              </div>
+              <div class="addon-card">
+                <strong style="color:var(--red)">DPS Mêlée</strong>
+                <span style="color:var(--text-dim);font-size:.8rem;display:block">Démoniste Destruction • Démoniste Affliction</span>
+              </div>
+              <div class="addon-card">
+                <strong style="color:var(--blue)">DPS Distance</strong>
+                <span style="color:var(--text-dim);font-size:.8rem;display:block">Mage Feu • Chasseur Survie • Voleur Subtilité</span>
+              </div>
+              <div class="addon-card">
+                <strong style="color:var(--mythic-color)">Heal</strong>
+                <span style="color:var(--text-dim);font-size:.8rem;display:block">Prêtre Discipline • Druide Restauration • Chaman Restauration</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
   <!-- FEEDBACK PAGE -->
   <div class="page" id="page-feedback">
     <div class="section-title">💬 Feedback & Suggestions</div>
