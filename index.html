@@ -543,8 +543,14 @@ select option{background:#0d1118;color:#c8d8e8;}
             <input type="text" id="addon-upload-desc" placeholder="Ex: Auras pour le boss X" style="width:100%;background:rgba(255,255,255,.04);border:1px solid var(--border-glow);border-radius:2px;padding:.65rem .9rem;color:var(--text);font-family:'Exo 2',sans-serif;font-size:.9rem;outline:none;">
           </div>
           <div class="form-group">
-            <label>Fichier</label>
+            <label>Mode d'envoi</label>
+            <div style="display:flex;gap:.5rem;margin-bottom:.6rem">
+              <button type="button" id="addon-mode-file-btn" onclick="setAddonMode('file')" class="btn-login" style="flex:1;padding:.5rem;font-size:.8rem">📄 Fichier (.zip/.rar/.lua)</button>
+              <button type="button" id="addon-mode-folder-btn" onclick="setAddonMode('folder')" class="btn-login" style="flex:1;padding:.5rem;font-size:.8rem;background:transparent;border:1px solid var(--border-glow);color:var(--text-dim)">📁 Dossier (zip auto)</button>
+            </div>
             <input type="file" id="addon-upload-file" accept=".zip,.lua,.rar,.7z" style="color:var(--text);font-size:.85rem;">
+            <input type="file" id="addon-upload-folder" webkitdirectory directory multiple style="color:var(--text);font-size:.85rem;display:none;">
+            <span id="addon-folder-info" style="display:block;font-size:.7rem;color:var(--text-dim);margin-top:.3rem"></span>
           </div>
           <div id="addon-upload-progress" style="display:none;margin-bottom:.8rem">
             <div style="background:var(--border);border-radius:4px;height:6px;overflow:hidden">
@@ -655,6 +661,7 @@ select option{background:#0d1118;color:#c8d8e8;}
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
 <script>
 // Aliases pour compatibilité avec le code existant
 const initializeApp = (cfg) => firebase.initializeApp(cfg);
@@ -5350,37 +5357,99 @@ window.openModal = openModal;
 window.closeModal = closeModal;
 window.showPage = showPage;
 window.uploadAddonFile = uploadAddonFile;
+window.setAddonMode = setAddonMode;
+window.deleteAddon = deleteAddon;
 
 // ════════════════════════════════════════════
 // ADDONS — UPLOAD & DOWNLOAD
 // ════════════════════════════════════════════
+let addonUploadMode = 'file';
+function setAddonMode(mode) {
+  addonUploadMode = mode;
+  const fileInput = document.getElementById('addon-upload-file');
+  const folderInput = document.getElementById('addon-upload-folder');
+  const fileBtn = document.getElementById('addon-mode-file-btn');
+  const folderBtn = document.getElementById('addon-mode-folder-btn');
+  const info = document.getElementById('addon-folder-info');
+  if (mode === 'folder') {
+    fileInput.style.display = 'none';
+    folderInput.style.display = 'block';
+    folderBtn.style.background = '';
+    folderBtn.style.color = '';
+    folderBtn.style.border = '';
+    fileBtn.style.background = 'transparent';
+    fileBtn.style.color = 'var(--text-dim)';
+    fileBtn.style.border = '1px solid var(--border-glow)';
+    info.textContent = '📁 Le dossier sera zippé automatiquement avant l\'envoi.';
+  } else {
+    fileInput.style.display = 'block';
+    folderInput.style.display = 'none';
+    fileBtn.style.background = '';
+    fileBtn.style.color = '';
+    fileBtn.style.border = '';
+    folderBtn.style.background = 'transparent';
+    folderBtn.style.color = 'var(--text-dim)';
+    folderBtn.style.border = '1px solid var(--border-glow)';
+    info.textContent = '';
+  }
+  fileInput.value = '';
+  folderInput.value = '';
+}
+
 async function uploadAddonFile() {
   const name = document.getElementById('addon-upload-name').value.trim();
   const desc = document.getElementById('addon-upload-desc').value.trim();
   const fileInput = document.getElementById('addon-upload-file');
-  const file = fileInput.files[0];
+  const folderInput = document.getElementById('addon-upload-folder');
   if (!name) { toast('❌ Donne un nom à l\'addon', true); return; }
-  if (!file)  { toast('❌ Sélectionne un fichier', true); return; }
-  if (file.size > 20 * 1024 * 1024) { toast('❌ Fichier trop lourd (max 20 Mo)', true); return; }
 
   const progressWrap = document.getElementById('addon-upload-progress');
   const progressBar  = document.getElementById('addon-progress-bar');
   const progressTxt  = document.getElementById('addon-progress-txt');
-  progressWrap.style.display = 'block';
-  progressBar.style.width = '10%';
-  progressTxt.textContent = 'Envoi…';
 
+  let file;
   try {
+    if (addonUploadMode === 'folder') {
+      const files = folderInput.files;
+      if (!files || !files.length) { toast('❌ Sélectionne un dossier', true); return; }
+      progressWrap.style.display = 'block';
+      progressBar.style.width = '5%';
+      progressTxt.textContent = 'Compression du dossier…';
+      const zip = new JSZip();
+      let rootName = '';
+      for (const f of files) {
+        const rel = f.webkitRelativePath || f.name;
+        if (!rootName) rootName = rel.split('/')[0] || 'addon';
+        zip.file(rel, f);
+      }
+      const blob = await zip.generateAsync({ type: 'blob', compression: 'DEFLATE', compressionOptions: { level: 6 } }, (meta) => {
+        progressBar.style.width = (5 + meta.percent * 0.4) + '%';
+        progressTxt.textContent = 'Compression… ' + Math.round(meta.percent) + '%';
+      });
+      file = new File([blob], (rootName || name.replace(/\s+/g,'_')) + '.zip', { type: 'application/zip' });
+    } else {
+      file = fileInput.files[0];
+      if (!file)  { toast('❌ Sélectionne un fichier', true); return; }
+      progressWrap.style.display = 'block';
+      progressBar.style.width = '10%';
+      progressTxt.textContent = 'Envoi…';
+    }
+
+    if (file.size > 20 * 1024 * 1024) { toast('❌ Fichier trop lourd (max 20 Mo)', true); progressWrap.style.display = 'none'; return; }
+
+    progressBar.style.width = '55%';
+    progressTxt.textContent = 'Envoi…';
     const path = Date.now() + '_' + file.name;
     const { error: upErr } = await sbClient.storage.from('addons').upload(path, file, { cacheControl: '3600', upsert: false });
     if (upErr) throw upErr;
-    progressBar.style.width = '80%';
+    progressBar.style.width = '85%';
     const { data: urlData } = sbClient.storage.from('addons').getPublicUrl(path);
     const url = urlData.publicUrl;
     progressBar.style.width = '95%';
     const user = JSON.parse(localStorage.getItem('tt_session') || '{}');
     await db.collection('addons').add({
       name, desc, url,
+      path,
       filename: file.name,
       size: file.size,
       uploader: user.username || 'Inconnu',
@@ -5392,12 +5461,29 @@ async function uploadAddonFile() {
     document.getElementById('addon-upload-name').value = '';
     document.getElementById('addon-upload-desc').value = '';
     fileInput.value = '';
+    folderInput.value = '';
     setTimeout(() => { progressWrap.style.display = 'none'; progressBar.style.width = '0%'; }, 1000);
     loadAddons();
   } catch(e) {
     toast('❌ Erreur upload : ' + (e.message || e), true);
     progressWrap.style.display = 'none';
   }
+}
+
+async function deleteAddon(id, path) {
+  openModal('Supprimer cet addon', 'Le fichier sera définitivement supprimé du stockage. Continuer ?', async () => {
+    try {
+      if (path) {
+        const { error } = await sbClient.storage.from('addons').remove([path]);
+        if (error) console.warn('Suppression Supabase:', error.message);
+      }
+      await db.collection('addons').doc(id).delete();
+      toast('🗑️ Addon supprimé.');
+      loadAddons();
+    } catch(e) {
+      toast('❌ Erreur suppression : ' + (e.message || e), true);
+    }
+  });
 }
 
 async function loadAddons() {
@@ -5410,21 +5496,34 @@ async function loadAddons() {
       return;
     }
     list.innerHTML = '';
+    const session = JSON.parse(localStorage.getItem('tt_session') || '{}');
+    const role = (currentUser?.role || session.role || '').toLowerCase();
+    const isAdmin = role === 'admin' || role === 'moderator';
+    const me = (currentUser?.name || currentUser?.login || session.username || '').toLowerCase();
+    console.log('🔧 loadAddons → currentUser:', currentUser, '| session:', session, '| isAdmin:', isAdmin, '| me:', me);
     snap.forEach(d => {
       const a = d.data();
       const kb = a.size > 1024*1024 ? (a.size/1024/1024).toFixed(1)+' Mo' : Math.round(a.size/1024)+' Ko';
       const date = new Date(a.uploadedAt).toLocaleDateString('fr-FR');
+      const canDelete = isAdmin || (a.uploader && a.uploader.toLowerCase() === me);
+      const delBtn = canDelete
+        ? `<button onclick="deleteAddon('${d.id}', ${JSON.stringify(a.path || '')})" style="background:transparent;color:var(--red);border:1px solid rgba(224,80,64,.4);border-radius:2px;padding:.4rem .7rem;font-size:.75rem;cursor:pointer;white-space:nowrap" title="Supprimer">🗑️</button>`
+        : '';
       const el = document.createElement('div');
       el.className = 'addon-card';
       el.style.display = 'flex';
       el.style.justifyContent = 'space-between';
       el.style.alignItems = 'center';
+      el.style.gap = '.6rem';
       el.innerHTML = `
-        <div>
+        <div style="flex:1;min-width:0">
           <strong style="color:var(--gold)">${a.name}</strong>
           <span style="color:var(--text-dim);font-size:.78rem;display:block">${a.desc || ''} · ${kb} · par ${a.uploader} · ${date}</span>
         </div>
-        <a href="${a.url}" target="_blank" download style="background:var(--blue);color:#fff;border:none;border-radius:2px;padding:.4rem .9rem;font-size:.8rem;cursor:pointer;text-decoration:none;white-space:nowrap">⬇️ Télécharger</a>`;
+        <div style="display:flex;gap:.4rem;align-items:center">
+          <a href="${a.url}" target="_blank" download style="background:var(--blue);color:#fff;border:none;border-radius:2px;padding:.4rem .9rem;font-size:.8rem;cursor:pointer;text-decoration:none;white-space:nowrap">⬇️ Télécharger</a>
+          ${delBtn}
+        </div>`;
       list.appendChild(el);
     });
   } catch(e) {
