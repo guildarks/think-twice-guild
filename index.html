@@ -5473,12 +5473,21 @@ async function uploadAddonFile() {
 async function deleteAddon(id, path) {
   openModal('Supprimer cet addon', 'Le fichier sera définitivement supprimé du stockage. Continuer ?', async () => {
     try {
+      let storageOk = true;
       if (path) {
-        const { error } = await sbClient.storage.from('addons').remove([path]);
-        if (error) console.warn('Suppression Supabase:', error.message);
+        console.log('🗑️ Suppression Supabase path:', path);
+        const { data, error } = await sbClient.storage.from('addons').remove([path]);
+        console.log('🗑️ Réponse Supabase:', { data, error });
+        if (error) {
+          storageOk = false;
+          toast('❌ Supabase a refusé : ' + error.message + ' (vérifie la policy DELETE)', true);
+        } else if (!data || data.length === 0) {
+          storageOk = false;
+          toast('⚠️ Fichier introuvable dans Supabase (peut-être déjà supprimé).', true);
+        }
       }
       await db.collection('addons').doc(id).delete();
-      toast('🗑️ Addon supprimé.');
+      if (storageOk) toast('🗑️ Addon supprimé (fichier + base).');
       loadAddons();
     } catch(e) {
       toast('❌ Erreur suppression : ' + (e.message || e), true);
@@ -5522,7 +5531,7 @@ async function loadAddons() {
           <span style="color:var(--text-dim);font-size:.78rem;display:block">${a.desc || ''} · ${kb} · par ${a.uploader} · ${date}</span>
         </div>
         <div style="display:flex;gap:.4rem;align-items:center">
-          <a href="${a.url}" target="_blank" download style="background:var(--blue);color:#fff;border:none;border-radius:2px;padding:.4rem .9rem;font-size:.8rem;cursor:pointer;text-decoration:none;white-space:nowrap">⬇️ Télécharger</a>
+          <a href="${a.url}" target="_blank" download="${a.filename || a.name}" style="background:var(--blue);color:#fff;border:none;border-radius:2px;padding:.4rem .9rem;font-size:.8rem;cursor:pointer;text-decoration:none;white-space:nowrap">⬇️ Télécharger</a>
           ${delBtn}
         </div>`;
       list.appendChild(el);
