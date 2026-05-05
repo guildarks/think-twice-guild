@@ -5496,8 +5496,11 @@ async function loadAddons() {
       return;
     }
     list.innerHTML = '';
-    const isAdmin = currentUser?.role === 'admin' || currentUser?.role === 'moderator';
-    const me = (currentUser?.name || currentUser?.login || JSON.parse(localStorage.getItem('tt_session') || '{}').username || '').toLowerCase();
+    const session = JSON.parse(localStorage.getItem('tt_session') || '{}');
+    const role = (currentUser?.role || session.role || '').toLowerCase();
+    const isAdmin = role === 'admin' || role === 'moderator';
+    const me = (currentUser?.name || currentUser?.login || session.username || '').toLowerCase();
+    console.log('🔧 loadAddons → currentUser:', currentUser, '| session:', session, '| isAdmin:', isAdmin, '| me:', me);
     snap.forEach(d => {
       const a = d.data();
       const kb = a.size > 1024*1024 ? (a.size/1024/1024).toFixed(1)+' Mo' : Math.round(a.size/1024)+' Ko';
