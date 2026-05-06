@@ -93,6 +93,19 @@ nav button.admin-nav:hover,nav button.admin-nav.active{background:rgba(255,107,5
 
 .addon-card{background:var(--bg-panel);border:1px solid var(--border);border-radius:4px;padding:.9rem 1.1rem;transition:border-color .2s,transform .2s;}
 .addon-card:hover{border-color:var(--gold-dim);transform:translateY(-2px);}
+.addon-card-rich{display:flex;gap:1rem;align-items:flex-start;}
+.addon-thumb{flex-shrink:0;width:64px;height:64px;border-radius:6px;background:linear-gradient(135deg,#1a2535,#0d1118);border:1px solid var(--border-glow);display:flex;align-items:center;justify-content:center;font-size:2rem;overflow:hidden;position:relative;}
+.addon-thumb img{width:100%;height:100%;object-fit:cover;}
+.addon-body{flex:1;min-width:0;}
+.addon-body strong{display:block;margin-bottom:.25rem;}
+.addon-desc{color:var(--text-dim);font-size:.8rem;line-height:1.5;display:block;margin-bottom:.55rem;}
+.addon-links{display:flex;gap:.5rem;flex-wrap:wrap;}
+.addon-link{display:inline-flex;align-items:center;gap:.3rem;font-size:.72rem;padding:.3rem .7rem;border-radius:3px;background:rgba(64,144,224,.1);border:1px solid rgba(64,144,224,.3);color:var(--blue);text-decoration:none;font-family:'Cinzel',serif;letter-spacing:.05em;transition:background .2s,border-color .2s;}
+.addon-link:hover{background:rgba(64,144,224,.2);border-color:var(--blue);}
+.addon-link.wago{background:rgba(144,96,224,.1);border-color:rgba(144,96,224,.3);color:var(--purple);}
+.addon-link.wago:hover{background:rgba(144,96,224,.2);border-color:var(--purple);}
+.addon-link.github{background:rgba(192,192,192,.08);border-color:rgba(192,192,192,.25);color:var(--text);}
+.addon-link.github:hover{background:rgba(192,192,192,.15);border-color:var(--text);}
 
 .stat-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(175px,1fr));gap:1rem;margin-bottom:1.8rem;}
 .stat-card{background:var(--bg-card);border:1px solid var(--border);border-radius:4px;padding:1.1rem 1.4rem;position:relative;overflow:hidden;transition:border-color .3s,transform .2s;}
@@ -467,26 +480,76 @@ select option{background:#0d1118;color:#c8d8e8;}
           <div class="admin-panel-body">
             <p style="color:var(--text-dim);font-size:.85rem;margin-bottom:1rem">Les addons essentiels utilisés par la guilde Think Twice.</p>
             <div id="addons-list" style="display:flex;flex-direction:column;gap:.8rem">
+
               <div class="addon-card">
-                <strong style="color:var(--gold)">WeakAuras 2</strong>
-                <span style="color:var(--text-dim);font-size:.8rem;display:block">Alertes et auras personnalisées pour les boss.</span>
+                <div class="addon-card-rich">
+                  <div class="addon-thumb" data-addon="weakauras">✨</div>
+                  <div class="addon-body">
+                    <strong style="color:var(--gold)">WeakAuras 2</strong>
+                    <span class="addon-desc">Système d'alertes et auras personnalisées affichant cooldowns, buffs/debuffs et mécaniques de boss. Indispensable pour le raid HM/Mythique et la M+ — chaque spé peut importer un pack adapté à son rôle.</span>
+                    <div class="addon-links">
+                      <a class="addon-link" href="https://www.curseforge.com/wow/addons/weakauras-2" target="_blank" rel="noopener">⬇ CurseForge</a>
+                      <a class="addon-link wago" href="https://wago.io/weakauras" target="_blank" rel="noopener">📦 Wago.io</a>
+                    </div>
+                  </div>
+                </div>
               </div>
+
               <div class="addon-card">
-                <strong style="color:var(--gold)">Details! Damage Meter</strong>
-                <span style="color:var(--text-dim);font-size:.8rem;display:block">Suivi des DPS/HPS en temps réel.</span>
+                <div class="addon-card-rich">
+                  <div class="addon-thumb" data-addon="details">⚔️</div>
+                  <div class="addon-body">
+                    <strong style="color:var(--gold)">Details! Damage Meter</strong>
+                    <span class="addon-desc">Meter de combat ultra-complet : DPS, HPS, mitigation, déaths log, interrupts, dispels et analyse de pull. Plugins compatibles WeakAuras et logs Warcraft. La référence pour analyser ses perfs de raid.</span>
+                    <div class="addon-links">
+                      <a class="addon-link" href="https://www.curseforge.com/wow/addons/details" target="_blank" rel="noopener">⬇ CurseForge</a>
+                      <a class="addon-link github" href="https://github.com/Tercioo/Details-Damage-Meter" target="_blank" rel="noopener">⚙ GitHub</a>
+                    </div>
+                  </div>
+                </div>
               </div>
+
               <div class="addon-card">
-                <strong style="color:var(--gold)">BigWigs / LittleWigs</strong>
-                <span style="color:var(--text-dim);font-size:.8rem;display:block">Timers de boss pour raid et donjon.</span>
+                <div class="addon-card-rich">
+                  <div class="addon-thumb" data-addon="bigwigs">⏱️</div>
+                  <div class="addon-body">
+                    <strong style="color:var(--gold)">BigWigs / LittleWigs</strong>
+                    <span class="addon-desc">Timers et alertes de mécaniques pour boss de raid (BigWigs) et donjons / Mythique+ (LittleWigs). Avertissements sonores, barres de cooldown des sorts et marqueurs de phase. Obligatoire en contenu HM+.</span>
+                    <div class="addon-links">
+                      <a class="addon-link" href="https://www.curseforge.com/wow/addons/big-wigs" target="_blank" rel="noopener">⬇ BigWigs</a>
+                      <a class="addon-link" href="https://www.curseforge.com/wow/addons/little-wigs" target="_blank" rel="noopener">⬇ LittleWigs</a>
+                    </div>
+                  </div>
+                </div>
               </div>
+
               <div class="addon-card">
-                <strong style="color:var(--gold)">Method Raid Tools</strong>
-                <span style="color:var(--text-dim);font-size:.8rem;display:block">Gestion de raid, marqueurs et CD.</span>
+                <div class="addon-card-rich">
+                  <div class="addon-thumb" data-addon="mrt">🛡️</div>
+                  <div class="addon-body">
+                    <strong style="color:var(--gold)">Method Raid Tools (MRT)</strong>
+                    <span class="addon-desc">Suite de gestion de raid : notes partagées en jeu, attribution automatique des CD, marqueurs de boss, timers d'externes et exécutions de stratégie. Synchronise toute la guilde sur la même note de raid.</span>
+                    <div class="addon-links">
+                      <a class="addon-link" href="https://www.curseforge.com/wow/addons/method-raid-tools" target="_blank" rel="noopener">⬇ CurseForge</a>
+                    </div>
+                  </div>
+                </div>
               </div>
+
               <div class="addon-card">
-                <strong style="color:var(--gold)">Mythic Dungeon Tools</strong>
-                <span style="color:var(--text-dim);font-size:.8rem;display:block">Planification de routes Mythique+.</span>
+                <div class="addon-card-rich">
+                  <div class="addon-thumb" data-addon="mdt">🗺️</div>
+                  <div class="addon-body">
+                    <strong style="color:var(--gold)">Mythic Dungeon Tools (MDT)</strong>
+                    <span class="addon-desc">Planificateur de routes pour Mythique+ : compte de pulls, gestion de l'enrage, drag & drop des packs et partage de route via chaîne MDT. Essentiel pour pousser des keys haut niveau en équipe.</span>
+                    <div class="addon-links">
+                      <a class="addon-link" href="https://www.curseforge.com/wow/addons/mythic-dungeon-tools" target="_blank" rel="noopener">⬇ CurseForge</a>
+                      <a class="addon-link github" href="https://github.com/Nnoggie/MythicDungeonTools" target="_blank" rel="noopener">⚙ GitHub</a>
+                    </div>
+                  </div>
+                </div>
               </div>
+
             </div>
           </div>
         </div>
