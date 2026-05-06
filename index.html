@@ -5533,6 +5533,7 @@ window.toggleBuildRole = toggleBuildRole;
 window.toggleBuildSpec = toggleBuildSpec;
 window.addBuildGuide = addBuildGuide;
 window.deleteBuildGuide = deleteBuildGuide;
+window.copyBuildGuide = copyBuildGuide;
 window.openAddonRecoModal = openAddonRecoModal;
 window.saveAddonRecoModal = saveAddonRecoModal;
 window.deleteAddonReco = deleteAddonReco;
@@ -5754,6 +5755,7 @@ function renderBuilds() {
               const canDel = isAdmin || (g.author && g.author.toLowerCase() === me);
               const linkBtn = g.link ? `<a href="${g.link}" target="_blank" rel="noopener" style="color:var(--blue);font-size:.72rem;text-decoration:none">🔗 Voir le guide</a>` : '';
               const delBtn = canDel ? `<button onclick="deleteBuildGuide('${g.id}')" style="background:transparent;color:var(--red);border:1px solid rgba(224,80,64,.3);border-radius:2px;padding:.15rem .45rem;font-size:.65rem;cursor:pointer">🗑️</button>` : '';
+              const copyBtn = `<button onclick="copyBuildGuide('${g.id}',this)" style="background:transparent;color:var(--blue);border:1px solid rgba(64,144,224,.3);border-radius:2px;padding:.15rem .45rem;font-size:.65rem;cursor:pointer" title="Copier le guide">📋</button>`;
               const guideEl = document.createElement('div');
               guideEl.style.background = 'var(--bg-card)';
               guideEl.style.border = '1px solid var(--border)';
@@ -5762,9 +5764,9 @@ function renderBuilds() {
               guideEl.innerHTML = `
                 <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:.5rem">
                   <strong style="color:var(--gold);font-size:.8rem">${g.title || 'Sans titre'}</strong>
-                  ${delBtn}
+                  <div style="display:flex;gap:.3rem">${copyBtn}${delBtn}</div>
                 </div>
-                ${g.content ? `<div style="color:var(--text);font-size:.75rem;margin:.3rem 0;white-space:pre-wrap;line-height:1.4">${g.content.replace(/</g,'&lt;')}</div>` : ''}
+                ${g.content ? `<div style="color:var(--text);font-size:.75rem;margin:.3rem 0;white-space:pre-wrap;line-height:1.4;user-select:text;cursor:text">${g.content.replace(/</g,'&lt;')}</div>` : ''}
                 <div style="display:flex;justify-content:space-between;align-items:center;gap:.5rem;margin-top:.3rem">
                   ${linkBtn}
                   <span style="color:var(--text-dim);font-size:.65rem">par <strong style="color:var(--gold-dim)">${g.author || 'Anonyme'}</strong> · ${date}</span>
@@ -5842,6 +5844,37 @@ async function deleteBuildGuide(id) {
       toast('❌ Erreur : ' + (e.message || e), true);
     }
   });
+}
+
+function copyBuildGuide(id, btn) {
+  const g = (BUILDS_CACHE || []).find(x => x.id === id);
+  if (!g) { toast('❌ Guide introuvable', true); return; }
+  const parts = [];
+  if (g.title) parts.push('# ' + g.title);
+  if (g.content) parts.push(g.content);
+  if (g.link) parts.push('🔗 ' + g.link);
+  if (g.author) parts.push('— ' + g.author);
+  const text = parts.join('\n\n');
+  const done = () => {
+    toast('📋 Guide copié !');
+    if (btn) { const old = btn.textContent; btn.textContent = '✓'; setTimeout(()=>{ btn.textContent = old; }, 1200); }
+  };
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(text).then(done).catch(() => fallbackCopy(text, done));
+  } else {
+    fallbackCopy(text, done);
+  }
+}
+
+function fallbackCopy(text, cb) {
+  const ta = document.createElement('textarea');
+  ta.value = text;
+  ta.style.position = 'fixed'; ta.style.opacity = '0';
+  document.body.appendChild(ta);
+  ta.select();
+  try { document.execCommand('copy'); cb && cb(); }
+  catch(e) { toast('❌ Copie impossible', true); }
+  ta.remove();
 }
 
 async function loadAddons() {
