@@ -2007,31 +2007,27 @@ let ADDON_RECO = [];
 let _addonRecoUnsubscribe = null;
 
 async function loadAddonReco() {
+  // Rendu immédiat depuis le cache ou les défauts (avant que Firebase réponde)
+  if (!ADDON_RECO.length) {
+    const cached = JSON.parse(localStorage.getItem('tt_addon_reco') || 'null');
+    ADDON_RECO = (Array.isArray(cached) && cached.length ? cached : JSON.parse(JSON.stringify(DEFAULT_ADDON_RECO)));
+  }
+  renderAddonReco();
+
   if (_addonRecoUnsubscribe) { _addonRecoUnsubscribe(); _addonRecoUnsubscribe = null; }
   return new Promise((resolve) => {
     try {
+      if (typeof db === 'undefined' || !db) { resolve(); return; }
       const ref = db.collection('guild').doc('addon_reco');
       _addonRecoUnsubscribe = ref.onSnapshot((snap) => {
         if (snap.exists && Array.isArray(snap.data()?.list) && snap.data().list.length) {
           ADDON_RECO = snap.data().list;
-        } else {
-          ADDON_RECO = JSON.parse(JSON.stringify(DEFAULT_ADDON_RECO));
+          try { localStorage.setItem('tt_addon_reco', JSON.stringify(ADDON_RECO)); } catch(e){}
         }
-        try { localStorage.setItem('tt_addon_reco', JSON.stringify(ADDON_RECO)); } catch(e){}
         renderAddonReco();
         resolve();
-      }, () => {
-        const cached = JSON.parse(localStorage.getItem('tt_addon_reco') || 'null');
-        ADDON_RECO = cached || JSON.parse(JSON.stringify(DEFAULT_ADDON_RECO));
-        renderAddonReco();
-        resolve();
-      });
-    } catch(e) {
-      const cached = JSON.parse(localStorage.getItem('tt_addon_reco') || 'null');
-      ADDON_RECO = cached || JSON.parse(JSON.stringify(DEFAULT_ADDON_RECO));
-      renderAddonReco();
-      resolve();
-    }
+      }, () => { renderAddonReco(); resolve(); });
+    } catch(e) { renderAddonReco(); resolve(); }
   });
 }
 
