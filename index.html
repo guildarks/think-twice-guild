@@ -5534,6 +5534,8 @@ window.toggleBuildSpec = toggleBuildSpec;
 window.addBuildGuide = addBuildGuide;
 window.deleteBuildGuide = deleteBuildGuide;
 window.copyBuildGuide = copyBuildGuide;
+window.pasteIntoField = pasteIntoField;
+window.copyFromField = copyFromField;
 window.openAddonRecoModal = openAddonRecoModal;
 window.saveAddonRecoModal = saveAddonRecoModal;
 window.deleteAddonReco = deleteAddonReco;
@@ -5784,7 +5786,13 @@ function renderBuilds() {
           form.innerHTML = `
             <div style="font-size:.7rem;color:var(--green);margin-bottom:.35rem">✏️ Poste ton guide pour ${spec}</div>
             <input type="text" id="${formId}-title" placeholder="Titre (ex: Build M+ +15)" style="width:100%;background:rgba(255,255,255,.04);border:1px solid var(--border);border-radius:2px;padding:.35rem .5rem;color:var(--text);font-size:.75rem;margin-bottom:.3rem;outline:none">
-            <textarea id="${formId}-content" placeholder="Conseils, priorités stats, rotation, talents…" rows="3" style="width:100%;background:rgba(255,255,255,.04);border:1px solid var(--border);border-radius:2px;padding:.35rem .5rem;color:var(--text);font-size:.75rem;margin-bottom:.3rem;outline:none;resize:vertical;font-family:inherit"></textarea>
+            <div style="position:relative;margin-bottom:.3rem">
+              <textarea id="${formId}-content" placeholder="Conseils, priorités stats, rotation, talents…" rows="3" style="width:100%;background:rgba(255,255,255,.04);border:1px solid var(--border);border-radius:2px;padding:.35rem .5rem;padding-right:3.4rem;color:var(--text);font-size:.75rem;outline:none;resize:vertical;font-family:inherit;box-sizing:border-box"></textarea>
+              <div style="position:absolute;top:.25rem;right:.3rem;display:flex;gap:.2rem">
+                <button type="button" onclick="pasteIntoField('${formId}-content',this)" title="Coller depuis le presse-papier" style="background:rgba(64,144,224,.15);color:var(--blue);border:1px solid rgba(64,144,224,.35);border-radius:2px;padding:.15rem .4rem;font-size:.65rem;cursor:pointer">📋 Coller</button>
+                <button type="button" onclick="copyFromField('${formId}-content',this)" title="Copier le contenu" style="background:rgba(192,192,192,.08);color:var(--text);border:1px solid var(--border-glow);border-radius:2px;padding:.15rem .4rem;font-size:.65rem;cursor:pointer">📄 Copier</button>
+              </div>
+            </div>
             <input type="url" id="${formId}-link" placeholder="Lien externe (Wowhead, Icy Veins…)" style="width:100%;background:rgba(255,255,255,.04);border:1px solid var(--border);border-radius:2px;padding:.35rem .5rem;color:var(--text);font-size:.75rem;margin-bottom:.3rem;outline:none">
             <button onclick="addBuildGuide('${key}','${spec.replace(/'/g,"\\'")}','${formId}')" style="background:var(--green);color:#fff;border:none;border-radius:2px;padding:.3rem .8rem;font-size:.72rem;cursor:pointer">📨 Publier</button>`;
           sub.appendChild(form);
@@ -5875,6 +5883,51 @@ function fallbackCopy(text, cb) {
   try { document.execCommand('copy'); cb && cb(); }
   catch(e) { toast('❌ Copie impossible', true); }
   ta.remove();
+}
+
+async function pasteIntoField(fieldId, btn) {
+  const el = document.getElementById(fieldId);
+  if (!el) return;
+  let text = '';
+  try {
+    if (navigator.clipboard && navigator.clipboard.readText) {
+      text = await navigator.clipboard.readText();
+    } else {
+      el.focus();
+      document.execCommand('paste');
+      toast('💡 Utilise Ctrl+V dans le champ', false, true);
+      return;
+    }
+  } catch(e) {
+    el.focus();
+    toast('❌ Autorise l\'accès au presse-papier (ou utilise Ctrl+V)', true);
+    return;
+  }
+  if (!text) { toast('💡 Presse-papier vide', false, true); return; }
+  if (el.value && !confirm('Remplacer le contenu actuel ?')) {
+    el.value += (el.value.endsWith('\n') ? '' : '\n') + text;
+  } else {
+    el.value = text;
+  }
+  el.focus();
+  toast('📋 Collé !');
+  if (btn) { const old = btn.textContent; btn.textContent = '✓'; setTimeout(()=>{ btn.textContent = old; }, 1200); }
+}
+
+function copyFromField(fieldId, btn) {
+  const el = document.getElementById(fieldId);
+  if (!el) return;
+  const text = el.value || '';
+  if (!text.trim()) { toast('💡 Champ vide', false, true); return; }
+  const done = () => {
+    toast('📄 Copié !');
+    if (btn) { const old = btn.textContent; btn.textContent = '✓'; setTimeout(()=>{ btn.textContent = old; }, 1200); }
+  };
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(text).then(done).catch(() => fallbackCopy(text, done));
+  } else {
+    fallbackCopy(text, done);
+  }
 }
 
 async function loadAddons() {
