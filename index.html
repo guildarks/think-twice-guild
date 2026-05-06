@@ -5786,13 +5786,11 @@ function renderBuilds() {
           form.innerHTML = `
             <div style="font-size:.7rem;color:var(--green);margin-bottom:.35rem">✏️ Poste ton guide pour ${spec}</div>
             <input type="text" id="${formId}-title" placeholder="Titre (ex: Build M+ +15)" style="width:100%;background:rgba(255,255,255,.04);border:1px solid var(--border);border-radius:2px;padding:.35rem .5rem;color:var(--text);font-size:.75rem;margin-bottom:.3rem;outline:none">
-            <div style="position:relative;margin-bottom:.3rem">
-              <textarea id="${formId}-content" placeholder="Conseils, priorités stats, rotation, talents…" rows="3" style="width:100%;background:rgba(255,255,255,.04);border:1px solid var(--border);border-radius:2px;padding:.35rem .5rem;padding-right:3.4rem;color:var(--text);font-size:.75rem;outline:none;resize:vertical;font-family:inherit;box-sizing:border-box"></textarea>
-              <div style="position:absolute;top:.25rem;right:.3rem;display:flex;gap:.2rem">
-                <button type="button" onclick="pasteIntoField('${formId}-content',this)" title="Coller depuis le presse-papier" style="background:rgba(64,144,224,.15);color:var(--blue);border:1px solid rgba(64,144,224,.35);border-radius:2px;padding:.15rem .4rem;font-size:.65rem;cursor:pointer">📋 Coller</button>
-                <button type="button" onclick="copyFromField('${formId}-content',this)" title="Copier le contenu" style="background:rgba(192,192,192,.08);color:var(--text);border:1px solid var(--border-glow);border-radius:2px;padding:.15rem .4rem;font-size:.65rem;cursor:pointer">📄 Copier</button>
-              </div>
+            <div style="display:flex;justify-content:flex-end;gap:.25rem;margin-bottom:.2rem">
+              <button type="button" onclick="pasteIntoField('${formId}-content',this)" title="Coller depuis le presse-papier" style="background:rgba(64,144,224,.15);color:var(--blue);border:1px solid rgba(64,144,224,.35);border-radius:2px;padding:.15rem .5rem;font-size:.65rem;cursor:pointer">📋 Coller</button>
+              <button type="button" onclick="copyFromField('${formId}-content',this)" title="Copier le contenu" style="background:rgba(192,192,192,.08);color:var(--text);border:1px solid var(--border-glow);border-radius:2px;padding:.15rem .5rem;font-size:.65rem;cursor:pointer">📄 Copier</button>
             </div>
+            <textarea id="${formId}-content" placeholder="Conseils, priorités stats, rotation, talents…" rows="3" style="width:100%;background:rgba(255,255,255,.04);border:1px solid var(--border);border-radius:2px;padding:.35rem .5rem;color:var(--text);font-size:.75rem;margin-bottom:.3rem;outline:none;resize:vertical;font-family:inherit;box-sizing:border-box"></textarea>
             <input type="url" id="${formId}-link" placeholder="Lien externe (Wowhead, Icy Veins…)" style="width:100%;background:rgba(255,255,255,.04);border:1px solid var(--border);border-radius:2px;padding:.35rem .5rem;color:var(--text);font-size:.75rem;margin-bottom:.3rem;outline:none">
             <button onclick="addBuildGuide('${key}','${spec.replace(/'/g,"\\'")}','${formId}')" style="background:var(--green);color:#fff;border:none;border-radius:2px;padding:.3rem .8rem;font-size:.72rem;cursor:pointer">📨 Publier</button>`;
           sub.appendChild(form);
