@@ -1311,7 +1311,7 @@ async function buildAll(errors=[]) {
   buildMembersTable(DATA);
   buildMythicPage();
   await loadMDTRoutes();
-  await loadAddons();
+  await loadAddonReco();
   buildRaidPage();
   buildProfileTabs();
   buildProfile(profIdx);
@@ -1979,9 +1979,9 @@ async function saveMDTModal(oldName) {
 
 
 // ════════════════════════════════════════════
-// ADDONS — gestion (admin/mod) + consultation
+// ADDONS RECOMMANDÉS — gestion (admin/mod) + consultation
 // ════════════════════════════════════════════
-const DEFAULT_ADDONS = [
+const DEFAULT_ADDON_RECO = [
   { name:'WeakAuras 2', icon:'✨', desc:"Système d'alertes et auras personnalisées affichant cooldowns, buffs/debuffs et mécaniques de boss. Indispensable pour le raid HM/Mythique et la M+ — chaque spé peut importer un pack adapté à son rôle.", img:'', links:[
     { label:'CurseForge', url:'https://www.curseforge.com/wow/addons/weakauras-2', type:'curse' },
     { label:'Wago.io', url:'https://wago.io/weakauras', type:'wago' }
@@ -2003,52 +2003,52 @@ const DEFAULT_ADDONS = [
   ]}
 ];
 
-let ADDONS = [];
-let _addonsUnsubscribe = null;
+let ADDON_RECO = [];
+let _addonRecoUnsubscribe = null;
 
-async function loadAddons() {
-  if (_addonsUnsubscribe) { _addonsUnsubscribe(); _addonsUnsubscribe = null; }
+async function loadAddonReco() {
+  if (_addonRecoUnsubscribe) { _addonRecoUnsubscribe(); _addonRecoUnsubscribe = null; }
   return new Promise((resolve) => {
     try {
-      const ref = db.collection('guild').doc('addons');
-      _addonsUnsubscribe = ref.onSnapshot((snap) => {
+      const ref = db.collection('guild').doc('addon_reco');
+      _addonRecoUnsubscribe = ref.onSnapshot((snap) => {
         if (snap.exists && Array.isArray(snap.data()?.list) && snap.data().list.length) {
-          ADDONS = snap.data().list;
+          ADDON_RECO = snap.data().list;
         } else {
-          ADDONS = JSON.parse(JSON.stringify(DEFAULT_ADDONS));
+          ADDON_RECO = JSON.parse(JSON.stringify(DEFAULT_ADDON_RECO));
         }
-        try { localStorage.setItem('tt_addons', JSON.stringify(ADDONS)); } catch(e){}
-        renderAddons();
+        try { localStorage.setItem('tt_addon_reco', JSON.stringify(ADDON_RECO)); } catch(e){}
+        renderAddonReco();
         resolve();
       }, () => {
-        const cached = JSON.parse(localStorage.getItem('tt_addons') || 'null');
-        ADDONS = cached || JSON.parse(JSON.stringify(DEFAULT_ADDONS));
-        renderAddons();
+        const cached = JSON.parse(localStorage.getItem('tt_addon_reco') || 'null');
+        ADDON_RECO = cached || JSON.parse(JSON.stringify(DEFAULT_ADDON_RECO));
+        renderAddonReco();
         resolve();
       });
     } catch(e) {
-      const cached = JSON.parse(localStorage.getItem('tt_addons') || 'null');
-      ADDONS = cached || JSON.parse(JSON.stringify(DEFAULT_ADDONS));
-      renderAddons();
+      const cached = JSON.parse(localStorage.getItem('tt_addon_reco') || 'null');
+      ADDON_RECO = cached || JSON.parse(JSON.stringify(DEFAULT_ADDON_RECO));
+      renderAddonReco();
       resolve();
     }
   });
 }
 
-async function saveAddons() {
+async function saveAddonReco() {
   try {
-    await db.collection('guild').doc('addons').set({ list: ADDONS, updatedAt: Date.now(), updatedBy: currentUser?.name||currentUser?.login||'?' });
-    try { localStorage.setItem('tt_addons', JSON.stringify(ADDONS)); } catch(e){}
+    await db.collection('guild').doc('addon_reco').set({ list: ADDON_RECO, updatedAt: Date.now(), updatedBy: currentUser?.name||currentUser?.login||'?' });
+    try { localStorage.setItem('tt_addon_reco', JSON.stringify(ADDON_RECO)); } catch(e){}
   } catch(e) { toast('❌ Erreur sauvegarde addons'); }
 }
 
-function renderAddons() {
+function renderAddonReco() {
   const isOfficer = ['admin','moderator'].includes(currentUser?.role);
   const adminBtn = document.getElementById('addon-admin-btn');
   if (adminBtn) {
     if (isOfficer) {
       adminBtn.style.display = '';
-      adminBtn.innerHTML = '<button onclick="openAddonModal(-1)" style="background:rgba(64,144,224,.15);border:1px solid rgba(64,144,224,.4);color:var(--blue);font-family:\'Cinzel\',serif;font-size:.65rem;letter-spacing:.08em;padding:.35rem .8rem;border-radius:3px;cursor:pointer">＋ Ajouter</button>';
+      adminBtn.innerHTML = '<button onclick="openAddonRecoModal(-1)" style="background:rgba(64,144,224,.15);border:1px solid rgba(64,144,224,.4);color:var(--blue);font-family:\'Cinzel\',serif;font-size:.65rem;letter-spacing:.08em;padding:.35rem .8rem;border-radius:3px;cursor:pointer">＋ Ajouter</button>';
     } else {
       adminBtn.style.display = 'none';
       adminBtn.innerHTML = '';
@@ -2056,29 +2056,29 @@ function renderAddons() {
   }
   const list = document.getElementById('addons-list');
   if (!list) return;
-  if (!ADDONS.length) {
+  if (!ADDON_RECO.length) {
     list.innerHTML = '<p style="color:var(--text-dim);font-size:.8rem">Aucun addon — ' + (isOfficer ? 'cliquez sur ＋ Ajouter.' : 'aucun addon publié pour le moment.') + '</p>';
     return;
   }
-  list.innerHTML = ADDONS.map((a, i) => {
+  list.innerHTML = ADDON_RECO.map((a, i) => {
     const linkClass = t => t==='wago'?'addon-link wago':(t==='github'?'addon-link github':'addon-link');
     const linkIcon = t => t==='wago'?'📦':(t==='github'?'⚙':'⬇');
-    const links = (a.links||[]).map(l => '<a class="'+linkClass(l.type)+'" href="'+escapeAttr(l.url)+'" target="_blank" rel="noopener">'+linkIcon(l.type)+' '+escapeHtml(l.label)+'</a>').join('');
+    const links = (a.links||[]).map(l => '<a class="'+linkClass(l.type)+'" href="'+escAttr(l.url)+'" target="_blank" rel="noopener">'+linkIcon(l.type)+' '+escHtml(l.label)+'</a>').join('');
     const thumb = a.img
-      ? '<div class="addon-thumb"><img src="'+escapeAttr(a.img)+'" alt="'+escapeAttr(a.name)+'" onerror="this.style.display=\'none\';this.parentElement.textContent=\''+escapeAttr(a.icon||'🧩').replace(/'/g,"\\'")+'\'"></div>'
-      : '<div class="addon-thumb">'+escapeHtml(a.icon||'🧩')+'</div>';
+      ? '<div class="addon-thumb"><img src="'+escAttr(a.img)+'" alt="'+escAttr(a.name)+'" onerror="this.style.display=\'none\';this.parentElement.textContent=\''+escAttr(a.icon||'🧩').replace(/'/g,"\\'")+'\'"></div>'
+      : '<div class="addon-thumb">'+escHtml(a.icon||'🧩')+'</div>';
     const adminActions = isOfficer
       ? '<div style="display:flex;gap:.4rem;margin-top:.5rem">'
-        + '<button onclick="openAddonModal('+i+')" style="background:rgba(126,184,247,.1);border:1px solid rgba(126,184,247,.3);color:var(--mod-color);font-size:.7rem;padding:.25rem .6rem;border-radius:3px;cursor:pointer;font-family:\'Cinzel\',serif">✏️ Modifier</button>'
-        + '<button onclick="deleteAddon('+i+')" style="background:rgba(224,80,64,.1);border:1px solid rgba(224,80,64,.3);color:var(--red);font-size:.7rem;padding:.25rem .6rem;border-radius:3px;cursor:pointer;font-family:\'Cinzel\',serif">🗑️ Supprimer</button>'
+        + '<button onclick="openAddonRecoModal('+i+')" style="background:rgba(126,184,247,.1);border:1px solid rgba(126,184,247,.3);color:var(--mod-color);font-size:.7rem;padding:.25rem .6rem;border-radius:3px;cursor:pointer;font-family:\'Cinzel\',serif">✏️ Modifier</button>'
+        + '<button onclick="deleteAddonReco('+i+')" style="background:rgba(224,80,64,.1);border:1px solid rgba(224,80,64,.3);color:var(--red);font-size:.7rem;padding:.25rem .6rem;border-radius:3px;cursor:pointer;font-family:\'Cinzel\',serif">🗑️ Supprimer</button>'
         + '</div>'
       : '';
     return '<div class="addon-card">'
       + '<div class="addon-card-rich">'
         + thumb
         + '<div class="addon-body">'
-          + '<strong style="color:var(--gold)">'+escapeHtml(a.name)+'</strong>'
-          + '<span class="addon-desc">'+escapeHtml(a.desc||'')+'</span>'
+          + '<strong style="color:var(--gold)">'+escHtml(a.name)+'</strong>'
+          + '<span class="addon-desc">'+escHtml(a.desc||'')+'</span>'
           + (links ? '<div class="addon-links">'+links+'</div>' : '')
           + adminActions
         + '</div>'
@@ -2087,90 +2087,90 @@ function renderAddons() {
   }).join('');
 }
 
-function escapeHtml(s) { return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;'); }
-function escapeAttr(s) { return escapeHtml(s); }
+function escHtml(s) { return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;'); }
+function escAttr(s) { return escHtml(s); }
 
-function openAddonModal(idx) {
+function openAddonRecoModal(idx) {
   if (!['admin','moderator'].includes(currentUser?.role)) return;
-  const editing = idx >= 0 && ADDONS[idx];
-  const a = editing ? ADDONS[idx] : { name:'', icon:'🧩', desc:'', img:'', links:[] };
-  const linksRows = (a.links && a.links.length ? a.links : [{label:'',url:'',type:'curse'}]).map((l,i) => addonLinkRowHtml(i, l)).join('');
+  const editing = idx >= 0 && ADDON_RECO[idx];
+  const a = editing ? ADDON_RECO[idx] : { name:'', icon:'🧩', desc:'', img:'', links:[] };
+  const linksRows = (a.links && a.links.length ? a.links : [{label:'',url:'',type:'curse'}]).map((l,i) => addonRecoLinkRowHtml(i, l)).join('');
   const modal = document.createElement('div');
-  modal.id = 'addon-modal';
+  modal.id = 'addon-reco-modal';
   modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:9999;display:flex;align-items:center;justify-content:center;padding:1rem';
   modal.innerHTML = `
     <div style="background:var(--bg-card);border:1px solid var(--border-glow);border-radius:8px;padding:1.5rem;width:100%;max-width:560px;max-height:90vh;overflow-y:auto">
       <div style="font-family:'Cinzel',serif;font-size:1rem;color:var(--gold);margin-bottom:1rem">${editing?'✏️ Modifier l\'addon':'➕ Ajouter un addon'}</div>
       <label style="font-size:.75rem;color:var(--text-dim);display:block;margin-bottom:.3rem">Nom</label>
-      <input id="addon-name" type="text" value="${escapeAttr(a.name)}" placeholder="Ex: WeakAuras 2" style="width:100%;background:#0d1118;border:1px solid var(--border-glow);color:#c8d8e8;padding:.5rem;border-radius:4px;margin-bottom:.8rem;font-size:.85rem;box-sizing:border-box">
+      <input id="addon-reco-name" type="text" value="${escAttr(a.name)}" placeholder="Ex: WeakAuras 2" style="width:100%;background:#0d1118;border:1px solid var(--border-glow);color:#c8d8e8;padding:.5rem;border-radius:4px;margin-bottom:.8rem;font-size:.85rem;box-sizing:border-box">
       <label style="font-size:.75rem;color:var(--text-dim);display:block;margin-bottom:.3rem">Icône <span style="opacity:.6">(emoji affiché si pas d'image)</span></label>
-      <input id="addon-icon" type="text" value="${escapeAttr(a.icon||'')}" placeholder="✨" style="width:100%;background:#0d1118;border:1px solid var(--border-glow);color:#c8d8e8;padding:.5rem;border-radius:4px;margin-bottom:.8rem;font-size:.85rem;box-sizing:border-box">
+      <input id="addon-reco-icon" type="text" value="${escAttr(a.icon||'')}" placeholder="✨" style="width:100%;background:#0d1118;border:1px solid var(--border-glow);color:#c8d8e8;padding:.5rem;border-radius:4px;margin-bottom:.8rem;font-size:.85rem;box-sizing:border-box">
       <label style="font-size:.75rem;color:var(--text-dim);display:block;margin-bottom:.3rem">URL de l'image <span style="opacity:.6">(optionnel — remplace l'emoji)</span></label>
-      <input id="addon-img" type="text" value="${escapeAttr(a.img||'')}" placeholder="https://..." style="width:100%;background:#0d1118;border:1px solid var(--border-glow);color:#c8d8e8;padding:.5rem;border-radius:4px;margin-bottom:.8rem;font-size:.85rem;box-sizing:border-box">
+      <input id="addon-reco-img" type="text" value="${escAttr(a.img||'')}" placeholder="https://..." style="width:100%;background:#0d1118;border:1px solid var(--border-glow);color:#c8d8e8;padding:.5rem;border-radius:4px;margin-bottom:.8rem;font-size:.85rem;box-sizing:border-box">
       <label style="font-size:.75rem;color:var(--text-dim);display:block;margin-bottom:.3rem">Description</label>
-      <textarea id="addon-desc" rows="4" placeholder="Description de l'addon..." style="width:100%;background:#0d1118;border:1px solid var(--border-glow);color:#c8d8e8;padding:.5rem;border-radius:4px;margin-bottom:.8rem;font-size:.85rem;font-family:'Exo 2',sans-serif;resize:vertical;box-sizing:border-box">${escapeHtml(a.desc||'')}</textarea>
+      <textarea id="addon-reco-desc" rows="4" placeholder="Description de l'addon..." style="width:100%;background:#0d1118;border:1px solid var(--border-glow);color:#c8d8e8;padding:.5rem;border-radius:4px;margin-bottom:.8rem;font-size:.85rem;font-family:'Exo 2',sans-serif;resize:vertical;box-sizing:border-box">${escHtml(a.desc||'')}</textarea>
       <label style="font-size:.75rem;color:var(--text-dim);display:block;margin-bottom:.3rem">Liens</label>
-      <div id="addon-links-rows" style="display:flex;flex-direction:column;gap:.4rem;margin-bottom:.6rem">${linksRows}</div>
-      <button onclick="addAddonLinkRow()" style="background:rgba(64,144,224,.1);border:1px dashed rgba(64,144,224,.4);color:var(--blue);font-size:.7rem;padding:.35rem .8rem;border-radius:3px;cursor:pointer;margin-bottom:1rem;font-family:'Cinzel',serif">＋ Ajouter un lien</button>
+      <div id="addon-reco-links-rows" style="display:flex;flex-direction:column;gap:.4rem;margin-bottom:.6rem">${linksRows}</div>
+      <button onclick="addAddonRecoLinkRow()" style="background:rgba(64,144,224,.1);border:1px dashed rgba(64,144,224,.4);color:var(--blue);font-size:.7rem;padding:.35rem .8rem;border-radius:3px;cursor:pointer;margin-bottom:1rem;font-family:'Cinzel',serif">＋ Ajouter un lien</button>
       <div style="display:flex;gap:.5rem;justify-content:flex-end">
-        <button onclick="document.getElementById('addon-modal').remove()" style="background:rgba(192,192,192,.08);border:1px solid var(--border-glow);color:var(--text);font-family:'Cinzel',serif;font-size:.75rem;padding:.5rem 1rem;border-radius:3px;cursor:pointer">Annuler</button>
-        <button onclick="saveAddonModal(${editing?idx:-1})" style="background:rgba(96,160,255,.15);border:1px solid var(--blue);color:var(--blue);font-family:'Cinzel',serif;font-size:.75rem;padding:.5rem 1rem;border-radius:3px;cursor:pointer">💾 Sauvegarder</button>
+        <button onclick="document.getElementById('addon-reco-modal').remove()" style="background:rgba(192,192,192,.08);border:1px solid var(--border-glow);color:var(--text);font-family:'Cinzel',serif;font-size:.75rem;padding:.5rem 1rem;border-radius:3px;cursor:pointer">Annuler</button>
+        <button onclick="saveAddonRecoModal(${editing?idx:-1})" style="background:rgba(96,160,255,.15);border:1px solid var(--blue);color:var(--blue);font-family:'Cinzel',serif;font-size:.75rem;padding:.5rem 1rem;border-radius:3px;cursor:pointer">💾 Sauvegarder</button>
       </div>
     </div>`;
   document.body.appendChild(modal);
   modal.addEventListener('click', e => { if(e.target===modal) modal.remove(); });
 }
 
-function addonLinkRowHtml(i, l) {
+function addonRecoLinkRowHtml(i, l) {
   const opts = ['curse','wago','github','other'].map(t => '<option value="'+t+'"'+((l?.type||'curse')===t?' selected':'')+'>'+t.toUpperCase()+'</option>').join('');
-  return '<div class="addon-link-row" style="display:flex;gap:.4rem">'
-    + '<input type="text" class="addon-link-label" value="'+escapeAttr(l?.label||'')+'" placeholder="Label" style="flex:0 0 110px;background:#0d1118;border:1px solid var(--border-glow);color:#c8d8e8;padding:.4rem;border-radius:3px;font-size:.75rem;box-sizing:border-box">'
-    + '<input type="text" class="addon-link-url" value="'+escapeAttr(l?.url||'')+'" placeholder="https://..." style="flex:1;background:#0d1118;border:1px solid var(--border-glow);color:#c8d8e8;padding:.4rem;border-radius:3px;font-size:.75rem;box-sizing:border-box">'
-    + '<select class="addon-link-type" style="background:#0d1118;border:1px solid var(--border-glow);color:#c8d8e8;padding:.4rem;border-radius:3px;font-size:.75rem">'+opts+'</select>'
+  return '<div class="addon-reco-link-row" style="display:flex;gap:.4rem">'
+    + '<input type="text" class="ar-link-label" value="'+escAttr(l?.label||'')+'" placeholder="Label" style="flex:0 0 110px;background:#0d1118;border:1px solid var(--border-glow);color:#c8d8e8;padding:.4rem;border-radius:3px;font-size:.75rem;box-sizing:border-box">'
+    + '<input type="text" class="ar-link-url" value="'+escAttr(l?.url||'')+'" placeholder="https://..." style="flex:1;background:#0d1118;border:1px solid var(--border-glow);color:#c8d8e8;padding:.4rem;border-radius:3px;font-size:.75rem;box-sizing:border-box">'
+    + '<select class="ar-link-type" style="background:#0d1118;border:1px solid var(--border-glow);color:#c8d8e8;padding:.4rem;border-radius:3px;font-size:.75rem">'+opts+'</select>'
     + '<button onclick="this.parentElement.remove()" style="background:rgba(224,80,64,.1);border:1px solid rgba(224,80,64,.3);color:var(--red);font-size:.75rem;padding:.4rem .6rem;border-radius:3px;cursor:pointer">✕</button>'
     + '</div>';
 }
 
-function addAddonLinkRow() {
-  const cont = document.getElementById('addon-links-rows');
+function addAddonRecoLinkRow() {
+  const cont = document.getElementById('addon-reco-links-rows');
   if (!cont) return;
   const tmp = document.createElement('div');
-  tmp.innerHTML = addonLinkRowHtml(cont.children.length, null);
+  tmp.innerHTML = addonRecoLinkRowHtml(cont.children.length, null);
   cont.appendChild(tmp.firstChild);
 }
 
-async function saveAddonModal(idx) {
+async function saveAddonRecoModal(idx) {
   if (!['admin','moderator'].includes(currentUser?.role)) return;
-  const name = document.getElementById('addon-name').value.trim();
+  const name = document.getElementById('addon-reco-name').value.trim();
   if (!name) { toast('❌ Le nom est requis'); return; }
-  const icon = document.getElementById('addon-icon').value.trim() || '🧩';
-  const img = document.getElementById('addon-img').value.trim();
-  const desc = document.getElementById('addon-desc').value.trim();
-  const rows = document.querySelectorAll('#addon-links-rows .addon-link-row');
+  const icon = document.getElementById('addon-reco-icon').value.trim() || '🧩';
+  const img = document.getElementById('addon-reco-img').value.trim();
+  const desc = document.getElementById('addon-reco-desc').value.trim();
+  const rows = document.querySelectorAll('#addon-reco-links-rows .addon-reco-link-row');
   const links = [];
   rows.forEach(r => {
-    const label = r.querySelector('.addon-link-label').value.trim();
-    const url = r.querySelector('.addon-link-url').value.trim();
-    const type = r.querySelector('.addon-link-type').value;
+    const label = r.querySelector('.ar-link-label').value.trim();
+    const url = r.querySelector('.ar-link-url').value.trim();
+    const type = r.querySelector('.ar-link-type').value;
     if (label && url) links.push({ label, url, type });
   });
   const entry = { name, icon, img, desc, links };
-  if (idx >= 0 && ADDONS[idx]) ADDONS[idx] = entry;
-  else ADDONS.push(entry);
-  await saveAddons();
-  document.getElementById('addon-modal')?.remove();
-  renderAddons();
+  if (idx >= 0 && ADDON_RECO[idx]) ADDON_RECO[idx] = entry;
+  else ADDON_RECO.push(entry);
+  await saveAddonReco();
+  document.getElementById('addon-reco-modal')?.remove();
+  renderAddonReco();
   toast(`✅ Addon "${name}" sauvegardé`);
 }
 
-async function deleteAddon(idx) {
+async function deleteAddonReco(idx) {
   if (!['admin','moderator'].includes(currentUser?.role)) return;
-  const a = ADDONS[idx];
+  const a = ADDON_RECO[idx];
   if (!a) return;
   if (!confirm(`Supprimer l'addon "${a.name}" ?`)) return;
-  ADDONS.splice(idx, 1);
-  await saveAddons();
-  renderAddons();
+  ADDON_RECO.splice(idx, 1);
+  await saveAddonReco();
+  renderAddonReco();
   toast(`🗑️ Addon "${a.name}" supprimé`);
 }
 
@@ -5507,7 +5507,7 @@ function showPage(id,btn){
   if(id==='admin')buildAdminPage();
   if(id==='mythic' && !_mdtUnsubscribe) loadMDTRoutes();
   if(id==='feedback') loadFeedbacks();
-  if(id==='guides') { loadAddons(); loadBuilds(); }
+  if(id==='guides') { loadAddons(); loadAddonReco(); loadBuilds(); }
 }
 function setBar(p){document.getElementById('bar').style.width=p+'%';}
 function setStatus(t){document.getElementById('load-status').textContent=t;}
@@ -5537,6 +5537,10 @@ window.toggleBuildRole = toggleBuildRole;
 window.toggleBuildSpec = toggleBuildSpec;
 window.addBuildGuide = addBuildGuide;
 window.deleteBuildGuide = deleteBuildGuide;
+window.openAddonRecoModal = openAddonRecoModal;
+window.saveAddonRecoModal = saveAddonRecoModal;
+window.deleteAddonReco = deleteAddonReco;
+window.addAddonRecoLinkRow = addAddonRecoLinkRow;
 
 // ════════════════════════════════════════════
 // ADDONS — UPLOAD & DOWNLOAD
