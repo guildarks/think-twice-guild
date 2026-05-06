@@ -1,7 +1,0 @@
-## Interface: 100005
-## Title: Jump Bip
-## Notes: Simple addon that beeps when you jump
-## Author: Claude
-## Version: 1.0
-
-JumpBip.lua
