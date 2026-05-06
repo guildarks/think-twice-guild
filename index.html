@@ -551,6 +551,61 @@ select option{background:#0d1118;color:#c8d8e8;}
       </div>
 
     </div>
+
+    <!-- TUTO INSTALLATION -->
+    <div style="margin-top:1.4rem">
+      <div class="admin-panel" style="border-color:var(--border-glow)">
+        <div class="admin-panel-header" style="background:rgba(144,96,224,.06);border-color:rgba(144,96,224,.2)">
+          <h3 style="color:var(--purple)">📚 Comment installer un addon</h3>
+        </div>
+        <div class="admin-panel-body">
+          <p style="color:var(--text-dim);font-size:.82rem;margin-bottom:1rem">Suis ces étapes pour installer un addon depuis un fichier .zip téléchargé ou un dossier déjà extrait.</p>
+
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1.2rem">
+
+            <div style="background:var(--bg-panel);border:1px solid var(--border);border-radius:4px;padding:1rem">
+              <div style="color:var(--gold);font-family:'Cinzel',serif;font-size:.8rem;letter-spacing:.08em;margin-bottom:.6rem">📄 DEPUIS UN .ZIP</div>
+              <ol style="color:var(--text);font-size:.82rem;line-height:1.7;padding-left:1.2rem;margin:0">
+                <li>Télécharge le fichier <strong style="color:var(--gold)">.zip</strong> de l'addon (CurseForge, Wago, GitHub…).</li>
+                <li>Ouvre le dossier <strong style="color:var(--gold)">_retail_/Interface/AddOns</strong> dans ton installation WoW.<br><span style="color:var(--text-dim);font-size:.72rem">Windows : <code style="background:rgba(255,255,255,.06);padding:.1rem .35rem;border-radius:2px">C:\Program Files (x86)\World of Warcraft\_retail_\Interface\AddOns</code></span></li>
+                <li>Clique droit sur le .zip → <strong>Extraire ici</strong> (ou avec 7-Zip / WinRAR).</li>
+                <li>Vérifie qu'un dossier comme <code style="background:rgba(255,255,255,.06);padding:.1rem .35rem;border-radius:2px">WeakAuras</code> apparaît directement dans <code style="background:rgba(255,255,255,.06);padding:.1rem .35rem;border-radius:2px">AddOns/</code> (pas un dossier imbriqué).</li>
+                <li>Lance WoW et active l'addon dans <strong style="color:var(--gold)">l'écran de sélection des persos → AddOns</strong>.</li>
+              </ol>
+            </div>
+
+            <div style="background:var(--bg-panel);border:1px solid var(--border);border-radius:4px;padding:1rem">
+              <div style="color:var(--gold);font-family:'Cinzel',serif;font-size:.8rem;letter-spacing:.08em;margin-bottom:.6rem">📁 DEPUIS UN DOSSIER</div>
+              <ol style="color:var(--text);font-size:.82rem;line-height:1.7;padding-left:1.2rem;margin:0">
+                <li>Si l'addon est déjà extrait, repère le dossier qui contient le fichier <code style="background:rgba(255,255,255,.06);padding:.1rem .35rem;border-radius:2px">.toc</code> (ex: <code style="background:rgba(255,255,255,.06);padding:.1rem .35rem;border-radius:2px">Details.toc</code>).</li>
+                <li>C'est CE dossier qu'il faut copier — pas son parent.</li>
+                <li>Colle-le dans <strong style="color:var(--gold)">_retail_/Interface/AddOns</strong>.</li>
+                <li>Si l'addon a plusieurs modules (ex: Details, Details_Streamer…), copie-les tous.</li>
+                <li>Redémarre WoW (ou tape <code style="background:rgba(255,255,255,.06);padding:.1rem .35rem;border-radius:2px">/reload</code>) puis active dans le menu AddOns.</li>
+              </ol>
+            </div>
+
+          </div>
+
+          <div style="background:rgba(64,144,224,.06);border:1px solid rgba(64,144,224,.25);border-radius:4px;padding:.9rem 1.1rem;margin-bottom:.8rem">
+            <div style="color:var(--blue);font-family:'Cinzel',serif;font-size:.78rem;letter-spacing:.08em;margin-bottom:.4rem">💡 ASTUCES</div>
+            <ul style="color:var(--text);font-size:.8rem;line-height:1.7;padding-left:1.2rem;margin:0">
+              <li><strong style="color:var(--gold)">Le .toc doit toujours être à la racine du dossier d'addon</strong> — si tu vois <code style="background:rgba(255,255,255,.06);padding:.1rem .35rem;border-radius:2px">AddOns/MonAddon/MonAddon/MonAddon.toc</code>, retire un niveau.</li>
+              <li>Si l'addon n'apparaît pas en jeu : coche <strong>"Charger les addons obsolètes"</strong> en haut à gauche de l'écran AddOns.</li>
+              <li>Pour mettre à jour facilement, utilise <strong style="color:var(--purple)">CurseForge App</strong> ou <strong style="color:var(--purple)">WowUp</strong> — ils gèrent les .zip automatiquement.</li>
+              <li>Profils <strong style="color:var(--gold)">WeakAuras</strong> / <strong style="color:var(--gold)">MDT</strong> : ce sont des chaînes de texte à importer DANS l'addon, pas des fichiers à coller dans AddOns/.</li>
+              <li>Sur Mac : le dossier est dans <code style="background:rgba(255,255,255,.06);padding:.1rem .35rem;border-radius:2px">/Applications/World of Warcraft/_retail_/Interface/AddOns</code>.</li>
+            </ul>
+          </div>
+
+          <div style="background:rgba(224,80,64,.05);border:1px solid rgba(224,80,64,.2);border-radius:4px;padding:.7rem .9rem">
+            <div style="color:var(--red);font-size:.75rem;line-height:1.6">⚠️ <strong>Attention</strong> : ne télécharge des addons que depuis des sources de confiance (CurseForge, Wago, GitHub officiel des auteurs, ou la section "Addons de la Guilde" ci-dessus).</div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+
   </div>
 
   <!-- FEEDBACK PAGE -->
