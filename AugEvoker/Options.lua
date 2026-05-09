@@ -169,18 +169,17 @@ end
 local optFrame = CreateFrame("Frame","AugEvokerOptions",UIParent,"BackdropTemplate")
 optFrame:SetSize(500,420)
 optFrame:SetPoint("CENTER",UIParent,"CENTER",0,0)
-optFrame:SetMovable(true); optFrame:EnableMouse(true); optFrame:EnableKeyboard(true)
+optFrame:SetMovable(true); optFrame:EnableMouse(true)
 optFrame:RegisterForDrag("LeftButton")
 optFrame:SetScript("OnDragStart",optFrame.StartMoving)
 optFrame:SetScript("OnDragStop",optFrame.StopMovingOrSizing)
-optFrame:SetScript("OnKeyDown", function(self, key)
-    if key == "ESCAPE" then self:Hide() end
-end)
 optFrame:SetFrameStrata("HIGH")
 optFrame:SetBackdrop({bgFile="Interface\\Buttons\\WHITE8X8",edgeFile="Interface\\Buttons\\WHITE8X8",edgeSize=1})
 optFrame:SetBackdropColor(0.08,0.08,0.10,0.98)
 optFrame:SetBackdropBorderColor(0.30,0.15,0.50,1)
 optFrame:Hide()
+-- Permet de fermer avec Échap (méthode standard WoW : ne capture pas le clavier)
+tinsert(UISpecialFrames, "AugEvokerOptions")
 
 -- Titre
 local optTitle = CreateFrame("Frame",nil,optFrame,"BackdropTemplate")
