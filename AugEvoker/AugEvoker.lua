@@ -467,18 +467,25 @@ reportBtn:SetScript("OnClick", function()
             if channel == "PARTY" or channel == "RAID" then channel = "SAY" end
         end
     end
-    -- Construction de la liste
+    -- Construction de la liste : on ne garde que les joueurs effectivement
+    -- buffés (ct > 0). Les 0% pollueraient le rapport partagé sans apporter
+    -- d'info utile aux autres. Le joueur lui-même est filtré aussi (il ne
+    -- se Prescience pas lui-même donc ct=0). Pour voir ses propres stats,
+    -- la fenêtre principale in-game continue d'afficher tout le monde.
     local list = {}
     local source = frozen and uptimeData or GetGroupMembers()
     for name, _ in pairs(source) do
-        list[#list+1] = {name=name, em=GetEMUptime(name), pr=GetPRUptime(name), ct=GetPrCount(name)}
+        local ct = GetPrCount(name)
+        if ct > 0 then
+            list[#list+1] = {name=name, em=GetEMUptime(name), pr=GetPRUptime(name), ct=ct}
+        end
     end
     table.sort(list, function(a,b)
         if math.abs(a.pr - b.pr) > 0.001 then return a.pr > b.pr end
         return a.name < b.name
     end)
     if #list == 0 then
-        DEFAULT_CHAT_FRAME:AddMessage("|cFF33CC99[AugEvoker]|r Aucune donnée à envoyer.")
+        DEFAULT_CHAT_FRAME:AddMessage("|cFF33CC99[AugEvoker]|r Aucun joueur buffé à reporter.")
         return
     end
     -- Envoi direct depuis OnClick = pas de taint
@@ -491,12 +498,18 @@ reportBtn:SetScript("OnClick", function()
         lines[#lines+1] = i..". "..shortName.." - Presc:x"..d.ct.." "..prStr.." EM:"..emStr
     end
     lines[#lines+1] = "[AugEvoker] --------------------"
-    for _, line in ipairs(lines) do
-        local ok, err = pcall(SendChatMessage, line, channel)
-        if not ok then
-            DEFAULT_CHAT_FRAME:AddMessage("|cFFFF4444[AugEvoker]|r Erreur envoi: "..(err or "?"))
-            break
-        end
+    -- Envoi séquentiel avec délai : sinon WoW throttle/réordonne les messages
+    -- côté serveur quand on en envoie plusieurs d'affilée (ordre mélangé dans
+    -- le chat des destinataires). 0.15s entre chaque suffit pour préserver
+    -- l'ordre sans rendre l'envoi trop lent.
+    local DELAY = 0.15
+    for i, line in ipairs(lines) do
+        C_Timer.After((i-1) * DELAY, function()
+            local ok, err = pcall(SendChatMessage, line, channel)
+            if not ok then
+                DEFAULT_CHAT_FRAME:AddMessage("|cFFFF4444[AugEvoker]|r Erreur envoi: "..(err or "?"))
+            end
+        end)
     end
 end)
 
