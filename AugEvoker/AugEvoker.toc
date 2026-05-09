@@ -1,0 +1,9 @@
+## Interface: 120001
+## Title: |cFF33CC99Aug|r |cFFAA55FFEvoker|r
+## Notes: Fenetre de suivi pour Evocateur Augmentation
+## Version: 8.2
+## Author: AugEvoker
+## SavedVariables: AugEvokerDB
+
+AugEvoker.lua
+Options.lua
