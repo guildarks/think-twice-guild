@@ -322,6 +322,7 @@ mainFrame:SetSize(320, 100)
 mainFrame:SetPoint("CENTER", UIParent, "CENTER", 0, 0)
 mainFrame:SetMovable(true)
 mainFrame:EnableMouse(true)
+mainFrame:EnableKeyboard(true)
 mainFrame:RegisterForDrag("LeftButton")
 mainFrame:SetScript("OnDragStart", mainFrame.StartMoving)
 mainFrame:SetScript("OnDragStop",  mainFrame.StopMovingOrSizing)
@@ -331,6 +332,9 @@ mainFrame:SetResizeBounds(200, 80, 500, 400)
 mainFrame:SetBackdrop({bgFile="Interface\\Buttons\\WHITE8X8", edgeFile="Interface\\Buttons\\WHITE8X8", edgeSize=1})
 mainFrame:SetBackdropColor(0.07, 0.07, 0.07, 0.96)
 mainFrame:SetBackdropBorderColor(0.20, 0.10, 0.30, 1)
+mainFrame:SetScript("OnKeyDown", function(self, key)
+    if key == "ESCAPE" then self:Hide() end
+end)
 
 -- ── Barre de titre ───────────────────────────────────────────
 local titleBg = mainFrame:CreateTexture(nil, "BACKGROUND", nil, 1)
