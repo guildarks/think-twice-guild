@@ -1119,22 +1119,21 @@ function resetInactivityTimer() {
 }
 
 let _autoRefreshTimer = null;
-const AUTO_REFRESH_INTERVAL = 15 * 60 * 1000; // 15 minutes
+const AUTO_REFRESH_INTERVAL = 5 * 60 * 1000; // 5 minutes (silencieux)
 
 function startAutoRefresh() {
   stopAutoRefresh();
-  _autoRefreshTimer = setInterval(() => {
+  _autoRefreshTimer = setInterval(async () => {
     if (!currentUser) return;
-    console.log('[Auto-refresh] Mise à jour des données Raider.IO...');
-    // Rafraîchir silencieusement sans toast intrusif
-    const oldToast = window.toast;
-    DATA=[]; CHARTS={};
-    document.getElementById('app').style.display='none';
-    document.getElementById('loading').style.display='flex';
-    document.getElementById('load-errors').innerHTML='';
-    boot().then(() => {
+    console.log('[Auto-refresh] Mise à jour silencieuse des données Raider.IO...');
+    try {
+      // Recharger les données SANS afficher le loading screen
+      DATA = [];
+      await boot({ silent: true });
       console.log('[Auto-refresh] Données mises à jour ✅');
-    });
+    } catch(e) {
+      console.warn('[Auto-refresh] Erreur:', e);
+    }
   }, AUTO_REFRESH_INTERVAL);
 }
 
@@ -1169,7 +1168,9 @@ function doLogout() {
 // ════════════════════════════════════════════
 // BOOT — Charge les membres du roster
 // ════════════════════════════════════════════
-async function boot() {
+async function boot(opts) {
+  const silent = opts && opts.silent;
+  if (silent) { window._silentBoot = true; } else { window._silentBoot = false; }
   setBar(0); setStatus('Détection de la saison en cours…');
   await resolveSeasonSlug();
   setBar(2); setStatus('Récupération du roster Blizzard…');
@@ -1291,10 +1292,14 @@ function finalize(errors=[]) {
   const myData = DATA.find(p=>p.name.toLowerCase()===currentUser.login);
   if(myData){ currentUser.charData=myData; profIdx=DATA.indexOf(myData); }
   updateHdrUser();
-  document.getElementById('loading').style.display='none';
-  document.getElementById('app').style.display='block';
+  if (!window._silentBoot) {
+    document.getElementById('loading').style.display='none';
+    document.getElementById('app').style.display='block';
+  }
   buildAll(errors);
-  toast(`✅ Bienvenue ${currentUser.name} ! ${DATA.length} membres chargés.`);
+  if (!window._silentBoot) {
+    toast(`✅ Bienvenue ${currentUser.name} ! ${DATA.length} membres chargés.`);
+  }
   startInactivityWatcher();
   startAutoRefresh();
 }
@@ -5555,8 +5560,8 @@ function showPage(id,btn){
   if(id==='feedback') loadFeedbacks();
   if(id==='guides') { loadAddons(); loadAddonReco(); loadBuilds(); }
 }
-function setBar(p){document.getElementById('bar').style.width=p+'%';}
-function setStatus(t){document.getElementById('load-status').textContent=t;}
+function setBar(p){if(window._silentBoot)return;document.getElementById('bar').style.width=p+'%';}
+function setStatus(t){if(window._silentBoot)return;document.getElementById('load-status').textContent=t;}
 function sleep(ms){return new Promise(r=>setTimeout(r,ms));}
 function toast(msg,err=false,warn=false){
   const t=document.getElementById('toast');
