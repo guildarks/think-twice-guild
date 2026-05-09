@@ -443,7 +443,6 @@ local function MakeBtn(parent, text, w)
     btn:SetBackdropBorderColor(0.35, 0.18, 0.55, 1)
     local fs = btn:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
     fs:SetAllPoints(); fs:SetText(text); fs:SetTextColor(0.85, 0.70, 1, 1)
-    btn:SetFontString(fs)
     btn.fs = fs
     btn:SetScript("OnEnter", function() btn:SetBackdropColor(0.30, 0.14, 0.46, 1) end)
     btn:SetScript("OnLeave", function() btn:SetBackdropColor(0.20, 0.09, 0.32, 1) end)
