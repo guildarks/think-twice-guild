@@ -1660,27 +1660,23 @@ function buildMythicPage(){
     <div class="stat-card" style="--card-accent:var(--gold)"><div class="stat-label">Keymaster</div><div class="stat-value">${top?score(top).toLocaleString():'—'}</div><div class="stat-sub">${top?.name||''}</div></div>
     <div class="stat-card" style="--card-accent:var(--purple)"><div class="stat-label">Records +20 ou +</div><div class="stat-value">${h20}</div><div class="stat-sub">Donjons distincts</div></div>`;
   // ── Top par rôle ──
-  console.log('🔍 Roles dans DATA:', DATA.slice(0,5).map(p=>({name:p.name, role:p.role, mRole:p.active_spec_role})));
-  console.log('🛡️ Tanks:', DATA.filter(p=>p.role==='TANK').map(p=>p.name));
-  console.log('💚 Heals:', DATA.filter(p=>p.role==='HEALER').map(p=>p.name));
-  const roleKey = {TANK:'tank', HEALER:'healer', DPS:'dps'};
-  const roleIcon = {TANK:'🛡️', HEALER:'💚', DPS:'⚔️'};
-  const roleLabel = {TANK:'Top Tank', HEALER:'Top Heal', DPS:'Top DPS'};
-  const roleColor = {TANK:'var(--gold)', HEALER:'#4fc08d', DPS:'var(--mythic-color)'};
+  console.log('🔍 Roles dans DATA:', DATA.slice(0,5).map(p=>({name:p.name, role:p.role, mRole:p.active_spec_role, computedRole:role(p)})));
+  console.log('🛡️ Tanks:', DATA.filter(p=>role(p)==='tank').map(p=>p.name));
+  console.log('💚 Heals:', DATA.filter(p=>role(p)==='healer').map(p=>p.name));
+  const roleKey = {tank:'tank', healer:'healer', dps:'dps'};
+  const roleIcon = {tank:'🛡️', healer:'💚', dps:'⚔️'};
+  const roleLabel = {tank:'Top Tank', healer:'Top Heal', dps:'Top DPS'};
+  const roleColor = {tank:'var(--gold)', healer:'#4fc08d', dps:'var(--mythic-color)'};
   // Set partagé entre tous les rôles : un joueur ne peut apparaître qu'une seule fois au total
   const seenMainsAllRoles = new Set();
-  const topRolesHtml = ['TANK','HEALER','DPS'].map(r=>{
+  const topRolesHtml = ['tank','healer','dps'].map(r=>{
     const rk = roleKey[r];
-    const allCandidates = DATA.filter(p => p.role === r).sort((a,b)=>{
-      const sa = a.mythic_plus_scores_by_season?.[0]?.scores?.[rk] || score(a);
-      const sb = b.mythic_plus_scores_by_season?.[0]?.scores?.[rk] || score(b);
-      return sb - sa;
-    });
+    const allCandidates = DATA.filter(p => role(p) === r).sort((a,b)=>score(b)-score(a));
     // Ne garder que le meilleur perso dont le joueur n'a pas encore été affiché
     const topP = allCandidates.find(p => !seenMainsAllRoles.has(getMainName(p.name)));
     if (topP) seenMainsAllRoles.add(getMainName(topP.name));
     if(!topP) return `<div class="stat-card" style="--card-accent:${roleColor[r]};opacity:.5"><div class="stat-label">${roleIcon[r]} ${roleLabel[r]}</div><div class="stat-value" style="font-size:1.1rem;color:var(--text-dim)">—</div></div>`;
-    const topScore = Math.round(topP.mythic_plus_scores_by_season?.[0]?.scores?.[rk] || score(topP));
+    const topScore = Math.round(score(topP));
     const bk = bestK(topP);
     const specStr = topP.active_spec_name ? `${topP.active_spec_name} ${topP.class||''}` : (topP.class||'');
     const topIdx = DATA.findIndex(p=>p.name===topP.name);
