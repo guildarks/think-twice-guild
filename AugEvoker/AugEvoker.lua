@@ -143,10 +143,14 @@ local function ScanUnit(unit)
             end
         end
         if matched then
-            foundPR = true
-            local exp = aura.expirationTime
-            if exp and not issecretvalue(exp) and exp > 0 then
-                foundExpiry = exp
+            -- Filtre : on ne compte que NOTRE Prescience (pas celles des autres Aug Evokers)
+            local src = aura.sourceUnit
+            if src and UnitIsUnit(src, "player") then
+                foundPR = true
+                local exp = aura.expirationTime
+                if exp and not issecretvalue(exp) and exp > 0 then
+                    foundExpiry = exp
+                end
             end
             break
         end
