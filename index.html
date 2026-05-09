@@ -1671,16 +1671,12 @@ function buildMythicPage(){
   const seenMainsAllRoles = new Set();
   const topRolesHtml = ['TANK','HEALER','DPS'].map(r=>{
     const rk = roleKey[r];
-    const allCandidates = DATA.filter(p => p.role === r).sort((a,b)=>{
-      const sa = a.mythic_plus_scores_by_season?.[0]?.scores?.[rk] || score(a);
-      const sb = b.mythic_plus_scores_by_season?.[0]?.scores?.[rk] || score(b);
-      return sb - sa;
-    });
+    const allCandidates = DATA.filter(p => p.role === r).sort((a,b)=>score(b)-score(a));
     // Ne garder que le meilleur perso dont le joueur n'a pas encore été affiché
     const topP = allCandidates.find(p => !seenMainsAllRoles.has(getMainName(p.name)));
     if (topP) seenMainsAllRoles.add(getMainName(topP.name));
     if(!topP) return `<div class="stat-card" style="--card-accent:${roleColor[r]};opacity:.5"><div class="stat-label">${roleIcon[r]} ${roleLabel[r]}</div><div class="stat-value" style="font-size:1.1rem;color:var(--text-dim)">—</div></div>`;
-    const topScore = Math.round(topP.mythic_plus_scores_by_season?.[0]?.scores?.[rk] || score(topP));
+    const topScore = Math.round(score(topP));
     const bk = bestK(topP);
     const specStr = topP.active_spec_name ? `${topP.active_spec_name} ${topP.class||''}` : (topP.class||'');
     const topIdx = DATA.findIndex(p=>p.name===topP.name);
