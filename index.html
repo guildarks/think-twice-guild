@@ -910,6 +910,7 @@ const sbClient = supabase.createClient(
 
 let USERS = {};
 let firebaseReady = false;
+let addonsUnsubscribe = null; // Listener Firestore pour les addons
 
 async function loadUsersFromFirebase() {
   // Affiche un indicateur de chargement Firebase sur l'écran login
@@ -5726,8 +5727,8 @@ async function deleteAddon(id, path) {
         }
       }
       await db.collection('addons').doc(id).delete();
+      console.log('✅ Addon supprimé de Firestore, le listener se mettra à jour automatiquement');
       if (storageOk) toast('🗑️ Addon supprimé (fichier + base).');
-      loadAddons();
     } catch(e) {
       toast('❌ Erreur suppression : ' + (e.message || e), true);
     }
@@ -5989,8 +5990,14 @@ function loadAddons() {
   const list = document.getElementById('addon-download-list');
   if (!list) return;
 
+  // Désabonner l'ancien listener s'il existe
+  if (addonsUnsubscribe) {
+    addonsUnsubscribe();
+    addonsUnsubscribe = null;
+  }
+
   // Listener temps réel avec Firestore
-  const unsubscribe = db.collection('addons')
+  addonsUnsubscribe = db.collection('addons')
     .orderBy('uploadedAt', 'desc')
     .onSnapshot(
       (snap) => {
