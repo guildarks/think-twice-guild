@@ -5985,53 +5985,59 @@ function copyFromField(fieldId, btn) {
   }
 }
 
-async function loadAddons() {
+function loadAddons() {
   const list = document.getElementById('addon-download-list');
   if (!list) return;
-  try {
-    const snap = await db.collection('addons').orderBy('uploadedAt','desc').get();
-    if (snap.empty) {
-      list.innerHTML = '<span style="color:var(--text-dim);font-size:.85rem">Aucun addon déposé pour l\'instant.</span>';
-      return;
-    }
-    list.innerHTML = '';
-    const session = JSON.parse(localStorage.getItem('tt_session') || '{}');
-    const role = (currentUser?.role || session.role || '').toLowerCase();
-    const isAdmin = role === 'admin' || role === 'moderator';
-    const me = (currentUser?.name || currentUser?.login || session.username || '').toLowerCase();
-    console.log('🔧 loadAddons → currentUser:', currentUser, '| session:', session, '| isAdmin:', isAdmin, '| me:', me);
-    snap.forEach(d => {
-      const a = d.data();
-      const kb = a.size > 1024*1024 ? (a.size/1024/1024).toFixed(1)+' Mo' : Math.round(a.size/1024)+' Ko';
-      const date = new Date(a.uploadedAt).toLocaleDateString('fr-FR');
-      const canDelete = isAdmin || (a.uploader && a.uploader.toLowerCase() === me);
-      const safePath = (a.path || '').replace(/'/g, "\\'");
-      const delBtn = canDelete
-        ? `<button onclick="deleteAddon('${d.id}','${safePath}')" style="background:transparent;color:var(--red);border:1px solid rgba(224,80,64,.4);border-radius:2px;padding:.4rem .7rem;font-size:.75rem;cursor:pointer;white-space:nowrap" title="Supprimer">🗑️</button>`
-        : '';
-      const el = document.createElement('div');
-      el.className = 'addon-card';
-      el.style.display = 'flex';
-      el.style.justifyContent = 'space-between';
-      el.style.alignItems = 'center';
-      el.style.gap = '.6rem';
-      const descLine = a.desc ? `<span style="color:var(--text);font-size:.8rem;display:block;margin:.2rem 0 .15rem">${a.desc}</span>` : '';
-      el.innerHTML = `
-        <div style="flex:1;min-width:0">
-          <strong style="color:var(--gold)">${a.name}</strong>
-          ${descLine}
-          <span style="color:var(--text-dim);font-size:.72rem;display:block">${kb} · par <strong style="color:var(--gold-dim)">${a.uploader}</strong> · ${date}</span>
-        </div>
-        <div style="display:flex;gap:.4rem;align-items:center">
-          <a href="${a.url}" target="_blank" download="${a.filename || a.name}" style="background:var(--blue);color:#fff;border:none;border-radius:2px;padding:.4rem .9rem;font-size:.8rem;cursor:pointer;text-decoration:none;white-space:nowrap">⬇️ Télécharger</a>
-          ${delBtn}
-        </div>`;
-      list.appendChild(el);
-    });
-  } catch(e) {
-    console.error('❌ Erreur loadAddons:', e);
-    list.innerHTML = '<span style="color:var(--red);font-size:.85rem">Erreur chargement addons: ' + (e.message || 'Erreur inconnue') + '</span>';
-  }
+
+  // Listener temps réel avec Firestore
+  const unsubscribe = db.collection('addons')
+    .orderBy('uploadedAt', 'desc')
+    .onSnapshot(
+      (snap) => {
+        if (snap.empty) {
+          list.innerHTML = '<span style="color:var(--text-dim);font-size:.85rem">Aucun addon déposé pour l\'instant.</span>';
+          return;
+        }
+        list.innerHTML = '';
+        const session = JSON.parse(localStorage.getItem('tt_session') || '{}');
+        const role = (currentUser?.role || session.role || '').toLowerCase();
+        const isAdmin = role === 'admin' || role === 'moderator';
+        const me = (currentUser?.name || currentUser?.login || session.username || '').toLowerCase();
+        console.log('🔧 loadAddons → currentUser:', currentUser, '| session:', session, '| isAdmin:', isAdmin, '| me:', me);
+        snap.forEach(d => {
+          const a = d.data();
+          const kb = a.size > 1024*1024 ? (a.size/1024/1024).toFixed(1)+' Mo' : Math.round(a.size/1024)+' Ko';
+          const date = new Date(a.uploadedAt).toLocaleDateString('fr-FR');
+          const canDelete = isAdmin || (a.uploader && a.uploader.toLowerCase() === me);
+          const safePath = (a.path || '').replace(/'/g, "\\'");
+          const delBtn = canDelete
+            ? `<button onclick="deleteAddon('${d.id}','${safePath}')" style="background:transparent;color:var(--red);border:1px solid rgba(224,80,64,.4);border-radius:2px;padding:.4rem .7rem;font-size:.75rem;cursor:pointer;white-space:nowrap" title="Supprimer">🗑️</button>`
+            : '';
+          const el = document.createElement('div');
+          el.className = 'addon-card';
+          el.style.display = 'flex';
+          el.style.justifyContent = 'space-between';
+          el.style.alignItems = 'center';
+          el.style.gap = '.6rem';
+          const descLine = a.desc ? `<span style="color:var(--text);font-size:.8rem;display:block;margin:.2rem 0 .15rem">${a.desc}</span>` : '';
+          el.innerHTML = `
+            <div style="flex:1;min-width:0">
+              <strong style="color:var(--gold)">${a.name}</strong>
+              ${descLine}
+              <span style="color:var(--text-dim);font-size:.72rem;display:block">${kb} · par <strong style="color:var(--gold-dim)">${a.uploader}</strong> · ${date}</span>
+            </div>
+            <div style="display:flex;gap:.4rem;align-items:center">
+              <a href="${a.url}" target="_blank" download="${a.filename || a.name}" style="background:var(--blue);color:#fff;border:none;border-radius:2px;padding:.4rem .9rem;font-size:.8rem;cursor:pointer;text-decoration:none;white-space:nowrap">⬇️ Télécharger</a>
+              ${delBtn}
+            </div>`;
+          list.appendChild(el);
+        });
+      },
+      (e) => {
+        console.error('❌ Erreur loadAddons:', e);
+        list.innerHTML = '<span style="color:var(--red);font-size:.85rem">Erreur chargement addons: ' + (e.message || 'Erreur inconnue') + '</span>';
+      }
+    );
 }
 window.goProfile = goProfile;
 window.refresh = refresh;
