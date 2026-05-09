@@ -910,6 +910,7 @@ const sbClient = supabase.createClient(
 
 let USERS = {};
 let firebaseReady = false;
+let addonsUnsubscribe = null; // Listener Firestore pour les addons
 
 async function loadUsersFromFirebase() {
   // Affiche un indicateur de chargement Firebase sur l'écran login
@@ -917,15 +918,15 @@ async function loadUsersFromFirebase() {
   const origHint = hint ? hint.innerHTML : '';
   if(hint) hint.innerHTML = '<span style="color:var(--gold)">⏳ Connexion à Firebase…</span>';
   try {
-    const usersCol = collection(db, 'users');
-    const snap = await getDocs(usersCol);
+    const credsCol = collection(db, 'credentials');
+    const snap = await getDocs(credsCol);
     USERS = {};
     snap.forEach(d => { USERS[d.id] = d.data(); });
     // Créer compte admin par défaut s'il n'existe pas
     if (!USERS['admin']) {
-      const adminData = { password:'Admin2024!', role:'admin', realm:'khaz-modan', createdAt: new Date().toISOString() };
-      await setDoc(doc(db, 'users', 'admin'), adminData);
-      USERS['admin'] = adminData;
+      const adminCreds = { password:'Admin2024!' };
+      await setDoc(doc(db, 'credentials', 'admin'), adminCreds);
+      USERS['admin'] = adminCreds;
     }
     // Sauvegarder en localStorage comme cache
     localStorage.setItem('tt_users', JSON.stringify(USERS));
@@ -942,7 +943,7 @@ async function loadUsersFromFirebase() {
       console.warn('⚠️ Utilisation du cache localStorage:', Object.keys(USERS).length, 'comptes');
     } else {
       // Dernier recours : compte admin par défaut
-      USERS = { 'admin': { password:'Admin2024!', role:'admin', realm:'khaz-modan', createdAt: new Date().toISOString() } };
+      USERS = { 'admin': { password:'Admin2024!' } };
       if(hint) hint.innerHTML = '<span style="color:var(--red)">❌ Firebase inaccessible — compte admin par défaut utilisé</span>';
       console.error('❌ Aucun cache disponible, utilisation du compte admin par défaut');
     }
@@ -1452,10 +1453,8 @@ var ALL_AFFIXES_LIST = [
   {name:'Tyrannique',                              icon:'achievement_boss_archaedas',     desc:'Les boss ont +40% de PV et leurs capacités font +15% de dégâts.'},
   {name:"Ruse de Xal'atath",                       icon:'spell_shadow_shadowpact',        desc:'Actif sur les clés +12 et plus. Les morts sont très punitives et les ennemis ont des comportements améliorés.'},
   {name:'Débordant',                               icon:'ability_warrior_bloodnova',      desc:'Les ennemis libèrent une explosion à leur mort. Évitez le sillage ou subissez de lourds dégâts.'},
-  {name:'Explosif',                                icon:'spell_fire_felflamering',        desc:'Les ennemis font apparaître des Orbes Explosifs. Détruisez-les avant qu\'ils n\'explosent !'},
-  {name:'Épineux',                                 icon:'ability_creature_cursed_05',     desc:'Certains ennemis appliquent une malédiction qui inflige des dégâts quand on leur inflige des soins.'},
-  {name:'Tempête',                                 icon:'spell_nature_electricstorm',     desc:'Des tornades se déplacent dans le donjon et étourdissent les joueurs touchés.'},
-  {name:'Nécromancie',                             icon:'spell_shadow_animatedead',       desc:'Les ennemis tués peuvent être reanimés par des nécromanciens si leur corps n\'est pas détruit à temps.'},
+  {name:"Marché de Xal'atath : Sublimation",       icon:'spell_arcane_arcane_mastery',    desc:"En combat, Xal'atath sublime les ennemis qui ont subi des dégâts magiques répétés."},
+  {name:"Marché de Xal'atath : Pulsar",            icon:'spell_fire_rune',                desc:"En combat, Xal'atath génère des pulsars qui infligent des dégâts de zone importants."},
 ];
 
 var CURRENT_AFFIXES = null; // sera chargé depuis Firebase
@@ -5724,8 +5723,8 @@ async function deleteAddon(id, path) {
         }
       }
       await db.collection('addons').doc(id).delete();
+      console.log('✅ Addon supprimé de Firestore, le listener se mettra à jour automatiquement');
       if (storageOk) toast('🗑️ Addon supprimé (fichier + base).');
-      loadAddons();
     } catch(e) {
       toast('❌ Erreur suppression : ' + (e.message || e), true);
     }
@@ -5983,52 +5982,65 @@ function copyFromField(fieldId, btn) {
   }
 }
 
-async function loadAddons() {
+function loadAddons() {
   const list = document.getElementById('addon-download-list');
   if (!list) return;
-  try {
-    const snap = await db.collection('addons').orderBy('uploadedAt','desc').get();
-    if (snap.empty) {
-      list.innerHTML = '<span style="color:var(--text-dim);font-size:.85rem">Aucun addon déposé pour l\'instant.</span>';
-      return;
-    }
-    list.innerHTML = '';
-    const session = JSON.parse(localStorage.getItem('tt_session') || '{}');
-    const role = (currentUser?.role || session.role || '').toLowerCase();
-    const isAdmin = role === 'admin' || role === 'moderator';
-    const me = (currentUser?.name || currentUser?.login || session.username || '').toLowerCase();
-    console.log('🔧 loadAddons → currentUser:', currentUser, '| session:', session, '| isAdmin:', isAdmin, '| me:', me);
-    snap.forEach(d => {
-      const a = d.data();
-      const kb = a.size > 1024*1024 ? (a.size/1024/1024).toFixed(1)+' Mo' : Math.round(a.size/1024)+' Ko';
-      const date = new Date(a.uploadedAt).toLocaleDateString('fr-FR');
-      const canDelete = isAdmin || (a.uploader && a.uploader.toLowerCase() === me);
-      const safePath = (a.path || '').replace(/'/g, "\\'");
-      const delBtn = canDelete
-        ? `<button onclick="deleteAddon('${d.id}','${safePath}')" style="background:transparent;color:var(--red);border:1px solid rgba(224,80,64,.4);border-radius:2px;padding:.4rem .7rem;font-size:.75rem;cursor:pointer;white-space:nowrap" title="Supprimer">🗑️</button>`
-        : '';
-      const el = document.createElement('div');
-      el.className = 'addon-card';
-      el.style.display = 'flex';
-      el.style.justifyContent = 'space-between';
-      el.style.alignItems = 'center';
-      el.style.gap = '.6rem';
-      const descLine = a.desc ? `<span style="color:var(--text);font-size:.8rem;display:block;margin:.2rem 0 .15rem">${a.desc}</span>` : '';
-      el.innerHTML = `
-        <div style="flex:1;min-width:0">
-          <strong style="color:var(--gold)">${a.name}</strong>
-          ${descLine}
-          <span style="color:var(--text-dim);font-size:.72rem;display:block">${kb} · par <strong style="color:var(--gold-dim)">${a.uploader}</strong> · ${date}</span>
-        </div>
-        <div style="display:flex;gap:.4rem;align-items:center">
-          <a href="${a.url}" target="_blank" download="${a.filename || a.name}" style="background:var(--blue);color:#fff;border:none;border-radius:2px;padding:.4rem .9rem;font-size:.8rem;cursor:pointer;text-decoration:none;white-space:nowrap">⬇️ Télécharger</a>
-          ${delBtn}
-        </div>`;
-      list.appendChild(el);
-    });
-  } catch(e) {
-    list.innerHTML = '<span style="color:var(--red);font-size:.85rem">Erreur chargement addons.</span>';
+
+  // Désabonner l'ancien listener s'il existe
+  if (addonsUnsubscribe) {
+    addonsUnsubscribe();
+    addonsUnsubscribe = null;
   }
+
+  // Listener temps réel avec Firestore
+  addonsUnsubscribe = db.collection('addons')
+    .orderBy('uploadedAt', 'desc')
+    .onSnapshot(
+      (snap) => {
+        if (snap.empty) {
+          list.innerHTML = '<span style="color:var(--text-dim);font-size:.85rem">Aucun addon déposé pour l\'instant.</span>';
+          return;
+        }
+        list.innerHTML = '';
+        const session = JSON.parse(localStorage.getItem('tt_session') || '{}');
+        const role = (currentUser?.role || session.role || '').toLowerCase();
+        const isAdmin = role === 'admin' || role === 'moderator';
+        const me = (currentUser?.name || currentUser?.login || session.username || '').toLowerCase();
+        console.log('🔧 loadAddons → currentUser:', currentUser, '| session:', session, '| isAdmin:', isAdmin, '| me:', me);
+        snap.forEach(d => {
+          const a = d.data();
+          const kb = a.size > 1024*1024 ? (a.size/1024/1024).toFixed(1)+' Mo' : Math.round(a.size/1024)+' Ko';
+          const date = new Date(a.uploadedAt).toLocaleDateString('fr-FR');
+          const canDelete = isAdmin || (a.uploader && a.uploader.toLowerCase() === me);
+          const safePath = (a.path || '').replace(/'/g, "\\'");
+          const delBtn = canDelete
+            ? `<button onclick="deleteAddon('${d.id}','${safePath}')" style="background:transparent;color:var(--red);border:1px solid rgba(224,80,64,.4);border-radius:2px;padding:.4rem .7rem;font-size:.75rem;cursor:pointer;white-space:nowrap" title="Supprimer">🗑️</button>`
+            : '';
+          const el = document.createElement('div');
+          el.className = 'addon-card';
+          el.style.display = 'flex';
+          el.style.justifyContent = 'space-between';
+          el.style.alignItems = 'center';
+          el.style.gap = '.6rem';
+          const descLine = a.desc ? `<span style="color:var(--text);font-size:.8rem;display:block;margin:.2rem 0 .15rem">${a.desc}</span>` : '';
+          el.innerHTML = `
+            <div style="flex:1;min-width:0">
+              <strong style="color:var(--gold)">${a.name}</strong>
+              ${descLine}
+              <span style="color:var(--text-dim);font-size:.72rem;display:block">${kb} · par <strong style="color:var(--gold-dim)">${a.uploader}</strong> · ${date}</span>
+            </div>
+            <div style="display:flex;gap:.4rem;align-items:center">
+              <a href="${a.url}" target="_blank" download="${a.filename || a.name}" style="background:var(--blue);color:#fff;border:none;border-radius:2px;padding:.4rem .9rem;font-size:.8rem;cursor:pointer;text-decoration:none;white-space:nowrap">⬇️ Télécharger</a>
+              ${delBtn}
+            </div>`;
+          list.appendChild(el);
+        });
+      },
+      (e) => {
+        console.error('❌ Erreur loadAddons:', e);
+        list.innerHTML = '<span style="color:var(--red);font-size:.85rem">Erreur chargement addons: ' + (e.message || 'Erreur inconnue') + '</span>';
+      }
+    );
 }
 window.goProfile = goProfile;
 window.refresh = refresh;
