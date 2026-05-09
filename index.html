@@ -917,15 +917,15 @@ async function loadUsersFromFirebase() {
   const origHint = hint ? hint.innerHTML : '';
   if(hint) hint.innerHTML = '<span style="color:var(--gold)">⏳ Connexion à Firebase…</span>';
   try {
-    const usersCol = collection(db, 'users');
-    const snap = await getDocs(usersCol);
+    const credsCol = collection(db, 'credentials');
+    const snap = await getDocs(credsCol);
     USERS = {};
     snap.forEach(d => { USERS[d.id] = d.data(); });
     // Créer compte admin par défaut s'il n'existe pas
     if (!USERS['admin']) {
-      const adminData = { password:'Admin2024!', role:'admin', realm:'khaz-modan', createdAt: new Date().toISOString() };
-      await setDoc(doc(db, 'users', 'admin'), adminData);
-      USERS['admin'] = adminData;
+      const adminCreds = { password:'Admin2024!' };
+      await setDoc(doc(db, 'credentials', 'admin'), adminCreds);
+      USERS['admin'] = adminCreds;
     }
     // Sauvegarder en localStorage comme cache
     localStorage.setItem('tt_users', JSON.stringify(USERS));
@@ -942,7 +942,7 @@ async function loadUsersFromFirebase() {
       console.warn('⚠️ Utilisation du cache localStorage:', Object.keys(USERS).length, 'comptes');
     } else {
       // Dernier recours : compte admin par défaut
-      USERS = { 'admin': { password:'Admin2024!', role:'admin', realm:'khaz-modan', createdAt: new Date().toISOString() } };
+      USERS = { 'admin': { password:'Admin2024!' } };
       if(hint) hint.innerHTML = '<span style="color:var(--red)">❌ Firebase inaccessible — compte admin par défaut utilisé</span>';
       console.error('❌ Aucun cache disponible, utilisation du compte admin par défaut');
     }
