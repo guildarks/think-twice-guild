@@ -6029,7 +6029,8 @@ async function loadAddons() {
       list.appendChild(el);
     });
   } catch(e) {
-    list.innerHTML = '<span style="color:var(--red);font-size:.85rem">Erreur chargement addons.</span>';
+    console.error('❌ Erreur loadAddons:', e);
+    list.innerHTML = '<span style="color:var(--red);font-size:.85rem">Erreur chargement addons: ' + (e.message || 'Erreur inconnue') + '</span>';
   }
 }
 window.goProfile = goProfile;
