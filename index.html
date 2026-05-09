@@ -918,15 +918,15 @@ async function loadUsersFromFirebase() {
   const origHint = hint ? hint.innerHTML : '';
   if(hint) hint.innerHTML = '<span style="color:var(--gold)">⏳ Connexion à Firebase…</span>';
   try {
-    const credsCol = collection(db, 'credentials');
-    const snap = await getDocs(credsCol);
+    const usersCol = collection(db, 'users');
+    const snap = await getDocs(usersCol);
     USERS = {};
     snap.forEach(d => { USERS[d.id] = d.data(); });
     // Créer compte admin par défaut s'il n'existe pas
     if (!USERS['admin']) {
-      const adminCreds = { password:'Admin2024!' };
-      await setDoc(doc(db, 'credentials', 'admin'), adminCreds);
-      USERS['admin'] = adminCreds;
+      const adminData = { password:'Admin2024!', role:'admin', realm:'khaz-modan', createdAt: new Date().toISOString() };
+      await setDoc(doc(db, 'users', 'admin'), adminData);
+      USERS['admin'] = adminData;
     }
     // Sauvegarder en localStorage comme cache
     localStorage.setItem('tt_users', JSON.stringify(USERS));
