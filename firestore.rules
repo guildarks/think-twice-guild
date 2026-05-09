@@ -1,0 +1,73 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ══ USERS ══
+    match /users/{userId} {
+      allow read: if request.auth.uid == userId;
+      allow write: if request.auth.uid == userId && validateUser(request.resource.data);
+      allow create: if request.auth != null && validateUser(request.resource.data);
+    }
+
+    // ══ GUILD MEMBERS ══
+    match /guilds/{guildId}/members/{memberId} {
+      allow read: if isGuildMember(guildId);
+      allow write: if isGuildAdmin(guildId);
+      allow create: if isGuildAdmin(guildId);
+      allow delete: if isGuildLeader(guildId);
+    }
+
+    // ══ PUBLIC GUILD INFO ══
+    match /guilds/{guildId} {
+      allow read: if true; // Public info
+      allow write: if isGuildLeader(guildId);
+      allow delete: if isGuildLeader(guildId);
+    }
+
+    // ══ MESSAGES / CHAT ══
+    match /guilds/{guildId}/messages/{messageId} {
+      allow read: if isGuildMember(guildId);
+      allow create: if isGuildMember(guildId) && validateMessage(request.resource.data);
+      allow update: if isMessageOwner(messageId) && validateMessage(request.resource.data);
+      allow delete: if isMessageOwner(messageId) || isGuildAdmin(guildId);
+    }
+
+    // ══ HELPER FUNCTIONS ══
+    function isGuildMember(guildId) {
+      return request.auth != null &&
+        exists(/databases/$(database)/documents/guilds/$(guildId)/members/$(request.auth.uid));
+    }
+
+    function isGuildAdmin(guildId) {
+      return request.auth != null &&
+        get(/databases/$(database)/documents/guilds/$(guildId)/members/$(request.auth.uid)).data.role in ['admin', 'leader'];
+    }
+
+    function isGuildLeader(guildId) {
+      return request.auth != null &&
+        get(/databases/$(database)/documents/guilds/$(guildId)/members/$(request.auth.uid)).data.role == 'leader';
+    }
+
+    function isMessageOwner(messageId) {
+      return request.auth.uid == resource.data.userId;
+    }
+
+    function validateUser(data) {
+      return data.size() > 0 &&
+        data.keys().hasAll(['username', 'email']) &&
+        data.username is string &&
+        data.email is string &&
+        data.username.size() > 0 &&
+        data.email.size() > 5;
+    }
+
+    function validateMessage(data) {
+      return data.size() > 0 &&
+        data.keys().hasAll(['text', 'userId', 'timestamp']) &&
+        data.text is string &&
+        data.text.size() > 0 &&
+        data.text.size() < 2000 &&
+        data.userId == request.auth.uid;
+    }
+  }
+}
