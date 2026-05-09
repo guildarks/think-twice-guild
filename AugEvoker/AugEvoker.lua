@@ -697,7 +697,7 @@ end)
 
 -- Bouton Geler / Dégeler (freeze manuel pour donjons normaux/héroïques)
 local freezeBtn = MakeBtn(mainFrame, "Geler", 52)
-freezeBtn:SetPoint("BOTTOMRIGHT", mainFrame, "BOTTOMRIGHT", -8, 5)
+freezeBtn:SetPoint("LEFT", optionsBtn, "RIGHT", 3, 0)
 freezeBtn:SetScript("OnClick", function()
     if frozen then
         -- Dégeler : remet à zéro pour une nouvelle session
