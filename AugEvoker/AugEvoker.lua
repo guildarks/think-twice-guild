@@ -324,7 +324,17 @@ mainFrame:SetMovable(true)
 mainFrame:EnableMouse(true)
 mainFrame:RegisterForDrag("LeftButton")
 mainFrame:SetScript("OnDragStart", mainFrame.StartMoving)
-mainFrame:SetScript("OnDragStop",  mainFrame.StopMovingOrSizing)
+mainFrame:SetScript("OnDragStop", function()
+    mainFrame:StopMovingOrSizing()
+    AugEvokerDB = AugEvokerDB or {}
+    local x, y = mainFrame:GetLeft(), mainFrame:GetTop()
+    AugEvokerDB.framePos = {point="TOPLEFT", relPoint="TOPLEFT", x=x, y=-y}
+end)
+mainFrame:SetScript("OnSizeChanged", function()
+    AugEvokerDB = AugEvokerDB or {}
+    local w, h = mainFrame:GetSize()
+    AugEvokerDB.frameSize = {w=w, h=h}
+end)
 mainFrame:SetClampedToScreen(true)
 mainFrame:SetResizable(true)
 mainFrame:SetResizeBounds(200, 80, 500, 400)
@@ -451,6 +461,12 @@ end
 
 local reportBtn = MakeBtn(mainFrame, "Envoyer", 88)
 reportBtn:SetPoint("BOTTOMLEFT", mainFrame, "BOTTOMLEFT", 8, 5)
+reportBtn:SetScript("OnEnter", function(self)
+    GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
+    GameTooltip:SetText("Envoyer les stats du combat dans le canal sélectionné")
+    GameTooltip:Show()
+end)
+reportBtn:SetScript("OnLeave", function() GameTooltip:Hide() end)
 reportBtn:SetScript("OnClick", function()
     -- Résolution du canal
     local channel
@@ -514,6 +530,12 @@ end)
 
 local chanBtn = MakeBtn(mainFrame, "v", 28)
 chanBtn:SetPoint("LEFT", reportBtn, "RIGHT", 3, 0)
+chanBtn:SetScript("OnEnter", function(self)
+    GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
+    GameTooltip:SetText("Sélectionner le canal d'envoi\n(Groupe, Raid, Guilde, etc.)")
+    GameTooltip:Show()
+end)
+chanBtn:SetScript("OnLeave", function() GameTooltip:Hide() end)
 chanBtn:SetScript("OnClick", function()
     if channelMenu:IsShown() then channelMenu:Hide()
     else
@@ -707,34 +729,51 @@ end
 
 local optionsBtn = MakeBtn(mainFrame, "Opt", 28)
 optionsBtn:SetPoint("LEFT", chanBtn, "RIGHT", 3, 0)
+optionsBtn:SetScript("OnEnter", function(self)
+    GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
+    GameTooltip:SetText("Ouvrir les paramètres\n(Couleurs, polices, textures)")
+    GameTooltip:Show()
+end)
+optionsBtn:SetScript("OnLeave", function() GameTooltip:Hide() end)
 optionsBtn:SetScript("OnClick", function()
     if AugEvokerOpts then AugEvokerOpts:Toggle() end
 end)
 
+-- Fonction centralisée pour basculer freeze/unfreeze
+local function ToggleFrozen(fromButton)
+    if frozen then
+        ResetData()
+        ScanAllUnits()
+        DEFAULT_CHAT_FRAME:AddMessage("|cFF33CC99[AugEvoker]|r Stats dégelées — nouvelle session.")
+    else
+        FreezeData()
+        DEFAULT_CHAT_FRAME:AddMessage("|cFF33CC99[AugEvoker]|r Stats figées. Clique sur |cFFFFAA00Envoyer|r pour partager.")
+    end
+end
+
 -- Bouton Geler / Dégeler (freeze manuel pour donjons normaux/héroïques)
 local freezeBtn = MakeBtn(mainFrame, "Geler", 52)
 freezeBtn:SetPoint("LEFT", optionsBtn, "RIGHT", 3, 0)
-freezeBtn:SetScript("OnClick", function()
+freezeBtn:SetScript("OnEnter", function(self)
+    GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
     if frozen then
-        -- Dégeler : remet à zéro pour une nouvelle session
-        ResetData()
-        ScanAllUnits()
-        freezeBtn.fs:SetText("Geler")
-        DEFAULT_CHAT_FRAME:AddMessage("|cFF33CC99[AugEvoker]|r Stats dégelées — nouvelle session.")
+        GameTooltip:SetText("Dégeler pour une nouvelle session")
     else
-        -- Geler : fige les stats actuelles
-        FreezeData()
-        freezeBtn.fs:SetText("Dégeler")
-        DEFAULT_CHAT_FRAME:AddMessage("|cFF33CC99[AugEvoker]|r Stats figées. Clique sur |cFFFFAA00Envoyer|r pour partager.")
+        GameTooltip:SetText("Figer les stats du combat actuel")
     end
+    GameTooltip:Show()
+end)
+freezeBtn:SetScript("OnLeave", function() GameTooltip:Hide() end)
+freezeBtn:SetScript("OnClick", function()
+    ToggleFrozen(true)
 end)
 
 -- Mettre à jour le texte du bouton selon l'état
+local lastFrozenState = frozen
 C_Timer.NewTicker(0.5, function()
-    if frozen then
-        freezeBtn.fs:SetText("|cFFFFAA00Dégeler|r")
-    else
-        freezeBtn.fs:SetText("Geler")
+    if frozen ~= lastFrozenState then
+        lastFrozenState = frozen
+        freezeBtn.fs:SetText(frozen and "|cFFFFAA00Dégeler|r" or "Geler")
     end
 end)
 
@@ -762,28 +801,13 @@ SlashCmdList["AUGEVOKER"]=function(msg)
     elseif msg=="options" or msg=="opt" then
         if AugEvokerOpts then AugEvokerOpts:Toggle() end
     elseif msg=="freeze" or msg=="gel" then
-        if frozen then
-            ResetData(); ScanAllUnits()
-            DEFAULT_CHAT_FRAME:AddMessage("|cFF33CC99[AugEvoker]|r Stats dégelées.")
-        else
-            FreezeData()
-            DEFAULT_CHAT_FRAME:AddMessage("|cFF33CC99[AugEvoker]|r Stats figées.")
-        end
+        ToggleFrozen()
     elseif msg=="hide" then mainFrame:Hide()
     elseif msg=="show" then mainFrame:Show()
-    elseif msg=="freeze" then
-        -- Freeze manuel (si l'event automatique ne s'est pas déclenché)
-        if frozen then
-            DEFAULT_CHAT_FRAME:AddMessage("|cFF33CC99[AugEvoker]|r Stats déjà figées.")
-        else
-            FreezeData()
-            DEFAULT_CHAT_FRAME:AddMessage("|cFF33CC99[AugEvoker]|r Stats figées manuellement. Clique sur |cFFFFAA00Envoyer|r.")
-        end
-        mainFrame:Show()
     elseif msg=="unfreeze" then
-        -- Dégèle pour continuer le tracking
-        frozen = false; frozenChannel = nil; freezeTime = nil
-        DEFAULT_CHAT_FRAME:AddMessage("|cFF33CC99[AugEvoker]|r Stats dégelées.")
+        if frozen then ToggleFrozen() else
+            DEFAULT_CHAT_FRAME:AddMessage("|cFF33CC99[AugEvoker]|r Stats déjà dégelées.")
+        end
     elseif msg=="report" or msg=="r" then
         -- SendChatMessage depuis un slash command est tainted par WoW.
         -- Utiliser le bouton "Envoyer" de l'interface à la place.
@@ -834,11 +858,14 @@ local function LoadSettings()
             end
         end
     end
-    -- Position de la frame
+    -- Position et taille de la frame
     if AugEvokerDB.framePos then
         local p = AugEvokerDB.framePos
         mainFrame:ClearAllPoints()
         mainFrame:SetPoint(p.point, UIParent, p.relPoint, p.x, p.y)
+    end
+    if AugEvokerDB.frameSize then
+        mainFrame:SetSize(AugEvokerDB.frameSize.w, AugEvokerDB.frameSize.h)
     end
 end
 
@@ -868,7 +895,7 @@ initFrame:SetScript("OnEvent",function(self)
     if C_Spell and C_Spell.GetSpellName then
         PRESC_SPELL_NAME = C_Spell.GetSpellName(PRESCIENCE_BUFF_ID)
     end
-    -- Charge les paramètres sauvegardés
+    -- Charge les paramètres sauvegardés (position, taille, canal, etc.)
     LoadSettings()
     mainFrame:Show()  -- afficher APRÈS LoadSettings pour éviter le scintillement
     C_Timer.After(0.1, function()
