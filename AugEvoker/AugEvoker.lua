@@ -280,20 +280,22 @@ eventFrame:SetScript("OnEvent", function(self, event, ...)
 
         -- Alerte décès : quelqu'un du groupe est mort
         elseif subEvent == "UNIT_DIED" and destName and not issecretvalue(destName) then
-            local isGroupMember = (destName == UnitName("player"))
-            if not isGroupMember then
-                if IsInRaid() then
-                    for i = 1, GetNumGroupMembers() do
-                        if UnitName("raid"..i) == destName then isGroupMember = true; break end
-                    end
-                elseif IsInGroup() then
-                    for i = 1, GetNumSubgroupMembers(0) do
-                        if UnitName("party"..i) == destName then isGroupMember = true; break end
+            if AugEvokerDB and AugEvokerDB.deathAlerts ~= false then  -- Activée par défaut
+                local isGroupMember = (destName == UnitName("player"))
+                if not isGroupMember then
+                    if IsInRaid() then
+                        for i = 1, GetNumGroupMembers() do
+                            if UnitName("raid"..i) == destName then isGroupMember = true; break end
+                        end
+                    elseif IsInGroup() then
+                        for i = 1, GetNumSubgroupMembers(0) do
+                            if UnitName("party"..i) == destName then isGroupMember = true; break end
+                        end
                     end
                 end
-            end
-            if isGroupMember then
-                DEFAULT_CHAT_FRAME:AddMessage(string.format("|cFFFF4444[AugEvoker]|r ☠ %s est mort", destName))
+                if isGroupMember then
+                    DEFAULT_CHAT_FRAME:AddMessage(string.format("|cFFFF4444[AugEvoker]|r ☠ %s est mort", destName))
+                end
             end
         end
 

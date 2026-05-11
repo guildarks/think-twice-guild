@@ -24,6 +24,8 @@ local defaults = {
     barTex="Interface\\TargetingFrame\\UI-StatusBar",
     -- ElvUI sync
     elvuiSync=false,
+    -- Alertes
+    deathAlerts=true,
 }
 
 -- Sauvegarde
