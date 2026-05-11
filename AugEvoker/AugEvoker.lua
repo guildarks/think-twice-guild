@@ -350,12 +350,10 @@ mainFrame:RegisterForDrag("LeftButton")
 mainFrame:SetScript("OnDragStart", mainFrame.StartMoving)
 mainFrame:SetScript("OnDragStop", function()
     mainFrame:StopMovingOrSizing()
-    AugEvokerDB = AugEvokerDB or {}
     local x, y = mainFrame:GetLeft(), mainFrame:GetTop()
     AugEvokerDB.framePos = {point="TOPLEFT", relPoint="TOPLEFT", x=x, y=-y}
 end)
 mainFrame:SetScript("OnSizeChanged", function()
-    AugEvokerDB = AugEvokerDB or {}
     local w, h = mainFrame:GetSize()
     AugEvokerDB.frameSize = {w=w, h=h}
 end)
@@ -483,14 +481,19 @@ local function MakeBtn(parent, text, w)
     return btn
 end
 
+-- Helper pour ajouter tooltips aux boutons
+local function SetButtonTooltip(btn, text)
+    btn:SetScript("OnEnter", function(self)
+        GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
+        GameTooltip:SetText(text)
+        GameTooltip:Show()
+    end)
+    btn:SetScript("OnLeave", function() GameTooltip:Hide() end)
+end
+
 local reportBtn = MakeBtn(mainFrame, "Envoyer", 88)
 reportBtn:SetPoint("BOTTOMLEFT", mainFrame, "BOTTOMLEFT", 8, 5)
-reportBtn:SetScript("OnEnter", function(self)
-    GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
-    GameTooltip:SetText("Envoyer les stats du combat dans le canal sélectionné")
-    GameTooltip:Show()
-end)
-reportBtn:SetScript("OnLeave", function() GameTooltip:Hide() end)
+SetButtonTooltip(reportBtn, "Envoyer les stats du combat dans le canal sélectionné")
 reportBtn:SetScript("OnClick", function()
     -- Résolution du canal
     local channel
@@ -554,12 +557,7 @@ end)
 
 local chanBtn = MakeBtn(mainFrame, "v", 28)
 chanBtn:SetPoint("LEFT", reportBtn, "RIGHT", 3, 0)
-chanBtn:SetScript("OnEnter", function(self)
-    GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
-    GameTooltip:SetText("Sélectionner le canal d'envoi\n(Groupe, Raid, Guilde, etc.)")
-    GameTooltip:Show()
-end)
-chanBtn:SetScript("OnLeave", function() GameTooltip:Hide() end)
+SetButtonTooltip(chanBtn, "Sélectionner le canal d'envoi\n(Groupe, Raid, Guilde, etc.)")
 chanBtn:SetScript("OnClick", function()
     if channelMenu:IsShown() then channelMenu:Hide()
     else
@@ -753,12 +751,7 @@ end
 
 local optionsBtn = MakeBtn(mainFrame, "Opt", 28)
 optionsBtn:SetPoint("LEFT", chanBtn, "RIGHT", 3, 0)
-optionsBtn:SetScript("OnEnter", function(self)
-    GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
-    GameTooltip:SetText("Ouvrir les paramètres\n(Couleurs, polices, textures)")
-    GameTooltip:Show()
-end)
-optionsBtn:SetScript("OnLeave", function() GameTooltip:Hide() end)
+SetButtonTooltip(optionsBtn, "Ouvrir les paramètres\n(Couleurs, polices, textures)")
 optionsBtn:SetScript("OnClick", function()
     if AugEvokerOpts then AugEvokerOpts:Toggle() end
 end)
@@ -780,11 +773,7 @@ local freezeBtn = MakeBtn(mainFrame, "Geler", 52)
 freezeBtn:SetPoint("LEFT", optionsBtn, "RIGHT", 3, 0)
 freezeBtn:SetScript("OnEnter", function(self)
     GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
-    if frozen then
-        GameTooltip:SetText("Dégeler pour une nouvelle session")
-    else
-        GameTooltip:SetText("Figer les stats du combat actuel")
-    end
+    GameTooltip:SetText(frozen and "Dégeler pour une nouvelle session" or "Figer les stats du combat actuel")
     GameTooltip:Show()
 end)
 freezeBtn:SetScript("OnLeave", function() GameTooltip:Hide() end)
@@ -913,6 +902,8 @@ local initFrame = CreateFrame("Frame")
 initFrame:RegisterEvent("PLAYER_LOGIN")
 initFrame:SetScript("OnEvent",function(self)
     self:UnregisterAllEvents()
+    -- Initialiser la base de données si nécessaire
+    AugEvokerDB = AugEvokerDB or {}
     -- GUID du joueur pour filtrer le combat log
     playerGUID = UnitGUID("player")
     -- Récupère les noms exacts des sorts dans la langue du client
