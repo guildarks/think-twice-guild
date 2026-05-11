@@ -253,7 +253,7 @@ eventFrame:SetScript("OnEvent", function(self, event, ...)
         if frozen then return end  -- stats figées, on ignore le CLEU
         local _, subEvent, _,
               sourceGUID, _, _, _,
-              _, _, _, _,
+              destGUID, destName, _, _,
               spellID = CombatLogGetCurrentEventInfo()
 
         -- Éclat d'Ébène
@@ -276,6 +276,24 @@ eventFrame:SetScript("OnEvent", function(self, event, ...)
                     if not d.emActive then d.emActive = true; d.emStart = t end
                     emExpiry[name] = expiry
                 end
+            end
+
+        -- Alerte décès : quelqu'un du groupe est mort
+        elseif subEvent == "UNIT_DIED" and destName and not issecretvalue(destName) then
+            local isGroupMember = (destName == UnitName("player"))
+            if not isGroupMember then
+                if IsInRaid() then
+                    for i = 1, GetNumGroupMembers() do
+                        if UnitName("raid"..i) == destName then isGroupMember = true; break end
+                    end
+                elseif IsInGroup() then
+                    for i = 1, GetNumSubgroupMembers(0) do
+                        if UnitName("party"..i) == destName then isGroupMember = true; break end
+                    end
+                end
+            end
+            if isGroupMember then
+                DEFAULT_CHAT_FRAME:AddMessage(string.format("|cFFFF4444[AugEvoker]|r ☠ %s est mort", destName))
             end
         end
 

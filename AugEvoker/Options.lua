@@ -300,6 +300,16 @@ AddSection(p1,"Comportement",-104)
 local cbAutoReset = MakeCheckbox(p1,"Reset auto au début du combat",true,function(v) S.autoReset=v end)
 cbAutoReset:SetPoint("TOPLEFT",p1,"TOPLEFT",12,-124)
 
+local cbDeathAlerts = MakeCheckbox(p1,"Alertes décès en chat",true,function(v) S.deathAlerts=v end)
+cbDeathAlerts:SetPoint("TOPLEFT",p1,"TOPLEFT",12,-148)
+
+AddSection(p1,"Taille et espacement",-176)
+local rowHeightSlider = MakeSlider(p1,"Hauteur ligne",16,32,1,S.rowHeight or 20,function(v) S.rowHeight=v; if ApplySettings then ApplySettings() end end)
+rowHeightSlider:SetPoint("TOPLEFT",p1,"TOPLEFT",12,-196)
+
+local rowPaddingSlider = MakeSlider(p1,"Espacement",0,4,1,S.rowPadding or 2,function(v) S.rowPadding=v; if ApplySettings then ApplySettings() end end)
+rowPaddingSlider:SetPoint("TOPLEFT",p1,"TOPLEFT",12,-240)
+
 -- ── Tab 2 : Apparence ─────────────────────────────────────────
 local p2 = tabPanels[2]
 AddSection(p2,"Couleur du fond",-8)
