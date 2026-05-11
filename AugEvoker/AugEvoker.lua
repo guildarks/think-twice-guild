@@ -280,7 +280,11 @@ eventFrame:SetScript("OnEvent", function(self, event, ...)
 
         -- Alerte décès : quelqu'un du groupe est mort
         elseif subEvent == "UNIT_DIED" and destName and not issecretvalue(destName) then
-            if AugEvokerDB and AugEvokerDB.deathAlerts ~= false then  -- Activée par défaut
+            -- Vérifie si les alertes décès sont activées dans les options
+            local showDeathAlert = true
+            if AugEvokerDB and AugEvokerDB.deathAlerts == false then showDeathAlert = false end
+
+            if showDeathAlert then
                 local isGroupMember = (destName == UnitName("player"))
                 if not isGroupMember then
                     if IsInRaid() then
