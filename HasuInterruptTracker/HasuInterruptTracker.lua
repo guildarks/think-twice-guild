@@ -5937,39 +5937,60 @@ local function UpdateCCDisplay()
                                 isUnknown  = isUnknown,
                             }
                         else
-                            -- Self with multi-charge: one bar per charge slot,
-                            -- each bar shows its real recharge timer. Charges
-                            -- recharge sequentially: nth missing charge becomes
-                            -- ready at start + (n - current) * duration.
-                            local perCharge = {}
+                            -- Self with multi-charge: try per-charge rendering.
+                            -- WoW 12.0 (Midnight) returns "secret"/tainted values
+                            -- from C_Spell.GetSpellCharges; arithmetic on them
+                            -- raises "attempt to compare a secret number value".
+                            -- Wrap the whole compute in pcall; on failure fall
+                            -- back to a single bar with the (xN) badge.
+                            local perCharge, computeOk = nil, false
                             if C_Spell and C_Spell.GetSpellCharges then
-                                local ok, info = pcall(C_Spell.GetSpellCharges, spellID)
-                                if ok and info then
-                                    local cur   = info.currentCharges or maxC
-                                    local start = info.cooldownStartTime or 0
-                                    local dur   = info.cooldownDuration or 0
-                                    for i = 1, maxC do
-                                        if i <= cur then
-                                            perCharge[i] = 0
-                                        else
-                                            local nth = i - cur
-                                            local readyAt = start + (nth * dur)
-                                            perCharge[i] = math.max(0, readyAt - now)
+                                local okGet, info = pcall(C_Spell.GetSpellCharges, spellID)
+                                if okGet and info then
+                                    local okMath, result = pcall(function()
+                                        local cur   = info.currentCharges or maxC
+                                        local start = info.cooldownStartTime or 0
+                                        local dur   = info.cooldownDuration or 0
+                                        local out = {}
+                                        for i = 1, maxC do
+                                            if i <= cur then
+                                                out[i] = 0
+                                            else
+                                                local nth = i - cur
+                                                local readyAt = start + (nth * dur)
+                                                out[i] = math.max(0, readyAt - now)
+                                            end
                                         end
+                                        return out
+                                    end)
+                                    if okMath and type(result) == "table" then
+                                        perCharge = result
+                                        computeOk = true
                                     end
                                 end
                             end
-                            for k = 1, maxC do
-                                local chRem = perCharge[k] or rem
+                            if computeOk then
+                                for k = 1, maxC do
+                                    entries[#entries + 1] = {
+                                        playerName = playerName,
+                                        spellID    = spellID,
+                                        cc         = cc,
+                                        userInfo   = userInfo,
+                                        rem        = perCharge[k] or rem,
+                                        isUnknown  = isUnknown,
+                                        chargeIdx  = k,
+                                        chargeMax  = maxC,
+                                    }
+                                end
+                            else
+                                -- Tainted/secret values: single bar with (xN) badge
                                 entries[#entries + 1] = {
                                     playerName = playerName,
                                     spellID    = spellID,
                                     cc         = cc,
                                     userInfo   = userInfo,
-                                    rem        = chRem,
+                                    rem        = rem,
                                     isUnknown  = isUnknown,
-                                    chargeIdx  = k,
-                                    chargeMax  = maxC,
                                 }
                             end
                         end
