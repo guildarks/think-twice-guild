@@ -11,18 +11,6 @@ HasuRotation = HasuRotation or {}
 
 local rotationOrder = {}   -- ordered list: { name, name, ... }
 
-local function SendRotation()
-    if not IsInGroup() then return end
-    if #rotationOrder == 0 then return end
-    local channel = IsInInstance() and "INSTANCE_CHAT" or "PARTY"
-    local entries = {}
-    for i, name in ipairs(rotationOrder) do
-        entries[i] = tostring(i) .. "=" .. name
-    end
-    local msg = "ROTATION:" .. table.concat(entries, ":")
-    pcall(C_ChatInfo.SendAddonMessage, "LOXX", msg, channel)
-end
-
 -- Rebuild rotation order from current roster.
 -- Preserves existing positions for known players; new players appended alphabetically.
 function HasuRotation.UpdateRoster(partyAddonUsers, myName)
@@ -142,16 +130,3 @@ function HasuRotation.MarkNextKicker(bars, barCount, partyAddonUsers, myName, my
     end
 end
 
--- Returns a copy of the current rotation order.
-function HasuRotation.GetOrder()
-    local copy = {}
-    for i, n in ipairs(rotationOrder) do copy[i] = n end
-    return copy
-end
-
--- Set a new rotation order and broadcast it to the group.
-function HasuRotation.SetOrder(newOrder)
-    rotationOrder = {}
-    for i, n in ipairs(newOrder) do rotationOrder[i] = n end
-    SendRotation()
-end

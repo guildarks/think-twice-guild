@@ -914,9 +914,14 @@ local function OnAddonMessage(prefix, message, channel, sender)
         if HasuRotation then HasuRotation.HandleMessage(parts, shortName) end
 
     elseif command == "CCCAST" then
-        -- CC Tracker sync: peer used their CC ability.  format: CCCAST:spellID:cd
-        local spellID = tonumber(parts[2])
-        local cd      = tonumber(parts[3])
+        -- CC Tracker sync: peer used their CC ability.
+        -- format: CCCAST:spellID:cd[:maxCharges]
+        --   maxCharges is optional for backward compatibility with older peers
+        --   (defaults to 1 when absent or invalid).
+        local spellID  = tonumber(parts[2])
+        local cd       = tonumber(parts[3])
+        local peerMaxC = tonumber(parts[4]) or 1
+        if peerMaxC < 1 then peerMaxC = 1 end
         if spellID and cd then
             -- Lookup name/class from Hasu CC table first, then legacy CC_SPELLS
             local ccEntry = HasuCCData and HasuCCData.CC_SPELL_LOOKUP and HasuCCData.CC_SPELL_LOOKUP[spellID]
@@ -949,13 +954,19 @@ local function OnAddonMessage(prefix, message, channel, sender)
                         name       = ccName,
                         baseCd     = cd,
                         cdEnd      = 0,
-                        maxCharges = 1,
+                        maxCharges = peerMaxC,
                         icon       = ok and icon or nil,
                     }
                     -- Insert into order if not already present
                     local found = false
                     for _, sid in ipairs(order) do if sid == spellID then found=true; break end end
                     if not found then table.insert(order, spellID) end
+                else
+                    -- Sync charge count when the peer reports a different value
+                    -- (talent picked/removed since last broadcast).
+                    if peerMaxC ~= (ccs[spellID].maxCharges or 1) then
+                        ccs[spellID].maxCharges = peerMaxC
+                    end
                 end
                 local newEnd = GetTime() + cd
                 if newEnd > (ccs[spellID].cdEnd or 0) then
@@ -963,7 +974,7 @@ local function OnAddonMessage(prefix, message, channel, sender)
                     ccs[spellID].baseCd = cd
                 end
                 ccDirty = true
-                DLog("CCCAST", shortName .. " cd=" .. cd .. "s spellID=" .. tostring(spellID))
+                DLog("CCCAST", shortName .. " cd=" .. cd .. "s spellID=" .. tostring(spellID) .. " maxC=" .. tostring(peerMaxC))
             end
         end
     end
@@ -1666,7 +1677,7 @@ local function GetCCBarLayout()
     barW                = math.max(60, barW)
     local fontSize      = math.max(2, db.ccNameFontSize or db.nameFontSize or 12)
     local cdFontSize    = math.max(2, db.ccCdFontSize  or db.readyFontSize or 12)
-    local readyFontSize = math.max(2, db.ccCdFontSize  or db.readyTextSize or 12)
+    local readyFontSize = math.max(2, db.readyTextSize or 12)
     return barW, barH, iconS, fontSize, cdFontSize, titleH, readyFontSize
 end
 
@@ -4890,6 +4901,19 @@ playerCastFrame:SetScript("OnEvent", function(_, _, unit, castGUID, spellID)
                 if ccCd < 1 then ccCd = 2 end
             end
 
+            -- Resolve maxCharges for this spell (talent + active charge data).
+            -- Fall back to a prior FindMyCCAbilities entry if the API is unavailable.
+            local _maxC = 1
+            do
+                local ok_ch, chInfo = pcall(C_Spell.GetSpellCharges, spellID)
+                if ok_ch and chInfo and chInfo.maxCharges and chInfo.maxCharges > 1 then
+                    _maxC = chInfo.maxCharges
+                elseif myName and ccAddonUsers[myName] and ccAddonUsers[myName].ccs
+                   and ccAddonUsers[myName].ccs[spellID] then
+                    _maxC = ccAddonUsers[myName].ccs[spellID].maxCharges or 1
+                end
+            end
+
             -- Update self in new per-spell ccs structure
             if myName and ccAddonUsers[myName] and ccAddonUsers[myName].ccs then
                 -- Check talent requirement: some spells only have CC utility with a specific talent
@@ -4914,12 +4938,18 @@ playerCastFrame:SetScript("OnEvent", function(_, _, unit, castGUID, spellID)
                             name       = ccName,
                             baseCd     = ccCd,
                             cdEnd      = 0,
-                            maxCharges = 1,
+                            maxCharges = _maxC,
                             icon       = ok_ic and icon or nil,
                         }
                         local found = false
                         for _, sid in ipairs(order) do if sid == spellID then found=true; break end end
                         if not found then table.insert(order, spellID); ccAddonUsers[myName].ccOrder = order end
+                    else
+                        -- Keep maxCharges in sync if the API now reports a higher value
+                        -- (e.g. talent picked after the entry was first created).
+                        if _maxC > (ccs[spellID].maxCharges or 1) then
+                            ccs[spellID].maxCharges = _maxC
+                        end
                     end
                     local newEnd = GetTime() + ccCd
                     if newEnd > (ccs[spellID].cdEnd or 0) then
@@ -4931,8 +4961,8 @@ playerCastFrame:SetScript("OnEvent", function(_, _, unit, castGUID, spellID)
                     DLog("CC_SELF", "requireTalent not met for spellID=" .. tostring(spellID) .. " reqTalent=" .. tostring(_reqTalent))
                 end
             end
-            -- Broadcast to party
-            SendHasu("CCCAST:" .. tostring(spellID) .. ":" .. tostring(ccCd))
+            -- Broadcast to party (4th field = maxCharges, optional for backward compat)
+            SendHasu("CCCAST:" .. tostring(spellID) .. ":" .. tostring(ccCd) .. ":" .. tostring(_maxC))
         end
         if spyMode then
             print("|cFF00DDDD[SPY]|r PLAYER cast spellID=" ..
@@ -5891,9 +5921,13 @@ local function UpdateCCDisplay()
                     end
                     if doShow then
                         local rem = (cc.cdEnd and cc.cdEnd > now) and (cc.cdEnd - now) or 0
-                        local isUnknown = (not userInfo.isSelf) and (cc.cdEnd == 0) and (not userInfo.hasAddon)
+                        local isUnknown = (not userInfo.isSelf) and ((cc.cdEnd or 0) == 0) and (not userInfo.hasAddon)
                         local maxC = cc.maxCharges or 1
-                        if maxC <= 1 then
+                        -- Per-charge rendering (N bars) is restricted to self because
+                        -- C_Spell.GetSpellCharges only returns reliable data for the
+                        -- local player. For party members we fall back to one bar
+                        -- with the legacy "(xN)" badge displayed by RenderCCBar.
+                        if maxC <= 1 or not userInfo.isSelf then
                             entries[#entries + 1] = {
                                 playerName = playerName,
                                 spellID    = spellID,
@@ -5903,21 +5937,20 @@ local function UpdateCCDisplay()
                                 isUnknown  = isUnknown,
                             }
                         else
-                            -- Multi-charge: render one bar per charge slot.
-                            -- For self, query C_Spell.GetSpellCharges so each bar
-                            -- shows the real per-charge recharge timer (charges
-                            -- recharge sequentially: nth charge is ready at
-                            -- start + (n - current) * duration).
+                            -- Self with multi-charge: one bar per charge slot,
+                            -- each bar shows its real recharge timer. Charges
+                            -- recharge sequentially: nth missing charge becomes
+                            -- ready at start + (n - current) * duration.
                             local perCharge = {}
-                            if userInfo.isSelf and C_Spell and C_Spell.GetSpellCharges then
+                            if C_Spell and C_Spell.GetSpellCharges then
                                 local ok, info = pcall(C_Spell.GetSpellCharges, spellID)
                                 if ok and info then
                                     local cur   = info.currentCharges or maxC
-                                    local start = info.cooldownStartTime or info.cooldownStart or 0
+                                    local start = info.cooldownStartTime or 0
                                     local dur   = info.cooldownDuration or 0
                                     for i = 1, maxC do
                                         if i <= cur then
-                                            perCharge[i] = 0  -- ready
+                                            perCharge[i] = 0
                                         else
                                             local nth = i - cur
                                             local readyAt = start + (nth * dur)
