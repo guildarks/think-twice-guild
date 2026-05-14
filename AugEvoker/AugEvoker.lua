@@ -228,65 +228,29 @@ eventFrame:SetScript("OnEvent", function(self, event, ...)
     elseif event == "UNIT_SPELLCAST_SUCCEEDED" then
         if frozen then return end  -- stats figées
         local unit, _, spellID = ...
-        -- Cast d'Éclat d'Ébène par le joueur : démarre le segment et garantit
-        -- que le joueur est dans uptimeData. Le décompte par cible est géré
-        -- dans COMBAT_LOG_EVENT_UNFILTERED (SPELL_AURA_APPLIED).
+        -- Cast d'Éclat d'Ébène par le joueur. L'aura EM est invisible via l'API
+        -- C_UnitAuras sur les autres joueurs en donjon (taint Midnight), mais le
+        -- spellID du cast (395152) reste lisible. Le sort touche le joueur + les
+        -- DPS du groupe : on compte une application pour chacun au moment du cast.
         if unit == "player"
         and spellID and not issecretvalue(spellID)
         and spellID == EBON_MIGHT_CAST_ID
         then
             if segmentStart == 0 then segmentStart = GetTime() end
-            local playerName = UnitName("player")
-            if playerName and not issecretvalue(playerName) then
-                EnsurePlayer(playerName)
+            for name, u in pairs(GetGroupMembers()) do
+                local role = UnitGroupRolesAssigned(u)
+                if issecretvalue(role) then role = nil end
+                -- DPS uniquement : on exclut tank et soigneur
+                if role ~= "HEALER" and role ~= "TANK" then
+                    local d = EnsurePlayer(name)
+                    d.emCount = (d.emCount or 0) + 1
+                end
             end
         end
 
     elseif event == "COMBAT_LOG_EVENT_UNFILTERED" then
         if frozen then return end  -- stats figées, on ignore le CLEU
-        local _, subEvent, _, sourceGUID, sourceName, _, _, _, destName,
-              _, _, spellId, spellName = CombatLogGetCurrentEventInfo()
-
-        -- Éclat d'Ébène : l'aura est invisible via l'API C_UnitAuras sur les
-        -- membres du groupe (taint Midnight), mais le combat log expose destName
-        -- et spellName de façon lisible. On compte chaque application/refresh
-        -- du buff lancé par le joueur.
-        if subEvent == "SPELL_AURA_APPLIED" or subEvent == "SPELL_AURA_REFRESH" then
-            -- DEBUG temporaire : trace les buffs appliqués par le joueur
-            if sourceName and not issecretvalue(sourceName)
-            and sourceName == UnitName("player") then
-                local sidStr  = (spellId and not issecretvalue(spellId)) and tostring(spellId) or "SECRET"
-                local snStr   = (spellName and not issecretvalue(spellName)) and spellName or "SECRET"
-                local dnStr   = (destName and not issecretvalue(destName)) and destName or "SECRET"
-                DEFAULT_CHAT_FRAME:AddMessage(string.format(
-                    "|cFFFF8800[EMDBG]|r %s sid=%s sn='%s' dest=%s", subEvent, sidStr, snStr, dnStr))
-            end
-
-            local isEM = false
-            if spellId and not issecretvalue(spellId) and spellId == EBON_MIGHT_BUFF_ID then
-                isEM = true
-                if not EM_SPELL_NAME and spellName and not issecretvalue(spellName) then
-                    EM_SPELL_NAME = spellName
-                end
-            end
-            if not isEM and EM_SPELL_NAME
-            and spellName and not issecretvalue(spellName)
-            and spellName == EM_SPELL_NAME then
-                isEM = true
-            end
-            if isEM and destName and not issecretvalue(destName) then
-                -- Filtre : seulement NOTRE Éclat d'Ébène
-                local srcIsPlayer = (sourceGUID and sourceGUID == UnitGUID("player"))
-                if not srcIsPlayer and sourceName and not issecretvalue(sourceName) then
-                    srcIsPlayer = (sourceName == UnitName("player"))
-                end
-                if srcIsPlayer then
-                    local d = EnsurePlayer(destName)
-                    d.emCount = (d.emCount or 0) + 1
-                    if segmentStart == 0 then segmentStart = GetTime() end
-                end
-            end
-        end
+        local _, subEvent, _, _, _, _, _, _, destName = CombatLogGetCurrentEventInfo()
 
         -- Alerte décès : quelqu'un du groupe est mort
         if subEvent == "UNIT_DIED" and destName and not issecretvalue(destName) then
