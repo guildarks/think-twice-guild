@@ -232,6 +232,16 @@ eventFrame:SetScript("OnEvent", function(self, event, ...)
         if subEvent == "SPELL_CAST_SUCCESS"
         and sourceGUID == playerGUID
         and spellID and not issecretvalue(spellID)
+        then
+            if spellID == EBON_MIGHT_CAST_ID then
+                DEFAULT_CHAT_FRAME:AddMessage(string.format("|cFF33CC99[Debug]|r EM cast detected! spellID=%d", spellID))
+            elseif spellID == PRESCIENCE_CAST_ID then
+                DEFAULT_CHAT_FRAME:AddMessage(string.format("|cFF33CC99[Debug]|r Presc cast detected! spellID=%d", spellID))
+            end
+        end
+        if subEvent == "SPELL_CAST_SUCCESS"
+        and sourceGUID == playerGUID
+        and spellID and not issecretvalue(spellID)
         and spellID == EBON_MIGHT_CAST_ID
         then
             local t = GetTime()
