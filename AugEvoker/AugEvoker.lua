@@ -216,8 +216,7 @@ eventFrame:RegisterEvent("PLAYER_REGEN_ENABLED")
 eventFrame:RegisterEvent("GROUP_ROSTER_UPDATE")
 eventFrame:RegisterEvent("PLAYER_ENTERING_WORLD")
 eventFrame:RegisterEvent("CHALLENGE_MODE_COMPLETED")
-eventFrame:RegisterEvent("SCENARIO_COMPLETED")  -- fin M+
-eventFrame:RegisterEvent("SCENARIO_COMPLETED")        -- fin donjon normal/héroïque
+eventFrame:RegisterEvent("SCENARIO_COMPLETED")
 
 local playerGUID = nil
 
@@ -350,8 +349,7 @@ mainFrame:RegisterForDrag("LeftButton")
 mainFrame:SetScript("OnDragStart", mainFrame.StartMoving)
 mainFrame:SetScript("OnDragStop", function()
     mainFrame:StopMovingOrSizing()
-    local x, y = mainFrame:GetLeft(), mainFrame:GetTop()
-    AugEvokerDB.framePos = {point="TOPLEFT", relPoint="TOPLEFT", x=x, y=-y}
+    SaveSettings()
 end)
 mainFrame:SetScript("OnSizeChanged", function()
     local w, h = mainFrame:GetSize()
@@ -886,9 +884,6 @@ end
 local saveFrame = CreateFrame("Frame")
 saveFrame:RegisterEvent("PLAYER_LOGOUT")
 saveFrame:SetScript("OnEvent", function() SaveSettings() end)
-
--- Sauvegarde aussi quand on déplace la frame
-mainFrame:HookScript("OnDragStop", function() SaveSettings() end)
 
 -- Sauvegarde quand on change le canal
 for _, btn in ipairs(channelBtns) do
