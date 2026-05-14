@@ -29,6 +29,16 @@ local function TruncateName(name, maxLen)
     return name:sub(1, maxLen-2).."..."
 end
 
+-- Centre une chaîne dans un champ de largeur fixe rempli de tirets.
+-- Ex : DashField("100%", 13) -> "----100%-----"
+local function DashField(s, width)
+    width = width or 13
+    local pad = width - #s
+    if pad <= 0 then return s end
+    local left = math.floor(pad / 2)
+    return string.rep("-", left)..s..string.rep("-", pad - left)
+end
+
 local function EnsurePlayer(name)
     if not uptimeData[name] then
         uptimeData[name] = {prStart=nil,prTotal=0,prActive=false,prCount=0,emCount=0}
@@ -497,7 +507,9 @@ reportBtn:SetScript("OnClick", function()
     for i, d in ipairs(list) do
         local shortName = TruncateName(d.name:match("^(%S+)") or d.name, 14)
         local prStr = d.pr>=1 and math.floor(d.pr).."%" or "-"
-        lines[#lines+1] = i..". "..shortName.." - Presc:x"..d.ct.." "..prStr.." EM:x"..d.emCt
+        -- % encadré de tirets, largeur fixe pour l'alignement
+        local prField = DashField(prStr, 13)
+        lines[#lines+1] = i..". "..shortName.." - Presc:x"..d.ct.." "..prField.." EM:x"..d.emCt
     end
     lines[#lines+1] = "[AugEvoker] --------------------"
     -- Envoi séquentiel avec délai : sinon WoW throttle/réordonne les messages
