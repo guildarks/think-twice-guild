@@ -17,7 +17,6 @@ local EM_SPELL_NAME    = nil
 local uptimeData   = {}  -- [name] = {prStart,prTotal,prActive,prExpiry, prCount,emCount}
 local segmentStart = 0
 local frozen      = false  -- true = stats figées (fin de donjon)
-local frozenChannel = nil  -- canal mémorisé au moment du freeze
 local freezeTime  = nil   -- GetTime() au moment du freeze (fige segDur)
 
 -- Forward-declaration : SaveSettings est défini bas dans le fichier mais
@@ -41,7 +40,6 @@ local function ResetData()
     uptimeData   = {}
     segmentStart = 0
     frozen       = false
-    frozenChannel = nil
     freezeTime   = nil
 end
 
@@ -57,10 +55,6 @@ local function FreezeData()
     end
     frozen     = true
     freezeTime = t   -- fige segDur : les % ne bougent plus après ce point
-    -- Mémorise le canal (on est encore en groupe à ce moment)
-    if IsInRaid() then frozenChannel = "RAID"
-    elseif IsInGroup() then frozenChannel = "PARTY"
-    else frozenChannel = nil end
 end
 
 local function GetPRUptime(name)
@@ -464,18 +458,16 @@ local reportBtn = MakeBtn(mainFrame, "Envoyer", 88)
 reportBtn:SetPoint("BOTTOMLEFT", mainFrame, "BOTTOMLEFT", 8, 5)
 SetButtonTooltip(reportBtn, "Envoyer les stats du combat dans le canal sélectionné")
 reportBtn:SetScript("OnClick", function()
-    -- Résolution du canal
-    local channel
-    if frozen and frozenChannel then
-        channel = frozenChannel
-    else
-        channel = selectedChannel
-        if IsInRaid() then
-            if channel == "PARTY" then channel = "RAID" end
-        elseif IsInGroup() then
-            if channel == "RAID" then channel = "PARTY" end
-        else
-            if channel == "PARTY" or channel == "RAID" then channel = "SAY" end
+    -- Résolution du canal : on respecte toujours le choix du menu déroulant,
+    -- puis on valide PARTY/RAID contre l'état réel du groupe pour éviter le
+    -- spam "Vous n'êtes pas dans un groupe" si le groupe s'est dissous.
+    local channel = selectedChannel
+    if channel == "PARTY" then
+        if IsInRaid() then channel = "RAID"
+        elseif not IsInGroup() then channel = "SAY" end
+    elseif channel == "RAID" then
+        if not IsInRaid() then
+            channel = IsInGroup() and "PARTY" or "SAY"
         end
     end
     -- Construction de la liste : on ne garde que les joueurs effectivement
