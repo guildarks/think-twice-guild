@@ -143,16 +143,16 @@ HasuCCData.SPEC_CC_DATA = {
         { spellID = 179057,  name = "Chaos Nova",          baseCd = 60  },
         { spellID = 1234195, name = "Void Nova",           baseCd = 90  }, -- TODO: verify spell ID in WoW 12.0
         { spellID = 217832,  name = "Imprison",            baseCd = 45  },
-        { spellID = 207684,  name = "Sigil of Misery",     baseCd = 90,
-          extraChargeTalent = 320418 }, -- Enhanced Sigil reduces CD
+        -- Sigil of Misery: talent 320418 (Improved Sigil) reduces the CD;
+        -- handled automatically via GetSpellBaseCooldown, no data key needed.
+        { spellID = 207684,  name = "Sigil of Misery",     baseCd = 90  },
     },
     [581] = { -- Vengeance DH
         { spellID = 183752,  name = "Disrupt",             baseCd = 15  },
         { spellID = 179057,  name = "Chaos Nova",          baseCd = 60  },
         { spellID = 1234195, name = "Void Nova",           baseCd = 90  }, -- TODO: verify spell ID in WoW 12.0
         { spellID = 217832,  name = "Imprison",            baseCd = 45  },
-        { spellID = 207684,  name = "Sigil of Misery",     baseCd = 90,
-          extraChargeTalent = 320418 },
+        { spellID = 207684,  name = "Sigil of Misery",     baseCd = 90  },
         { spellID = 202138,  name = "Sigil of Chains",     baseCd = 90  }, -- Sigil de chaînes
         { spellID = 202137,  name = "Sigil of Silence",    baseCd = 60  }, -- Sigil de silence
     },
