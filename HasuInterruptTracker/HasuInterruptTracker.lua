@@ -5789,20 +5789,21 @@ local function BuildOneCCBar(parent)
     nm:SetTextColor(unpack(FONT_COLOR))
     nm:SetPoint("LEFT", 6, 0)
     nm:SetJustifyH("LEFT")
-    nm:SetWidth(math.floor(barW * 0.44))
+    nm:SetWidth(math.floor(barW * 0.38))
     nm:SetWordWrap(false)
     nm:SetShadowOffset(1, -1)
     nm:SetShadowColor(0, 0, 0, 1)
     f.nameText = nm
 
-    -- Hasu: spell name label (right of player name)
+    -- Hasu: spell name label (right of player name).
+    -- Anchored LEFT + RIGHT so it fills available space; CD text reserves ~36px.
     local spellFs = math.max(8, fontSize - 1)
     local sn = content:CreateFontString(nil, "OVERLAY")
     sn:SetFont(FONT_FACE, spellFs, FONT_FLAGS)
     sn:SetTextColor(0.75, 0.75, 0.75, 1)
-    sn:SetPoint("LEFT", math.floor(barW * 0.46), 0)
+    sn:SetPoint("LEFT", math.floor(barW * 0.40), 0)
+    sn:SetPoint("RIGHT", -36, 0)
     sn:SetJustifyH("LEFT")
-    sn:SetWidth(math.floor(barW * 0.36))
     sn:SetWordWrap(false)
     sn:SetShadowOffset(1, -1)
     sn:SetShadowColor(0, 0, 0, 1)
@@ -5830,7 +5831,11 @@ RebuildCCBars = function()
         if ccBars[i] then ccBars[i]:Hide(); ccBars[i]:SetParent(nil); ccBars[i] = nil end
     end
     local _, barH, _, _, _, titleH = GetCCBarLayout()
-    local maxN = math.min(currentMaxBars, MAX_BARS)
+    -- CC tracker is independent from the kick tracker: each player can show
+    -- many CCs (and multi-charge spells contribute one row per charge), so
+    -- allocate up to MAX_BARS rather than currentMaxBars (which is sized for
+    -- one row per group member).
+    local maxN = MAX_BARS
     local th   = db.showTitle and 20 or 0
     for i = 1, maxN do
         ccBars[i] = BuildOneCCBar(ccFrame)
@@ -6015,7 +6020,7 @@ local function UpdateCCDisplay()
 
     local barIdx = 1
     for _, e in ipairs(entries) do
-        if barIdx > currentMaxBars then break end
+        if barIdx > MAX_BARS then break end
         local bar = ccBars[barIdx]
         if not bar then break end
         RenderCCBar(bar, e.playerName, e.cc, e.userInfo, e.rem, e.isUnknown, e.chargeIdx, e.chargeMax)
