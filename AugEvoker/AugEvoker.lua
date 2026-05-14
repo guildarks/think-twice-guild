@@ -188,6 +188,7 @@ local classCache = {}
 local eventFrame = CreateFrame("Frame")
 
 eventFrame:RegisterEvent("UNIT_AURA")
+eventFrame:RegisterEvent("UNIT_SPELLCAST_SUCCEEDED")
 eventFrame:RegisterEvent("COMBAT_LOG_EVENT_UNFILTERED")
 eventFrame:RegisterEvent("PLAYER_REGEN_DISABLED")
 eventFrame:RegisterEvent("PLAYER_REGEN_ENABLED")
@@ -222,20 +223,17 @@ eventFrame:SetScript("OnEvent", function(self, event, ...)
         if unit then ScanUnit(unit) end
         -- UpdateDisplay est géré par le ticker 0.1s (évite les appels massifs en raid)
 
-    elseif event == "COMBAT_LOG_EVENT_UNFILTERED" then
-        if frozen then return end  -- stats figées, on ignore le CLEU
-        local _, subEvent, _,
-              sourceGUID, _, _, _,
-              _, destName, _, _,
-              spellID = CombatLogGetCurrentEventInfo()
-        if subEvent == "SPELL_CAST_SUCCESS" and spellID and not issecretvalue(spellID) then
-            DEFAULT_CHAT_FRAME:AddMessage(string.format("|cFF33CC99[CLEU]|r spell=%d src=%s player=%s emID=%d", spellID, sourceGUID == playerGUID and "OUI" or "NON", playerGUID or "NIL", EBON_MIGHT_CAST_ID))
-        end
-        if subEvent == "SPELL_CAST_SUCCESS"
-        and sourceGUID == playerGUID
+    elseif event == "UNIT_SPELLCAST_SUCCEEDED" then
+        if frozen then return end  -- stats figées
+        local unit, _, spellID = ...
+        -- Éclat d'Ébène : le COMBAT_LOG ne donne plus le spellID en donjon
+        -- (valeur "secret" depuis Midnight). UNIT_SPELLCAST_SUCCEEDED expose
+        -- le spellID des sorts du joueur sans restriction.
+        if unit == "player"
         and spellID and not issecretvalue(spellID)
         and spellID == EBON_MIGHT_CAST_ID
         then
+            DEFAULT_CHAT_FRAME:AddMessage("|cFF33CC99[EM]|r Éclat d'Ébène détecté — #EM +1")
             local t = GetTime()
             if segmentStart == 0 then segmentStart = t end
             -- S'assure que le joueur est dans uptimeData (cas où aucun Presc n'a encore été casté)
@@ -252,9 +250,13 @@ eventFrame:SetScript("OnEvent", function(self, event, ...)
                     d.emCount = (d.emCount or 0) + 1
                 end
             end
+        end
 
+    elseif event == "COMBAT_LOG_EVENT_UNFILTERED" then
+        if frozen then return end  -- stats figées, on ignore le CLEU
+        local _, subEvent, _, _, _, _, _, _, destName = CombatLogGetCurrentEventInfo()
         -- Alerte décès : quelqu'un du groupe est mort
-        elseif subEvent == "UNIT_DIED" and destName and not issecretvalue(destName) then
+        if subEvent == "UNIT_DIED" and destName and not issecretvalue(destName) then
             -- Vérifie si les alertes décès sont activées dans les options
             local showDeathAlert = true
             if AugEvokerDB and AugEvokerDB.deathAlerts == false then showDeathAlert = false end
