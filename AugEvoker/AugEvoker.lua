@@ -23,6 +23,10 @@ local frozen      = false  -- true = stats figées (fin de donjon)
 local frozenChannel = nil  -- canal mémorisé au moment du freeze
 local freezeTime  = nil   -- GetTime() au moment du freeze (fige segDur)
 
+-- Forward-declaration : SaveSettings est défini bas dans le fichier mais
+-- référencé par le handler OnDragStop de mainFrame (créé avant la définition).
+local SaveSettings
+
 local function TruncateName(name, maxLen)
     maxLen = maxLen or 16
     if #name <= maxLen then return name end
@@ -252,7 +256,7 @@ eventFrame:SetScript("OnEvent", function(self, event, ...)
         if frozen then return end  -- stats figées, on ignore le CLEU
         local _, subEvent, _,
               sourceGUID, _, _, _,
-              destGUID, destName, _, _,
+              _, destName, _, _,
               spellID = CombatLogGetCurrentEventInfo()
 
         -- Éclat d'Ébène
@@ -350,10 +354,6 @@ mainFrame:SetScript("OnDragStart", mainFrame.StartMoving)
 mainFrame:SetScript("OnDragStop", function()
     mainFrame:StopMovingOrSizing()
     SaveSettings()
-end)
-mainFrame:SetScript("OnSizeChanged", function()
-    local w, h = mainFrame:GetSize()
-    AugEvokerDB.frameSize = {w=w, h=h}
 end)
 mainFrame:SetClampedToScreen(true)
 mainFrame:SetResizable(true)
@@ -573,7 +573,7 @@ local gripTex = resizeGrip:CreateTexture(nil, "OVERLAY")
 gripTex:SetAllPoints()
 gripTex:SetColorTexture(0.4, 0.2, 0.6, 0.6)
 resizeGrip:SetScript("OnMouseDown", function() mainFrame:StartSizing("BOTTOMRIGHT") end)
-resizeGrip:SetScript("OnMouseUp",   function() mainFrame:StopMovingOrSizing() end)
+resizeGrip:SetScript("OnMouseUp",   function() mainFrame:StopMovingOrSizing(); SaveSettings() end)
 
 -- ── Lignes de données ────────────────────────────────────────
 local CLASS_COLORS = {
@@ -755,7 +755,7 @@ optionsBtn:SetScript("OnClick", function()
 end)
 
 -- Fonction centralisée pour basculer freeze/unfreeze
-local function ToggleFrozen(fromButton)
+local function ToggleFrozen()
     if frozen then
         ResetData()
         ScanAllUnits()
@@ -776,7 +776,7 @@ freezeBtn:SetScript("OnEnter", function(self)
 end)
 freezeBtn:SetScript("OnLeave", function() GameTooltip:Hide() end)
 freezeBtn:SetScript("OnClick", function()
-    ToggleFrozen(true)
+    ToggleFrozen()
 end)
 
 -- Mettre à jour le texte du bouton selon l'état
@@ -846,7 +846,7 @@ end
 -- ============================================================
 --  SAUVEGARDE / CHARGEMENT (SavedVariables = AugEvokerDB)
 -- ============================================================
-local function SaveSettings()
+function SaveSettings()
     if not AugEvokerDB then AugEvokerDB = {} end
     AugEvokerDB.selectedChannel = selectedChannel
     -- Position de la frame
@@ -854,6 +854,9 @@ local function SaveSettings()
     if point then
         AugEvokerDB.framePos = {point=point, relPoint=relPoint, x=x, y=y}
     end
+    -- Taille de la frame
+    local w, h = mainFrame:GetSize()
+    AugEvokerDB.frameSize = {w=w, h=h}
 end
 
 local function LoadSettings()
