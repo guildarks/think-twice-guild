@@ -35,7 +35,7 @@ end
 
 local function EnsurePlayer(name)
     if not uptimeData[name] then
-        uptimeData[name] = {prStart=nil,prTotal=0,prActive=false,emStart=nil,emTotal=0,emActive=false,prCount=0}
+        uptimeData[name] = {prStart=nil,prTotal=0,prActive=false,emStart=nil,emTotal=0,emActive=false,prCount=0,emCount=0}
     end
     return uptimeData[name]
 end
@@ -108,6 +108,11 @@ end
 local function GetPrCount(name)
     local d = uptimeData[name]
     return d and d.prCount or 0
+end
+
+local function GetEmCount(name)
+    local d = uptimeData[name]
+    return d and d.emCount or 0
 end
 
 -- ============================================================
@@ -274,10 +279,12 @@ eventFrame:SetScript("OnEvent", function(self, event, ...)
                 EnsurePlayer(playerName)
             end
             -- Active EM sur le joueur + tous les membres avec Prescience active
+            -- emCount = nombre de fois où le joueur a reçu le buff EM
             for name, d in pairs(uptimeData) do
                 if name == playerName or d.prActive then
                     if not d.emActive then d.emActive = true; d.emStart = t end
                     emExpiry[name] = expiry
+                    d.emCount = (d.emCount or 0) + 1
                 end
             end
 
@@ -400,7 +407,7 @@ end
 MakeHdr("Joueur",   8,  136, "LEFT")
 MakeHdr("#Pr",    146,   36, "RIGHT")
 MakeHdr("Presc%", 184,   58, "RIGHT")
-MakeHdr("EM",     244,   60, "RIGHT")
+MakeHdr("#EM",    244,   60, "RIGHT")
 
 -- Séparateur sous le header
 local sepLine = mainFrame:CreateTexture(nil, "OVERLAY")
@@ -517,7 +524,7 @@ reportBtn:SetScript("OnClick", function()
     for name, _ in pairs(source) do
         local ct = GetPrCount(name)
         if ct > 0 then
-            list[#list+1] = {name=name, em=GetEMUptime(name), pr=GetPRUptime(name), ct=ct}
+            list[#list+1] = {name=name, emCt=GetEmCount(name), pr=GetPRUptime(name), ct=ct}
         end
     end
     table.sort(list, function(a,b)
@@ -534,8 +541,7 @@ reportBtn:SetScript("OnClick", function()
     for i, d in ipairs(list) do
         local shortName = TruncateName(d.name:match("^(%S+)") or d.name, 14)
         local prStr = d.pr>=1 and math.floor(d.pr).."%" or "-"
-        local emStr = d.em>=1 and math.floor(d.em).."%" or "-"
-        lines[#lines+1] = i..". "..shortName.." - Presc:x"..d.ct.." "..prStr.." EM:"..emStr
+        lines[#lines+1] = i..". "..shortName.." - Presc:x"..d.ct.." "..prStr.." EM:x"..d.emCt
     end
     lines[#lines+1] = "[AugEvoker] --------------------"
     -- Envoi séquentiel avec délai : sinon WoW throttle/réordonne les messages
@@ -691,11 +697,11 @@ local function UpdateDisplay()
     if frozen then
         -- Stats figées : on affiche uptimeData directement (groupe peut être vide)
         for name, _ in pairs(uptimeData) do
-            list[#list+1] = {name=name, em=GetEMUptime(name), pr=GetPRUptime(name), ct=GetPrCount(name)}
+            list[#list+1] = {name=name, em=GetEMUptime(name), emCt=GetEmCount(name), pr=GetPRUptime(name), ct=GetPrCount(name)}
         end
     else
         for name, _ in pairs(GetGroupMembers()) do
-            list[#list+1] = {name=name, em=GetEMUptime(name), pr=GetPRUptime(name), ct=GetPrCount(name)}
+            list[#list+1] = {name=name, em=GetEMUptime(name), emCt=GetEmCount(name), pr=GetPRUptime(name), ct=GetPrCount(name)}
         end
     end
     table.sort(list, function(a, b)
@@ -734,9 +740,8 @@ local function UpdateDisplay()
                 row.pr:SetTextColor(r, g, b, 1); row.pr:SetText(string.format("%.0f%%", data.pr))
             else row.pr:SetTextColor(0.3, 0.3, 0.3, 1); row.pr:SetText("—") end
             row.pr:Show()
-            if data.em >= 1 then
-                local r,g,b = UptimeColor(data.em)
-                row.em:SetTextColor(r, g, b, 1); row.em:SetText(string.format("%.0f%%", data.em))
+            if data.emCt > 0 then
+                row.em:SetTextColor(0.85, 0.6, 1.0, 1); row.em:SetText(tostring(data.emCt))
             else row.em:SetTextColor(0.3, 0.3, 0.3, 1); row.em:SetText("—") end
             row.em:Show()
         else
