@@ -7,7 +7,7 @@ local ADDON_VERSION = "8.2"
 
 local PRESCIENCE_BUFF_ID = 410089
 local PRESCIENCE_CAST_ID = 409311
-local EBON_MIGHT_CAST_ID = 395152  -- seul ID pertinent pour SPELL_CAST_SUCCESS
+local EBON_MIGHT_CAST_ID = 395296  -- seul ID pertinent pour SPELL_CAST_SUCCESS
 
 -- Noms exacts récupérés au runtime
 local PRESC_SPELL_NAME = nil
