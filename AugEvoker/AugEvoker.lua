@@ -237,6 +237,7 @@ eventFrame:SetScript("OnEvent", function(self, event, ...)
         and spellID == EBON_MIGHT_CAST_ID
         then
             if segmentStart == 0 then segmentStart = GetTime() end
+            local counted = {}
             for name, u in pairs(GetGroupMembers()) do
                 local role = UnitGroupRolesAssigned(u)
                 if issecretvalue(role) then role = nil end
@@ -244,8 +245,13 @@ eventFrame:SetScript("OnEvent", function(self, event, ...)
                 if role ~= "HEALER" and role ~= "TANK" then
                     local d = EnsurePlayer(name)
                     d.emCount = (d.emCount or 0) + 1
+                    counted[#counted+1] = name
                 end
             end
+            -- DEBUG temporaire : confirme la détection du cast
+            DEFAULT_CHAT_FRAME:AddMessage(string.format(
+                "|cFFFF8800[EMDBG]|r Cast EM détecté — #EM +1 pour %d DPS : %s",
+                #counted, table.concat(counted, ", ")))
         end
 
     elseif event == "COMBAT_LOG_EVENT_UNFILTERED" then
