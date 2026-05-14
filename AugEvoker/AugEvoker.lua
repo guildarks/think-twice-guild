@@ -277,11 +277,13 @@ eventFrame:SetScript("OnEvent", function(self, event, ...)
             local playerName = UnitName("player")
             if playerName and not issecretvalue(playerName) then
                 EnsurePlayer(playerName)
+            else
+                playerName = nil
             end
             -- Active EM sur le joueur + tous les membres avec Prescience active
             -- emCount = nombre de fois où le joueur a reçu le buff EM
             for name, d in pairs(uptimeData) do
-                if name == playerName or d.prActive then
+                if (playerName and name == playerName) or d.prActive then
                     if not d.emActive then d.emActive = true; d.emStart = t end
                     emExpiry[name] = expiry
                     d.emCount = (d.emCount or 0) + 1
