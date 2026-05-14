@@ -275,8 +275,20 @@ eventFrame:SetScript("OnEvent", function(self, event, ...)
         -- Si le nom du buff EM n'est pas encore connu, scanne d'abord le joueur
         -- (notre propre buff est lisible par spellId) pour l'apprendre avant
         -- de traiter les autres unités dont le spellId est masqué.
-        if not EM_SPELL_NAME and unit ~= "player" then ScanUnit("player") end
-        if unit then ScanUnit(unit) end
+        if not EM_SPELL_NAME and unit ~= "player" then
+            ScanUnit("player")
+            DEFAULT_CHAT_FRAME:AddMessage(string.format("[DEBUG] Appris EM_SPELL_NAME='%s' from player", EM_SPELL_NAME or "nil"))
+        end
+        if unit then
+            local name = UnitName(unit)
+            ScanUnit(unit)
+            if unit ~= "player" then
+                local d = uptimeData[name]
+                if d then
+                    DEFAULT_CHAT_FRAME:AddMessage(string.format("[DEBUG] After scan: %s emCount=%d emExpiry=%s", name, d.emCount or 0, d.emExpiry or "nil"))
+                end
+            end
+        end
         -- UpdateDisplay est géré par le ticker 0.1s (évite les appels massifs en raid)
 
     elseif event == "UNIT_SPELLCAST_SUCCEEDED" then
