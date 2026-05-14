@@ -228,22 +228,15 @@ eventFrame:SetScript("OnEvent", function(self, event, ...)
     elseif event == "UNIT_SPELLCAST_SUCCEEDED" then
         if frozen then return end  -- stats figées
         local unit, _, spellID = ...
-        -- DEBUG temporaire : log tous les sorts du joueur pour identifier
-        -- le vrai spellID d'Éclat d'Ébène.
-        if unit == "player" and spellID and not issecretvalue(spellID) then
-            DEFAULT_CHAT_FRAME:AddMessage(string.format(
-                "|cFF00FFFF[CASTDBG]|r spellID=%s", tostring(spellID)))
-        end
         -- Cast d'Éclat d'Ébène par le joueur. L'aura EM est invisible via l'API
         -- C_UnitAuras sur les autres joueurs en donjon (taint Midnight), mais le
         -- spellID du cast (395152) reste lisible. Le sort touche le joueur + les
-        -- DPS du groupe : on compte une application pour chacun au moment du cast.
+        -- DPS du groupe : on compte une application pour chaque DPS au cast.
         if unit == "player"
         and spellID and not issecretvalue(spellID)
         and spellID == EBON_MIGHT_CAST_ID
         then
             if segmentStart == 0 then segmentStart = GetTime() end
-            local counted = {}
             for name, u in pairs(GetGroupMembers()) do
                 local role = UnitGroupRolesAssigned(u)
                 if issecretvalue(role) then role = nil end
@@ -251,13 +244,8 @@ eventFrame:SetScript("OnEvent", function(self, event, ...)
                 if role ~= "HEALER" and role ~= "TANK" then
                     local d = EnsurePlayer(name)
                     d.emCount = (d.emCount or 0) + 1
-                    counted[#counted+1] = name
                 end
             end
-            -- DEBUG temporaire : confirme la détection du cast
-            DEFAULT_CHAT_FRAME:AddMessage(string.format(
-                "|cFFFF8800[EMDBG]|r Cast EM détecté — #EM +1 pour %d DPS : %s",
-                #counted, table.concat(counted, ", ")))
         end
 
     elseif event == "COMBAT_LOG_EVENT_UNFILTERED" then
