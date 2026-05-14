@@ -275,20 +275,8 @@ eventFrame:SetScript("OnEvent", function(self, event, ...)
         -- Si le nom du buff EM n'est pas encore connu, scanne d'abord le joueur
         -- (notre propre buff est lisible par spellId) pour l'apprendre avant
         -- de traiter les autres unités dont le spellId est masqué.
-        if not EM_SPELL_NAME and unit ~= "player" then
-            ScanUnit("player")
-            DEFAULT_CHAT_FRAME:AddMessage(string.format("[DEBUG] Appris EM_SPELL_NAME='%s' from player", EM_SPELL_NAME or "nil"))
-        end
-        if unit then
-            local name = UnitName(unit)
-            ScanUnit(unit)
-            if unit ~= "player" then
-                local d = uptimeData[name]
-                if d then
-                    DEFAULT_CHAT_FRAME:AddMessage(string.format("[DEBUG] After scan: %s emCount=%d emExpiry=%s", name, d.emCount or 0, d.emExpiry or "nil"))
-                end
-            end
-        end
+        if not EM_SPELL_NAME and unit ~= "player" then ScanUnit("player") end
+        if unit then ScanUnit(unit) end
         -- UpdateDisplay est géré par le ticker 0.1s (évite les appels massifs en raid)
 
     elseif event == "UNIT_SPELLCAST_SUCCEEDED" then
@@ -845,6 +833,9 @@ SlashCmdList["AUGEVOKER"]=function(msg)
         DEFAULT_CHAT_FRAME:AddMessage("|cFF33CC99[AugEvoker]|r Utilise le bouton |cFFFFAA00Envoyer|r dans la fenêtre.")
         mainFrame:Show()
     elseif msg=="scan" then
+        DEFAULT_CHAT_FRAME:AddMessage(string.format(
+            "|cFFFFAA00[AugScan]|r EM_SPELL_NAME='%s'  EBON_MIGHT_BUFF_ID=%d",
+            EM_SPELL_NAME or "nil", EBON_MIGHT_BUFF_ID))
         for name,unit in pairs(GetGroupMembers()) do
             local i=1
             while true do
@@ -852,9 +843,17 @@ SlashCmdList["AUGEVOKER"]=function(msg)
                 if not aura then break end
                 local sid=aura.spellId
                 local aname=aura.name
-                local sidStr=(sid and not issecretvalue(sid)) and tostring(sid) or "SECRET"
-                local nameStr=(aname and not issecretvalue(aname)) and aname or "SECRET"
-                DEFAULT_CHAT_FRAME:AddMessage(string.format("|cFF33CC99[AugScan]|r %s: [%s] '%s'",name,sidStr,nameStr))
+                local sidOk=(sid and not issecretvalue(sid))
+                local nameOk=(aname and not issecretvalue(aname))
+                local sidStr=sidOk and tostring(sid) or "SECRET"
+                local nameStr=nameOk and aname or "SECRET"
+                -- Marque si cette aura correspond à Éclat d'Ébène
+                local isEM=false
+                if sidOk and sid==EBON_MIGHT_BUFF_ID then isEM=true end
+                if nameOk and EM_SPELL_NAME and aname==EM_SPELL_NAME then isEM=true end
+                local tag=isEM and " |cFF00FF00<<< EM>>>|r" or ""
+                DEFAULT_CHAT_FRAME:AddMessage(string.format(
+                    "|cFF33CC99[AugScan]|r %s: [%s] '%s'%s",name,sidStr,nameStr,tag))
                 i=i+1
             end
         end
