@@ -545,9 +545,9 @@ reportBtn:SetScript("OnClick", function()
     local DELAY = 0.15
     for i, line in ipairs(lines) do
         C_Timer.After((i-1) * DELAY, function()
-            local ok, err = pcall(SendChatMessage, line, channel)
+            local ok, err = pcall(function() SendChatMessage(line, channel) end)
             if not ok then
-                DEFAULT_CHAT_FRAME:AddMessage("|cFFFF4444[AugEvoker]|r Erreur envoi: "..(err or "?"))
+                DEFAULT_CHAT_FRAME:AddMessage("|cFFFF4444[AugEvoker]|r Erreur envoi (canal: "..channel.."): "..(err or "?"))
             end
         end)
     end
