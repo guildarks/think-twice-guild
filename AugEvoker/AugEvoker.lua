@@ -157,7 +157,8 @@ local function ScanUnit(unit)
 
     -- Éclat d'Ébène : détecte les applications du buff sur tous les membres du groupe.
     -- En donjon, le spellId des buffs des autres joueurs est une "valeur secrète"
-    -- (taint Midnight) : on ajoute un fallback par nom comme pour Prescience.
+    -- (taint Midnight) : on apprend le nom exact du buff depuis nos propres auras
+    -- (lisibles par spellId) puis on le matche par nom chez les autres joueurs.
     local foundEM    = false
     local emFoundExpiry = nil
     local i = 1
@@ -167,14 +168,19 @@ local function ScanUnit(unit)
         local sid      = aura.spellId
         local auraName = aura.name
         local matched  = false
-        if sid and not issecretvalue(sid) then
-            if sid == EBON_MIGHT_BUFF_ID then matched = true end
-        elseif auraName and not issecretvalue(auraName) then
-            if EM_SPELL_NAME and auraName == EM_SPELL_NAME then matched = true end
-            if not matched then
-                local low = auraName:lower()
-                if low:find("ébène", 1, true) or low:find("ebon", 1, true) then matched = true end
+        -- Match par spellId : fiable sur nos propres auras
+        if sid and not issecretvalue(sid) and sid == EBON_MIGHT_BUFF_ID then
+            matched = true
+            -- Apprend le nom exact pour pouvoir matcher les autres joueurs
+            if not EM_SPELL_NAME and auraName and not issecretvalue(auraName) then
+                EM_SPELL_NAME = auraName
             end
+        end
+        -- Match par nom : nécessaire pour les autres joueurs (spellId masqué)
+        if not matched and EM_SPELL_NAME
+        and auraName and not issecretvalue(auraName)
+        and auraName == EM_SPELL_NAME then
+            matched = true
         end
         if matched then
             foundEM = true
@@ -266,6 +272,10 @@ eventFrame:SetScript("OnEvent", function(self, event, ...)
 
     elseif event == "UNIT_AURA" then
         local unit = ...
+        -- Si le nom du buff EM n'est pas encore connu, scanne d'abord le joueur
+        -- (notre propre buff est lisible par spellId) pour l'apprendre avant
+        -- de traiter les autres unités dont le spellId est masqué.
+        if not EM_SPELL_NAME and unit ~= "player" then ScanUnit("player") end
         if unit then ScanUnit(unit) end
         -- UpdateDisplay est géré par le ticker 0.1s (évite les appels massifs en raid)
 
