@@ -861,6 +861,7 @@ initFrame:SetScript("OnEvent",function(self)
     AugEvokerDB = AugEvokerDB or {}
     -- GUID du joueur pour filtrer le combat log
     playerGUID = UnitGUID("player")
+    DEFAULT_CHAT_FRAME:AddMessage(string.format("|cFF33CC99[AugEvoker Init]|r playerGUID=%s", playerGUID or "NIL"))
     -- Récupère les noms exacts des sorts dans la langue du client
     if C_Spell and C_Spell.GetSpellName then
         PRESC_SPELL_NAME = C_Spell.GetSpellName(PRESCIENCE_BUFF_ID)
