@@ -228,6 +228,12 @@ eventFrame:SetScript("OnEvent", function(self, event, ...)
     elseif event == "UNIT_SPELLCAST_SUCCEEDED" then
         if frozen then return end  -- stats figées
         local unit, _, spellID = ...
+        -- DEBUG temporaire : log tous les sorts du joueur pour identifier
+        -- le vrai spellID d'Éclat d'Ébène.
+        if unit == "player" and spellID and not issecretvalue(spellID) then
+            DEFAULT_CHAT_FRAME:AddMessage(string.format(
+                "|cFF00FFFF[CASTDBG]|r spellID=%s", tostring(spellID)))
+        end
         -- Cast d'Éclat d'Ébène par le joueur. L'aura EM est invisible via l'API
         -- C_UnitAuras sur les autres joueurs en donjon (taint Midnight), mais le
         -- spellID du cast (395152) reste lisible. Le sort touche le joueur + les
