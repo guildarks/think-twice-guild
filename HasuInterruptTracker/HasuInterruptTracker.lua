@@ -5796,13 +5796,14 @@ local function BuildOneCCBar(parent)
     f.nameText = nm
 
     -- Hasu: spell name label (right of player name).
-    -- Anchored LEFT + RIGHT so it fills available space; CD text reserves ~36px.
+    -- Anchored LEFT + RIGHT so it fills available space; CD text reserves ~48px
+    -- (accounts for long cooldown numbers and padding).
     local spellFs = math.max(8, fontSize - 1)
     local sn = content:CreateFontString(nil, "OVERLAY")
     sn:SetFont(FONT_FACE, spellFs, FONT_FLAGS)
     sn:SetTextColor(0.75, 0.75, 0.75, 1)
     sn:SetPoint("LEFT", math.floor(barW * 0.40), 0)
-    sn:SetPoint("RIGHT", -36, 0)
+    sn:SetPoint("RIGHT", -48, 0)
     sn:SetJustifyH("LEFT")
     sn:SetWordWrap(false)
     sn:SetShadowOffset(1, -1)
@@ -6357,7 +6358,8 @@ ShowCCSpellConfig = function()
                     db.ccSpellState[specID][sid] = chk and nil or false
                 end
                 ccDirty = true
-                f:RefreshSpells()
+                -- Deferred refresh to avoid synchronous rebuild overhead
+                C_Timer.After(0, function() f:RefreshSpells() end)
             end)
 
             local ok_ic, tex = pcall(C_Spell.GetSpellTexture, sid)
