@@ -4967,9 +4967,6 @@ playerCastFrame:SetScript("OnEvent", function(_, _, unit, castGUID, spellID)
         if spyMode then
             print("|cFF00DDDD[SPY]|r PLAYER cast spellID=" ..
                 tostring(spellID) .. " interrupt=" .. isInterrupt .. " extra=" .. isExtra)
-            if ccData then
-                print("|cFF00DDDD[SPY]|r   → CC: " .. ccData.name .. " [" .. ccData.dr .. "]")
-            end
         end
     end
 
