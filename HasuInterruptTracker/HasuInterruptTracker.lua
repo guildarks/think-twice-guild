@@ -6357,6 +6357,7 @@ ShowCCSpellConfig = function()
                     db.ccSpellState[specID][sid] = chk and nil or false
                 end
                 ccDirty = true
+                f:RefreshSpells()
             end)
 
             local ok_ic, tex = pcall(C_Spell.GetSpellTexture, sid)
