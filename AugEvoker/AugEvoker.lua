@@ -109,6 +109,12 @@ local function ScanUnit(unit)
     if not name or issecretvalue(name) or name == UNKNOWN then return end
 
     local d = EnsurePlayer(name)
+    -- Mémorise la classe tant que l'unité existe : sert au rapport coloré
+    -- même après la dissolution du groupe (fin de donjon).
+    if not d.class then
+        local _, cf = UnitClass(unit)
+        if cf and not issecretvalue(cf) then d.class = cf end
+    end
     local foundPR    = false
     local foundExpiry = nil  -- expirationTime de l'aura Prescience
 
@@ -508,11 +514,12 @@ reportBtn:SetScript("OnClick", function()
     local lines = {}
     lines[#lines+1] = "[AugEvoker] --------------------"
     for i, d in ipairs(list) do
-        local shortName = TruncateName(d.name:match("^(%S+)") or d.name, 14)
-        -- Nom coloré selon la classe du joueur
+        local shortName = TruncateName(d.name:match("^(%S+)") or d.name, 12)
+        -- Nom à largeur fixe (alignement des colonnes) + couleur de classe
+        local paddedName = string.format("%-12s", shortName)
         local cr, cg, cb = GetClassColor(d.name)
         local coloredName = string.format("|cFF%02X%02X%02X%s|r",
-            math.floor(cr*255), math.floor(cg*255), math.floor(cb*255), shortName)
+            math.floor(cr*255), math.floor(cg*255), math.floor(cb*255), paddedName)
         local prStr = d.pr>=1 and math.floor(d.pr).."%" or "-"
         -- % encadré de tirets, largeur fixe pour l'alignement
         local prField = DashField(prStr, 13)
@@ -568,6 +575,14 @@ local CLASS_COLORS = {
 }
 
 function GetClassColor(name)
+    if not classCache[name] then
+        -- D'abord : classe mémorisée dans uptimeData (survit à la dissolution
+        -- du groupe, contrairement au scan des unités party/raid).
+        local ud = uptimeData[name]
+        if ud and ud.class then
+            classCache[name] = ud.class
+        end
+    end
     if not classCache[name] then
         local function try(unit)
             if not UnitExists(unit) then return end
