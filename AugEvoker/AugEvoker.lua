@@ -22,6 +22,9 @@ local freezeTime  = nil   -- GetTime() au moment du freeze (fige segDur)
 -- Forward-declaration : SaveSettings est défini bas dans le fichier mais
 -- référencé par le handler OnDragStop de mainFrame (créé avant la définition).
 local SaveSettings
+-- GetClassColor est défini avec l'UI (plus bas) mais référencé par le bouton
+-- Envoyer (créé avant) pour colorer les noms dans le rapport.
+local GetClassColor
 
 local function TruncateName(name, maxLen)
     maxLen = maxLen or 16
@@ -506,10 +509,14 @@ reportBtn:SetScript("OnClick", function()
     lines[#lines+1] = "[AugEvoker] --------------------"
     for i, d in ipairs(list) do
         local shortName = TruncateName(d.name:match("^(%S+)") or d.name, 14)
+        -- Nom coloré selon la classe du joueur
+        local cr, cg, cb = GetClassColor(d.name)
+        local coloredName = string.format("|cFF%02X%02X%02X%s|r",
+            math.floor(cr*255), math.floor(cg*255), math.floor(cb*255), shortName)
         local prStr = d.pr>=1 and math.floor(d.pr).."%" or "-"
         -- % encadré de tirets, largeur fixe pour l'alignement
         local prField = DashField(prStr, 13)
-        lines[#lines+1] = i..". "..shortName.." - Presc:x"..d.ct.." "..prField.." EM:x"..d.emCt
+        lines[#lines+1] = i..". "..coloredName.." - Presc:x"..d.ct.." "..prField.." EM:x"..d.emCt
     end
     lines[#lines+1] = "[AugEvoker] --------------------"
     -- Envoi séquentiel avec délai : sinon WoW throttle/réordonne les messages
@@ -560,7 +567,7 @@ local CLASS_COLORS = {
     EVOKER={0.20,0.58,0.50},
 }
 
-local function GetClassColor(name)
+function GetClassColor(name)
     if not classCache[name] then
         local function try(unit)
             if not UnitExists(unit) then return end
