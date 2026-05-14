@@ -197,8 +197,6 @@ eventFrame:RegisterEvent("PLAYER_ENTERING_WORLD")
 eventFrame:RegisterEvent("CHALLENGE_MODE_COMPLETED")
 eventFrame:RegisterEvent("SCENARIO_COMPLETED")
 
-local playerGUID = nil
-
 eventFrame:SetScript("OnEvent", function(self, event, ...)
     if event == "PLAYER_REGEN_DISABLED" then
         if frozen then return end  -- stats figées
@@ -233,7 +231,6 @@ eventFrame:SetScript("OnEvent", function(self, event, ...)
         and spellID and not issecretvalue(spellID)
         and spellID == EBON_MIGHT_CAST_ID
         then
-            DEFAULT_CHAT_FRAME:AddMessage("|cFF33CC99[EM]|r Éclat d'Ébène détecté — #EM +1")
             local t = GetTime()
             if segmentStart == 0 then segmentStart = t end
             -- S'assure que le joueur est dans uptimeData (cas où aucun Presc n'a encore été casté)
@@ -374,7 +371,7 @@ end
 MakeHdr("Joueur",   8,  136, "LEFT")
 MakeHdr("#Pr",    146,   36, "RIGHT")
 MakeHdr("Presc%", 184,   58, "RIGHT")
-MakeHdr("#EM",    244,   60, "RIGHT")
+MakeHdr("#EM",    244,   60, "CENTER")
 
 -- Séparateur sous le header
 local sepLine = mainFrame:CreateTexture(nil, "OVERLAY")
@@ -627,7 +624,7 @@ for i = 1, MAX_ROWS do
 
     row.em = mainFrame:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
     row.em:SetPoint("TOPLEFT", mainFrame, "TOPLEFT", 244, y)
-    row.em:SetSize(60, ROW_H); row.em:SetJustifyH("RIGHT"); row.em:SetJustifyV("MIDDLE")
+    row.em:SetSize(60, ROW_H); row.em:SetJustifyH("CENTER"); row.em:SetJustifyV("MIDDLE")
     row.em:SetText("")
 
     row.bg:Hide(); row.accent:Hide(); row.prBar:Hide()
@@ -861,9 +858,6 @@ initFrame:SetScript("OnEvent",function(self)
     self:UnregisterAllEvents()
     -- Initialiser la base de données si nécessaire
     AugEvokerDB = AugEvokerDB or {}
-    -- GUID du joueur pour filtrer le combat log
-    playerGUID = UnitGUID("player")
-    DEFAULT_CHAT_FRAME:AddMessage(string.format("|cFF33CC99[AugEvoker Init]|r playerGUID=%s", playerGUID or "NIL"))
     -- Récupère les noms exacts des sorts dans la langue du client
     if C_Spell and C_Spell.GetSpellName then
         PRESC_SPELL_NAME = C_Spell.GetSpellName(PRESCIENCE_BUFF_ID)
