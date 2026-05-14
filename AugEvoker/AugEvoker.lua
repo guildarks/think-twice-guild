@@ -32,7 +32,7 @@ end
 
 local function EnsurePlayer(name)
     if not uptimeData[name] then
-        uptimeData[name] = {prStart=nil,prTotal=0,prActive=false,prCount=0,emCount=0,emExpiry=nil}
+        uptimeData[name] = {prStart=nil,prTotal=0,prActive=false,prCount=0,emCount=0}
     end
     return uptimeData[name]
 end
@@ -154,59 +154,9 @@ local function ScanUnit(unit)
         d.prExpiry = nil
         if d.prStart then d.prTotal = d.prTotal + (t - d.prStart); d.prStart = nil end
     end
-
-    -- Éclat d'Ébène : détecte les applications du buff sur tous les membres du groupe.
-    -- En donjon, le spellId des buffs des autres joueurs est une "valeur secrète"
-    -- (taint Midnight) : on apprend le nom exact du buff depuis nos propres auras
-    -- (lisibles par spellId) puis on le matche par nom chez les autres joueurs.
-    local foundEM    = false
-    local emFoundExpiry = nil
-    local i = 1
-    while true do
-        local aura = C_UnitAuras.GetAuraDataByIndex(unit, i, "HELPFUL")
-        if not aura then break end
-        local sid      = aura.spellId
-        local auraName = aura.name
-        local matched  = false
-        -- Match par spellId : fiable sur nos propres auras
-        if sid and not issecretvalue(sid) and sid == EBON_MIGHT_BUFF_ID then
-            matched = true
-            -- Apprend le nom exact pour pouvoir matcher les autres joueurs
-            if not EM_SPELL_NAME and auraName and not issecretvalue(auraName) then
-                EM_SPELL_NAME = auraName
-            end
-        end
-        -- Match par nom : nécessaire pour les autres joueurs (spellId masqué)
-        if not matched and EM_SPELL_NAME
-        and auraName and not issecretvalue(auraName)
-        and auraName == EM_SPELL_NAME then
-            matched = true
-        end
-        if matched then
-            foundEM = true
-            local exp = aura.expirationTime
-            if exp and not issecretvalue(exp) and exp > 0 then
-                emFoundExpiry = exp
-            end
-            break
-        end
-        i = i + 1
-    end
-
-    if foundEM then
-        if not d.emExpiry then
-            -- Première détection du buff EM : nouveau cast
-            d.emCount  = (d.emCount or 0) + 1
-            d.emExpiry = emFoundExpiry
-            if segmentStart == 0 then segmentStart = t end
-        elseif emFoundExpiry and d.emExpiry and emFoundExpiry > d.emExpiry + 1.0 then
-            -- L'expiration a avancé de >1s = refresh / nouveau cast sur cible déjà buffée
-            d.emCount  = (d.emCount or 0) + 1
-            d.emExpiry = emFoundExpiry
-        end
-    else
-        d.emExpiry = nil
-    end
+    -- NB : Éclat d'Ébène n'est PAS détecté ici. L'aura est invisible via l'API
+    -- C_UnitAuras sur les membres du groupe (masquée par le taint Midnight).
+    -- La détection se fait dans COMBAT_LOG_EVENT_UNFILTERED (SPELL_AURA_APPLIED).
 end
 
 local function ScanAllUnits()
@@ -272,37 +222,72 @@ eventFrame:SetScript("OnEvent", function(self, event, ...)
 
     elseif event == "UNIT_AURA" then
         local unit = ...
-        -- Si le nom du buff EM n'est pas encore connu, scanne d'abord le joueur
-        -- (notre propre buff est lisible par spellId) pour l'apprendre avant
-        -- de traiter les autres unités dont le spellId est masqué.
-        if not EM_SPELL_NAME and unit ~= "player" then ScanUnit("player") end
         if unit then ScanUnit(unit) end
         -- UpdateDisplay est géré par le ticker 0.1s (évite les appels massifs en raid)
 
     elseif event == "UNIT_SPELLCAST_SUCCEEDED" then
         if frozen then return end  -- stats figées
         local unit, _, spellID = ...
-        -- Éclat d'Ébène : le COMBAT_LOG ne donne plus le spellID en donjon
-        -- (valeur "secret" depuis Midnight). UNIT_SPELLCAST_SUCCEEDED expose
-        -- le spellID des sorts du joueur sans restriction.
+        -- Cast d'Éclat d'Ébène par le joueur : démarre le segment et garantit
+        -- que le joueur est dans uptimeData. Le décompte par cible est géré
+        -- dans COMBAT_LOG_EVENT_UNFILTERED (SPELL_AURA_APPLIED).
         if unit == "player"
         and spellID and not issecretvalue(spellID)
         and spellID == EBON_MIGHT_CAST_ID
         then
-            local t = GetTime()
-            if segmentStart == 0 then segmentStart = t end
-            -- S'assure que le joueur est dans uptimeData (cas où aucun Presc n'a encore été casté)
+            if segmentStart == 0 then segmentStart = GetTime() end
             local playerName = UnitName("player")
             if playerName and not issecretvalue(playerName) then
                 EnsurePlayer(playerName)
             end
-            -- emCount est maintenant géré par ScanUnit() qui détecte le buff EM
-            -- sur tous les membres du groupe via UNIT_AURA.
         end
 
     elseif event == "COMBAT_LOG_EVENT_UNFILTERED" then
         if frozen then return end  -- stats figées, on ignore le CLEU
-        local _, subEvent, _, _, _, _, _, _, destName = CombatLogGetCurrentEventInfo()
+        local _, subEvent, _, sourceGUID, sourceName, _, _, _, destName,
+              _, _, spellId, spellName = CombatLogGetCurrentEventInfo()
+
+        -- Éclat d'Ébène : l'aura est invisible via l'API C_UnitAuras sur les
+        -- membres du groupe (taint Midnight), mais le combat log expose destName
+        -- et spellName de façon lisible. On compte chaque application/refresh
+        -- du buff lancé par le joueur.
+        if subEvent == "SPELL_AURA_APPLIED" or subEvent == "SPELL_AURA_REFRESH" then
+            -- DEBUG temporaire : trace les buffs appliqués par le joueur
+            if sourceName and not issecretvalue(sourceName)
+            and sourceName == UnitName("player") then
+                local sidStr  = (spellId and not issecretvalue(spellId)) and tostring(spellId) or "SECRET"
+                local snStr   = (spellName and not issecretvalue(spellName)) and spellName or "SECRET"
+                local dnStr   = (destName and not issecretvalue(destName)) and destName or "SECRET"
+                DEFAULT_CHAT_FRAME:AddMessage(string.format(
+                    "|cFFFF8800[EMDBG]|r %s sid=%s sn='%s' dest=%s", subEvent, sidStr, snStr, dnStr))
+            end
+
+            local isEM = false
+            if spellId and not issecretvalue(spellId) and spellId == EBON_MIGHT_BUFF_ID then
+                isEM = true
+                if not EM_SPELL_NAME and spellName and not issecretvalue(spellName) then
+                    EM_SPELL_NAME = spellName
+                end
+            end
+            if not isEM and EM_SPELL_NAME
+            and spellName and not issecretvalue(spellName)
+            and spellName == EM_SPELL_NAME then
+                isEM = true
+            end
+            if isEM and destName and not issecretvalue(destName) then
+                -- Filtre : seulement NOTRE Éclat d'Ébène
+                local srcIsPlayer = (sourceGUID and sourceGUID == UnitGUID("player"))
+                if not srcIsPlayer and sourceName and not issecretvalue(sourceName) then
+                    srcIsPlayer = (sourceName == UnitName("player"))
+                end
+                if srcIsPlayer then
+                    local d = EnsurePlayer(destName)
+                    d.emCount = (d.emCount or 0) + 1
+                    if segmentStart == 0 then segmentStart = GetTime() end
+                end
+            end
+        end
+
         -- Alerte décès : quelqu'un du groupe est mort
         if subEvent == "UNIT_DIED" and destName and not issecretvalue(destName) then
             -- Vérifie si les alertes décès sont activées dans les options
