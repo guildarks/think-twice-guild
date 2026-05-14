@@ -228,6 +228,9 @@ eventFrame:SetScript("OnEvent", function(self, event, ...)
               sourceGUID, _, _, _,
               _, destName, _, _,
               spellID = CombatLogGetCurrentEventInfo()
+        if subEvent == "SPELL_CAST_SUCCESS" and spellID and not issecretvalue(spellID) then
+            DEFAULT_CHAT_FRAME:AddMessage(string.format("|cFF33CC99[CLEU]|r spell=%d src=%s player=%s emID=%d", spellID, sourceGUID == playerGUID and "OUI" or "NON", playerGUID or "NIL", EBON_MIGHT_CAST_ID))
+        end
         if subEvent == "SPELL_CAST_SUCCESS"
         and sourceGUID == playerGUID
         and spellID and not issecretvalue(spellID)
