@@ -31,7 +31,7 @@ end
 
 local function EnsurePlayer(name)
     if not uptimeData[name] then
-        uptimeData[name] = {prStart=nil,prTotal=0,prActive=false,prCount=0,emCount=0}
+        uptimeData[name] = {prStart=nil,prTotal=0,prActive=false,prCount=0,emCount=0,emExpiry=nil}
     end
     return uptimeData[name]
 end
@@ -153,6 +153,40 @@ local function ScanUnit(unit)
         d.prExpiry = nil
         if d.prStart then d.prTotal = d.prTotal + (t - d.prStart); d.prStart = nil end
     end
+
+    -- Éclat d'Ébène : détecte les applications du buff sur tous les membres du groupe
+    local foundEM    = false
+    local emFoundExpiry = nil
+    local i = 1
+    while true do
+        local aura = C_UnitAuras.GetAuraDataByIndex(unit, i, "HELPFUL")
+        if not aura then break end
+        local sid      = aura.spellId
+        if sid and not issecretvalue(sid) and sid == EBON_MIGHT_BUFF_ID then
+            foundEM = true
+            local exp = aura.expirationTime
+            if exp and not issecretvalue(exp) and exp > 0 then
+                emFoundExpiry = exp
+            end
+            break
+        end
+        i = i + 1
+    end
+
+    if foundEM then
+        if not d.emExpiry then
+            -- Première détection du buff EM : nouveau cast
+            d.emCount  = (d.emCount or 0) + 1
+            d.emExpiry = emFoundExpiry
+            if segmentStart == 0 then segmentStart = t end
+        elseif emFoundExpiry and d.emExpiry and emFoundExpiry > d.emExpiry + 1.0 then
+            -- L'expiration a avancé de >1s = refresh / nouveau cast sur cible déjà buffée
+            d.emCount  = (d.emCount or 0) + 1
+            d.emExpiry = emFoundExpiry
+        end
+    else
+        d.emExpiry = nil
+    end
 end
 
 local function ScanAllUnits()
@@ -237,16 +271,9 @@ eventFrame:SetScript("OnEvent", function(self, event, ...)
             local playerName = UnitName("player")
             if playerName and not issecretvalue(playerName) then
                 EnsurePlayer(playerName)
-            else
-                playerName = nil
             end
-            -- emCount = nombre de fois où chaque joueur a reçu le buff EM
-            -- (le joueur lui-même + tous les membres avec Prescience active)
-            for name, d in pairs(uptimeData) do
-                if (playerName and name == playerName) or d.prActive then
-                    d.emCount = (d.emCount or 0) + 1
-                end
-            end
+            -- emCount est maintenant géré par ScanUnit() qui détecte le buff EM
+            -- sur tous les membres du groupe via UNIT_AURA.
         end
 
     elseif event == "COMBAT_LOG_EVENT_UNFILTERED" then
