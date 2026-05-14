@@ -12,6 +12,7 @@ local EBON_MIGHT_CAST_ID = 395152  -- sort lancé (pour COMBAT_LOG)
 
 -- Noms exacts récupérés au runtime
 local PRESC_SPELL_NAME = nil
+local EM_SPELL_NAME    = nil
 
 local uptimeData   = {}  -- [name] = {prStart,prTotal,prActive,prExpiry, prCount,emCount}
 local segmentStart = 0
@@ -154,7 +155,9 @@ local function ScanUnit(unit)
         if d.prStart then d.prTotal = d.prTotal + (t - d.prStart); d.prStart = nil end
     end
 
-    -- Éclat d'Ébène : détecte les applications du buff sur tous les membres du groupe
+    -- Éclat d'Ébène : détecte les applications du buff sur tous les membres du groupe.
+    -- En donjon, le spellId des buffs des autres joueurs est une "valeur secrète"
+    -- (taint Midnight) : on ajoute un fallback par nom comme pour Prescience.
     local foundEM    = false
     local emFoundExpiry = nil
     local i = 1
@@ -162,7 +165,18 @@ local function ScanUnit(unit)
         local aura = C_UnitAuras.GetAuraDataByIndex(unit, i, "HELPFUL")
         if not aura then break end
         local sid      = aura.spellId
-        if sid and not issecretvalue(sid) and sid == EBON_MIGHT_BUFF_ID then
+        local auraName = aura.name
+        local matched  = false
+        if sid and not issecretvalue(sid) then
+            if sid == EBON_MIGHT_BUFF_ID then matched = true end
+        elseif auraName and not issecretvalue(auraName) then
+            if EM_SPELL_NAME and auraName == EM_SPELL_NAME then matched = true end
+            if not matched then
+                local low = auraName:lower()
+                if low:find("ébène", 1, true) or low:find("ebon", 1, true) then matched = true end
+            end
+        end
+        if matched then
             foundEM = true
             local exp = aura.expirationTime
             if exp and not issecretvalue(exp) and exp > 0 then
@@ -888,6 +902,7 @@ initFrame:SetScript("OnEvent",function(self)
     -- Récupère les noms exacts des sorts dans la langue du client
     if C_Spell and C_Spell.GetSpellName then
         PRESC_SPELL_NAME = C_Spell.GetSpellName(PRESCIENCE_BUFF_ID)
+        EM_SPELL_NAME    = C_Spell.GetSpellName(EBON_MIGHT_BUFF_ID)
     end
     -- Charge les paramètres sauvegardés (position, taille, canal, etc.)
     LoadSettings()
@@ -897,8 +912,9 @@ initFrame:SetScript("OnEvent",function(self)
         UpdateDisplay()
     end)
     DEFAULT_CHAT_FRAME:AddMessage(string.format(
-        "|cFF33CC99[AugEvoker]|r v%s — Presc='%s'",
+        "|cFF33CC99[AugEvoker]|r v%s — Presc='%s' EM='%s'",
         ADDON_VERSION,
-        PRESC_SPELL_NAME or "?"
+        PRESC_SPELL_NAME or "?",
+        EM_SPELL_NAME or "?"
     ))
 end)
