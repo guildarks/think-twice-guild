@@ -1,6 +1,6 @@
 -- ============================================================
 --  AugEvoker v8.2
---  Colonnes : Joueur | #Presc | Presc% | EM%
+--  Colonnes : Joueur | #Pr | Presc% | #EM
 -- ============================================================
 
 local ADDON_VERSION = "8.2"
@@ -8,16 +8,11 @@ local ADDON_VERSION = "8.2"
 local PRESCIENCE_BUFF_ID = 410089
 local PRESCIENCE_CAST_ID = 409311
 local EBON_MIGHT_CAST_ID = 395152  -- seul ID pertinent pour SPELL_CAST_SUCCESS
-local EBON_MIGHT_DURATION = 11.1
 
 -- Noms exacts récupérés au runtime
 local PRESC_SPELL_NAME = nil
 
--- Table des expirations EM par joueur (tracking par cast)
--- emExpiry[name] = timestamp d'expiration
-local emExpiry = {}
-
-local uptimeData   = {}  -- [name] = {prStart,prTotal,prActive, emStart,emTotal,emActive, prCount}
+local uptimeData   = {}  -- [name] = {prStart,prTotal,prActive,prExpiry, prCount,emCount}
 local segmentStart = 0
 local frozen      = false  -- true = stats figées (fin de donjon)
 local frozenChannel = nil  -- canal mémorisé au moment du freeze
@@ -35,21 +30,20 @@ end
 
 local function EnsurePlayer(name)
     if not uptimeData[name] then
-        uptimeData[name] = {prStart=nil,prTotal=0,prActive=false,emStart=nil,emTotal=0,emActive=false,prCount=0,emCount=0}
+        uptimeData[name] = {prStart=nil,prTotal=0,prActive=false,prCount=0,emCount=0}
     end
     return uptimeData[name]
 end
 
 local function ResetData()
     uptimeData   = {}
-    emExpiry     = {}
     segmentStart = 0
     frozen       = false
     frozenChannel = nil
     freezeTime   = nil
 end
 
--- Fige les données : clôture les segments ouverts, arrête l'accumulation
+-- Fige les données : clôture les segments Presc ouverts, arrête l'accumulation
 local function FreezeData()
     if frozen then return end
     local t = GetTime()
@@ -58,39 +52,13 @@ local function FreezeData()
             d.prTotal  = d.prTotal + (t - d.prStart)
             d.prStart  = nil; d.prActive = false; d.prExpiry = nil
         end
-        if d.emActive and d.emStart then
-            d.emTotal = d.emTotal + (t - d.emStart)
-            d.emStart = nil; d.emActive = false
-        end
     end
-    emExpiry   = {}
     frozen     = true
     freezeTime = t   -- fige segDur : les % ne bougent plus après ce point
     -- Mémorise le canal (on est encore en groupe à ce moment)
     if IsInRaid() then frozenChannel = "RAID"
     elseif IsInGroup() then frozenChannel = "PARTY"
     else frozenChannel = nil end
-end
-
-local function GetEMUptime(name)
-    local d = uptimeData[name]
-    if not d then return 0 end
-    if segmentStart == 0 then return 0 end  -- pas encore de segment actif
-    -- Si figé : on utilise freezeTime au lieu de GetTime()
-    -- pour que segDur ne continue pas de croître (les % resteraient stables)
-    local now = frozen and freezeTime or GetTime()
-    -- Vérifie si le buff a expiré (seulement si pas figé)
-    if not frozen and d.emActive and emExpiry[name] then
-        if now > emExpiry[name] then
-            d.emActive = false
-            if d.emStart then d.emTotal = d.emTotal + (emExpiry[name] - d.emStart); d.emStart = nil end
-            emExpiry[name] = nil
-        end
-    end
-    local segDur = math.max(1, now - segmentStart)
-    local total = d.emTotal or 0
-    if d.emActive and d.emStart then total = total + (now - d.emStart) end
-    return math.min(100, (total / segDur) * 100)
 end
 
 local function GetPRUptime(name)
@@ -236,7 +204,7 @@ eventFrame:SetScript("OnEvent", function(self, event, ...)
 
     elseif event == "PLAYER_REGEN_ENABLED" then
         if frozen then return end  -- stats figées
-        -- Fin de combat : on checkpointe le temps sans réinitialiser prActive/emActive.
+        -- Fin de combat : on checkpointe le temps sans réinitialiser prActive.
         -- Si on remettait prActive=false puis appelait ScanAllUnits(), ScanUnit verrait
         -- foundPR=true + prActive=false et incrémenterait prCount à tort.
         local t = GetTime()
@@ -244,10 +212,6 @@ eventFrame:SetScript("OnEvent", function(self, event, ...)
             if d.prActive and d.prStart then
                 d.prTotal = d.prTotal + (t - d.prStart)
                 d.prStart = t   -- repart de maintenant, prActive reste true
-            end
-            if d.emActive and d.emStart then
-                d.emTotal = d.emTotal + (t - d.emStart)
-                d.emStart = t   -- idem pour EM
             end
         end
         -- Pas de ScanAllUnits : UNIT_AURA se déclenchera naturellement
@@ -271,7 +235,6 @@ eventFrame:SetScript("OnEvent", function(self, event, ...)
         and spellID == EBON_MIGHT_CAST_ID
         then
             local t = GetTime()
-            local expiry = t + EBON_MIGHT_DURATION
             if segmentStart == 0 then segmentStart = t end
             -- S'assure que le joueur est dans uptimeData (cas où aucun Presc n'a encore été casté)
             local playerName = UnitName("player")
@@ -280,12 +243,10 @@ eventFrame:SetScript("OnEvent", function(self, event, ...)
             else
                 playerName = nil
             end
-            -- Active EM sur le joueur + tous les membres avec Prescience active
-            -- emCount = nombre de fois où le joueur a reçu le buff EM
+            -- emCount = nombre de fois où chaque joueur a reçu le buff EM
+            -- (le joueur lui-même + tous les membres avec Prescience active)
             for name, d in pairs(uptimeData) do
                 if (playerName and name == playerName) or d.prActive then
-                    if not d.emActive then d.emActive = true; d.emStart = t end
-                    emExpiry[name] = expiry
                     d.emCount = (d.emCount or 0) + 1
                 end
             end
@@ -580,7 +541,9 @@ resizeGrip:SetPoint("BOTTOMRIGHT", mainFrame, "BOTTOMRIGHT", -2, 2)
 local gripTex = resizeGrip:CreateTexture(nil, "OVERLAY")
 gripTex:SetAllPoints()
 gripTex:SetColorTexture(0.4, 0.2, 0.6, 0.6)
-resizeGrip:SetScript("OnMouseDown", function() mainFrame:StartSizing("BOTTOMRIGHT") end)
+-- Resize horizontal uniquement : la hauteur est recalculée par ResizeFrame
+-- selon le nombre de lignes, donc un resize vertical serait annulé aussitôt.
+resizeGrip:SetScript("OnMouseDown", function() mainFrame:StartSizing("RIGHT") end)
 resizeGrip:SetScript("OnMouseUp",   function() mainFrame:StopMovingOrSizing(); SaveSettings() end)
 
 -- ── Lignes de données ────────────────────────────────────────
@@ -642,14 +605,6 @@ for i = 1, MAX_ROWS do
     row.prBar:SetTexture("Interface\\TargetingFrame\\UI-StatusBar")
     row.prBar:SetVertexColor(0.3, 0.6, 1.0, 0.45)
 
-    -- Barre EM% (dans la zone EM, à droite)
-    row.emBar = mainFrame:CreateTexture(nil, "ARTWORK", nil, 1)
-    row.emBar:SetPoint("TOPRIGHT", mainFrame, "TOPRIGHT", -1, y)
-    row.emBar:SetHeight(ROW_H)
-    row.emBar:SetWidth(1)
-    row.emBar:SetTexture("Interface\\TargetingFrame\\UI-StatusBar")
-    row.emBar:SetVertexColor(0.6, 0.2, 0.9, 0.45)
-
     row.name = mainFrame:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
     row.name:SetPoint("TOPLEFT", mainFrame, "TOPLEFT", 8, y)
     row.name:SetSize(136, ROW_H)
@@ -671,7 +626,7 @@ for i = 1, MAX_ROWS do
     row.em:SetSize(60, ROW_H); row.em:SetJustifyH("RIGHT"); row.em:SetJustifyV("MIDDLE")
     row.em:SetText("")
 
-    row.bg:Hide(); row.accent:Hide(); row.prBar:Hide(); row.emBar:Hide()
+    row.bg:Hide(); row.accent:Hide(); row.prBar:Hide()
     row.name:Hide(); row.ct:Hide(); row.pr:Hide(); row.em:Hide()
     rows[i] = row
 end
@@ -699,11 +654,11 @@ local function UpdateDisplay()
     if frozen then
         -- Stats figées : on affiche uptimeData directement (groupe peut être vide)
         for name, _ in pairs(uptimeData) do
-            list[#list+1] = {name=name, em=GetEMUptime(name), emCt=GetEmCount(name), pr=GetPRUptime(name), ct=GetPrCount(name)}
+            list[#list+1] = {name=name, emCt=GetEmCount(name), pr=GetPRUptime(name), ct=GetPrCount(name)}
         end
     else
         for name, _ in pairs(GetGroupMembers()) do
-            list[#list+1] = {name=name, em=GetEMUptime(name), emCt=GetEmCount(name), pr=GetPRUptime(name), ct=GetPrCount(name)}
+            list[#list+1] = {name=name, emCt=GetEmCount(name), pr=GetPRUptime(name), ct=GetPrCount(name)}
         end
     end
     table.sort(list, function(a, b)
@@ -726,12 +681,6 @@ local function UpdateDisplay()
                 row.prBar:SetWidth(prW); row.prBar:Show()
             else row.prBar:Hide() end
 
-            local emW = math.max(0, math.floor(data.em / 100 * 60))
-            if emW > 0 then
-                row.emBar:SetVertexColor(0.8, 0.4, 1.0, 0.75)
-                row.emBar:SetWidth(emW); row.emBar:Show()
-            else row.emBar:Hide() end
-
             row.name:SetTextColor(1, 1, 1, 1)
             row.name:SetText(TruncateName(data.name)); row.name:Show()
             if data.ct > 0 then row.ct:SetTextColor(0.8, 0.8, 0.8, 1); row.ct:SetText(tostring(data.ct))
@@ -747,7 +696,7 @@ local function UpdateDisplay()
             else row.em:SetTextColor(0.3, 0.3, 0.3, 1); row.em:SetText("—") end
             row.em:Show()
         else
-            row.bg:Hide(); row.accent:Hide(); row.prBar:Hide(); row.emBar:Hide()
+            row.bg:Hide(); row.accent:Hide(); row.prBar:Hide()
             row.name:Hide(); row.ct:Hide(); row.pr:Hide(); row.em:Hide()
         end
     end
@@ -861,9 +810,8 @@ function SaveSettings()
     if point then
         AugEvokerDB.framePos = {point=point, relPoint=relPoint, x=x, y=y}
     end
-    -- Taille de la frame
-    local w, h = mainFrame:GetSize()
-    AugEvokerDB.frameSize = {w=w, h=h}
+    -- Largeur de la frame (la hauteur est calculée selon le nombre de lignes)
+    AugEvokerDB.frameSize = {w = mainFrame:GetWidth()}
 end
 
 local function LoadSettings()
@@ -885,8 +833,8 @@ local function LoadSettings()
         mainFrame:ClearAllPoints()
         mainFrame:SetPoint(p.point, UIParent, p.relPoint, p.x, p.y)
     end
-    if AugEvokerDB.frameSize then
-        mainFrame:SetSize(AugEvokerDB.frameSize.w, AugEvokerDB.frameSize.h)
+    if AugEvokerDB.frameSize and AugEvokerDB.frameSize.w then
+        mainFrame:SetWidth(AugEvokerDB.frameSize.w)
     end
 end
 

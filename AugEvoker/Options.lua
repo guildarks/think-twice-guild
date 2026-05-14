@@ -9,21 +9,15 @@ local defaults = {
     -- Fond
     bgR=0.07, bgG=0.07, bgB=0.07, bgA=0.96,
     -- Bordure
-    bdR=0.20, bdG=0.10, bdB=0.30, bdA=1.0,
+    bdR=0.20, bdG=0.10, bdB=0.30,
     -- Titre
     titleR=0.73, titleG=0.53, titleB=1.0,
-    -- Header bg
-    hdrR=0.11, hdrG=0.05, hdrB=0.18,
     -- Barre Presc alpha
     prBarA=0.75,
-    -- Barre EM alpha
-    emBarA=0.75,
     -- Taille police
     fontSize=10,
     -- Texture barre
     barTex="Interface\\TargetingFrame\\UI-StatusBar",
-    -- ElvUI sync
-    elvuiSync=false,
     -- Alertes
     deathAlerts=true,
 }
@@ -192,7 +186,7 @@ optTitle:SetBackdrop({bgFile="Interface\\Buttons\\WHITE8X8"})
 optTitle:SetBackdropColor(0.15,0.07,0.25,1)
 local optTitleTxt = optTitle:CreateFontString(nil,"OVERLAY","GameFontNormal")
 optTitleTxt:SetPoint("LEFT",optTitle,"LEFT",10,0)
-optTitleTxt:SetAllPoints()
+optTitleTxt:SetPoint("RIGHT",optTitle,"RIGHT",-10,0)
 optTitleTxt:SetJustifyH("LEFT"); optTitleTxt:SetJustifyV("MIDDLE")
 optTitleTxt:SetText("|cFFAA77FFAug Evoker|r  Options")
 
@@ -209,6 +203,8 @@ local tabPanels = {}
 local fontMenu, texMenu, outlineMenu
 -- Forward-declarations des widgets référencés par le tab ElvUI
 local fontDropLabel, fontPreview, texDropLabel, texPreview, bgColorSwatch
+-- Forward-declaration : appelée par ShowTab, définie dans le tab ElvUI
+local RefreshElvDetection
 
 local function ShowTab(idx)
     -- Ferme tous les dropdowns ouverts
@@ -227,6 +223,8 @@ local function ShowTab(idx)
             b.fs:SetTextColor(0.6,0.5,0.7,1)
         end
     end
+    -- Rafraîchit la détection ElvUI/ToxiUI à l'affichage du tab ElvUI
+    if idx == 5 and RefreshElvDetection then RefreshElvDetection() end
 end
 
 for i,name in ipairs(tabs) do
@@ -290,20 +288,9 @@ local function AddSection(panel, text, y)
     return fs
 end
 
-AddSection(p1,"Visibilité",-8)
-local cbPresc = MakeCheckbox(p1,"Afficher colonne Presc",true,function(v) S.showPresc=v end)
-cbPresc:SetPoint("TOPLEFT",p1,"TOPLEFT",12,-28)
-local cbEM = MakeCheckbox(p1,"Afficher colonne EM",true,function(v) S.showEM=v end)
-cbEM:SetPoint("TOPLEFT",p1,"TOPLEFT",12,-52)
-local cbCt = MakeCheckbox(p1,"Afficher colonne #Pr",true,function(v) S.showCt=v end)
-cbCt:SetPoint("TOPLEFT",p1,"TOPLEFT",12,-76)
-
-AddSection(p1,"Comportement",-104)
-local cbAutoReset = MakeCheckbox(p1,"Reset auto au début du combat",true,function(v) S.autoReset=v end)
-cbAutoReset:SetPoint("TOPLEFT",p1,"TOPLEFT",12,-124)
-
-local cbDeathAlerts = MakeCheckbox(p1,"Alertes décès en chat",true,function(v) S.deathAlerts=v end)
-cbDeathAlerts:SetPoint("TOPLEFT",p1,"TOPLEFT",12,-148)
+AddSection(p1,"Comportement",-8)
+local cbDeathAlerts = MakeCheckbox(p1,"Alertes décès en chat",S.deathAlerts,function(v) S.deathAlerts=v end)
+cbDeathAlerts:SetPoint("TOPLEFT",p1,"TOPLEFT",12,-28)
 
 -- ── Tab 2 : Apparence ─────────────────────────────────────────
 local p2 = tabPanels[2]
@@ -326,15 +313,12 @@ local titleColorSwatch = MakeColorSwatch(p2,"Titre",S.titleR,S.titleG,S.titleB,f
 end)
 titleColorSwatch:SetPoint("TOPLEFT",p2,"TOPLEFT",12,-76)
 
-AddSection(p2,"Opacité des barres",-104)
+AddSection(p2,"Opacité",-104)
 local prBarSlider = MakeSlider(p2,"Barre Presc",0,1,0.05,S.prBarA,function(v) S.prBarA=v end)
 prBarSlider:SetPoint("TOPLEFT",p2,"TOPLEFT",12,-124)
 
-local emBarSlider = MakeSlider(p2,"Barre EM",0,1,0.05,S.emBarA,function(v) S.emBarA=v end)
-emBarSlider:SetPoint("TOPLEFT",p2,"TOPLEFT",12,-168)
-
 local bgAlphaSlider = MakeSlider(p2,"Opacité fond",0,1,0.05,S.bgA,function(v) S.bgA=v end)
-bgAlphaSlider:SetPoint("TOPLEFT",p2,"TOPLEFT",12,-212)
+bgAlphaSlider:SetPoint("TOPLEFT",p2,"TOPLEFT",12,-168)
 
 -- ── Tab 3 : Texte ─────────────────────────────────────────────
 local p3 = tabPanels[3]
@@ -648,17 +632,6 @@ outlineDropBtn:SetScript("OnClick", function()
 end)
 outlineMenu:SetScript("OnHide", function() outlineArrow:SetText("▼") end)
 
-AddSection(p3,"Couleurs des textes",-212)
-local nameColorSwatch = MakeColorSwatch(p3,"Nom (sans classe)",1,1,1,function(r,g,b)
-    S.nameR,S.nameG,S.nameB=r,g,b
-end)
-nameColorSwatch:SetPoint("TOPLEFT",p3,"TOPLEFT",12,-232)
-
-local hdrColorSwatch = MakeColorSwatch(p3,"En-têtes colonnes",0.60,0.45,0.80,function(r,g,b)
-    S.hdrR2,S.hdrG2,S.hdrB2=r,g,b
-end)
-hdrColorSwatch:SetPoint("TOPLEFT",p3,"TOPLEFT",12,-256)
-
 -- ── Tab 4 : Texture ───────────────────────────────────────────
 local p4 = tabPanels[4]
 AddSection(p4,"Texture des barres",-8)
@@ -825,7 +798,7 @@ AddSection(p5,"Synchronisation automatique",-8)
 local detectedTxt = p5:CreateFontString(nil,"OVERLAY","GameFontNormalSmall")
 detectedTxt:SetPoint("TOPLEFT",p5,"TOPLEFT",12,-28)
 
-local function RefreshElvDetection()
+RefreshElvDetection = function()
     local E = ElvUI and ElvUI[1]
     if E then
         local isToxiUI = (ToxiUI ~= nil)
@@ -835,17 +808,12 @@ local function RefreshElvDetection()
     detectedTxt:SetText("Addon détecté : |cFFFF4444Aucun|r")
     return false
 end
--- Détecte au chargement ET quand on affiche le tab
+-- Détecte au chargement ET quand on affiche le tab (via ShowTab)
 RefreshElvDetection()
-
-local cbElvSync = MakeCheckbox(p5,"Activer la synchro ElvUI / ToxiUI",S.elvuiSync,function(v)
-    S.elvuiSync=v
-end)
-cbElvSync:SetPoint("TOPLEFT",p5,"TOPLEFT",12,-52)
 
 local syncBtn = CreateFrame("Button",nil,p5,"BackdropTemplate")
 syncBtn:SetSize(200,24)
-syncBtn:SetPoint("TOPLEFT",p5,"TOPLEFT",12,-80)
+syncBtn:SetPoint("TOPLEFT",p5,"TOPLEFT",12,-52)
 syncBtn:SetBackdrop({bgFile="Interface\\Buttons\\WHITE8X8",edgeFile="Interface\\Buttons\\WHITE8X8",edgeSize=1})
 syncBtn:SetBackdropColor(0.15,0.07,0.25,1)
 syncBtn:SetBackdropBorderColor(0.60,0.40,0.90,1)
@@ -880,7 +848,6 @@ syncBtn:SetScript("OnClick",function()
             if bgColorSwatch then bgColorSwatch:SetColor(cc.r,cc.g,cc.b) end
         end
     end
-    S.elvuiSync = true
     -- Applique immédiatement
     if ApplySettings then ApplySettings() end
     DEFAULT_CHAT_FRAME:AddMessage("|cFFAA77FF[AugEvoker]|r Style ElvUI/ToxiUI appliqué.")
@@ -928,22 +895,12 @@ ApplySettings = function()
         mf.titleText:SetText(string.format("|cFF%02X%02X%02XAug Evoker|r  |cFF555555v%s|r", tr, tg, tb, ver))
     end
 
-    -- Barres : opacité
+    -- Barre Presc : opacité + texture
     if mf.rows then
         for _,row in ipairs(mf.rows) do
             if row.prBar then
-                local cr,cg,cb = 0.3,0.6,1
-                row.prBar:SetVertexColor(cr,cg,cb,S.prBarA)
-            end
-            if row.emBar then
-                row.emBar:SetVertexColor(0.8,0.4,1.0,S.emBarA)
-            end
-            -- Texture
-            if row.prBar and S.barTex then
-                row.prBar:SetTexture(S.barTex)
-            end
-            if row.emBar and S.barTex then
-                row.emBar:SetTexture(S.barTex)
+                row.prBar:SetVertexColor(0.3,0.6,1,S.prBarA)
+                if S.barTex then row.prBar:SetTexture(S.barTex) end
             end
         end
     end
