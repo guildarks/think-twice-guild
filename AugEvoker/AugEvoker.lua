@@ -229,14 +229,9 @@ eventFrame:SetScript("OnEvent", function(self, event, ...)
               spellID = CombatLogGetCurrentEventInfo()
 
         -- Éclat d'Ébène
-        if subEvent == "SPELL_CAST_SUCCESS"
-        and sourceGUID == playerGUID
-        and spellID and not issecretvalue(spellID)
-        then
-            if spellID == EBON_MIGHT_CAST_ID then
-                DEFAULT_CHAT_FRAME:AddMessage(string.format("|cFF33CC99[Debug]|r EM cast detected! spellID=%d", spellID))
-            elseif spellID == PRESCIENCE_CAST_ID then
-                DEFAULT_CHAT_FRAME:AddMessage(string.format("|cFF33CC99[Debug]|r Presc cast detected! spellID=%d", spellID))
+        if subEvent == "SPELL_CAST_SUCCESS" then
+            if sourceGUID == playerGUID and spellID and not issecretvalue(spellID) then
+                DEFAULT_CHAT_FRAME:AddMessage(string.format("|cFF33CC99[Debug CAST]|r spellID=%d (EM=%d, Presc=%d)", spellID, EBON_MIGHT_CAST_ID, PRESCIENCE_CAST_ID))
             end
         end
         if subEvent == "SPELL_CAST_SUCCESS"
@@ -869,6 +864,7 @@ initFrame:SetScript("OnEvent",function(self)
     AugEvokerDB = AugEvokerDB or {}
     -- GUID du joueur pour filtrer le combat log
     playerGUID = UnitGUID("player")
+    DEFAULT_CHAT_FRAME:AddMessage(string.format("|cFF33CC99[Debug]|r playerGUID=%s", playerGUID or "NIL"))
     -- Récupère les noms exacts des sorts dans la langue du client
     if C_Spell and C_Spell.GetSpellName then
         PRESC_SPELL_NAME = C_Spell.GetSpellName(PRESCIENCE_BUFF_ID)
