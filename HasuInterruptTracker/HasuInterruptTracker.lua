@@ -438,7 +438,7 @@ local CC_CLASS_PRIMARY = {
     SHAMAN      = { spellID = 51514,  name = "Hex",                   cd = 0   },
     HUNTER      = { spellID = 187650, name = "Freezing Trap",         cd = 25  },
     ROGUE       = { spellID = 2094,   name = "Blind",                 cd = 120 },
-    PALADIN     = { spellID = 853,    name = "Hammer of Justice",     cd = 60  },
+    PALADIN     = { spellID = 853,    name = "Hammer of Justice",     cd = 45  },
     DRUID       = { spellID = 99,     name = "Incapacitating Roar",   cd = 30  },
     WARLOCK     = { spellID = 5782,   name = "Fear",                  cd = 0   },
     MONK        = { spellID = 115078, name = "Paralysis",             cd = 15  },
