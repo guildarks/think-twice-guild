@@ -8,12 +8,15 @@
       HasuCCData.FindMyCCAbilities  — populate ccAddonUsers[myName] from spellbook + talent tree
 
     Each SPEC_CC_DATA entry:
-      spellID          : WoW spell ID
-      name             : English display name (localized names come from the spell itself)
-      baseCd           : Fallback CD in seconds (0 = no CD / no timer needed)
-                         For self, GetSpellBaseCooldown() is used instead (reflects talents).
-      requireTalent    : (optional) talent spellID — only show this CC if the talent is active
-      extraChargeTalent: (optional) talent spellID — if active, maxCharges = 2
+      spellID                : WoW spell ID
+      name                   : English display name (localized names come from the spell itself)
+      baseCd                 : Fallback CD in seconds (0 = no CD / no timer needed)
+                               For self, GetSpellBaseCooldown() is used instead (reflects talents).
+      requireTalent          : (optional) talent spellID — only show this CC if the talent is active
+      extraChargeTalent      : (optional) talent spellID — if active, maxCharges = 2
+      cooldownReducingTalent : (optional) talent spellID — if active, accept reduced CD values
+                               from GetSpellBaseCooldown (otherwise validation rejects values
+                               significantly lower than baseCd).
 ]]
 
 HasuCCData = HasuCCData or {}
@@ -136,25 +139,33 @@ HasuCCData.SPEC_CC_DATA = {
     },
 
     -- ── DEMON HUNTER ─────────────────────────────────────────
-    -- Havoc = 577 | Vengeance = 581
+    -- Havoc = 577 | Vengeance = 581 | Dévoration = 1480
     -- ─────────────────────────────────────────────────────────
     [577] = { -- Havoc DH (Dévastation)
         { spellID = 183752,  name = "Disrupt",             baseCd = 15  },
         { spellID = 179057,  name = "Chaos Nova",          baseCd = 60  },
-        { spellID = 1234195, name = "Void Nova",           baseCd = 90  }, -- TODO: verify spell ID in WoW 12.0
         { spellID = 217832,  name = "Imprison",            baseCd = 45  },
-        -- Sigil of Misery: talent 320418 (Improved Sigil) reduces the CD;
-        -- handled automatically via GetSpellBaseCooldown, no data key needed.
-        { spellID = 207684,  name = "Sigil of Misery",     baseCd = 90  },
+        { spellID = 207684,  name = "Sigil of Misery",     baseCd = 120,
+          cooldownReducingTalent = 320418 }, -- Sceau Amélioré réduit le CD de 30s
+        { spellID = 1234195, name = "Void Nova",           baseCd = 60  },
     },
     [581] = { -- Vengeance DH
         { spellID = 183752,  name = "Disrupt",             baseCd = 15  },
         { spellID = 179057,  name = "Chaos Nova",          baseCd = 60  },
-        { spellID = 1234195, name = "Void Nova",           baseCd = 90  }, -- TODO: verify spell ID in WoW 12.0
         { spellID = 217832,  name = "Imprison",            baseCd = 45  },
-        { spellID = 207684,  name = "Sigil of Misery",     baseCd = 90  },
+        { spellID = 207684,  name = "Sigil of Misery",     baseCd = 120,
+          cooldownReducingTalent = 320418 },
         { spellID = 202138,  name = "Sigil of Chains",     baseCd = 90  }, -- Sigil de chaînes
         { spellID = 202137,  name = "Sigil of Silence",    baseCd = 60  }, -- Sigil de silence
+        { spellID = 1234195, name = "Void Nova",           baseCd = 60  },
+    },
+    [1480] = { -- Dévoration DH (WoW 12.0 Midnight)
+        { spellID = 183752,  name = "Disrupt",             baseCd = 15  },
+        { spellID = 179057,  name = "Chaos Nova",          baseCd = 60  },
+        { spellID = 217832,  name = "Imprison",            baseCd = 45  },
+        { spellID = 207684,  name = "Sigil of Misery",     baseCd = 120,
+          cooldownReducingTalent = 320418 },
+        { spellID = 1234195, name = "Void Nova",           baseCd = 60  },
     },
 
     -- ── EVOKER ───────────────────────────────────────────────
@@ -406,7 +417,7 @@ local CLASS_FOR_SPEC = {
     [250]="DEATHKNIGHT", [251]="DEATHKNIGHT", [252]="DEATHKNIGHT",
     [65]="PALADIN",      [66]="PALADIN",       [70]="PALADIN",
     [62]="MAGE",         [63]="MAGE",          [64]="MAGE",
-    [577]="DEMONHUNTER", [581]="DEMONHUNTER",
+    [577]="DEMONHUNTER", [581]="DEMONHUNTER", [1480]="DEMONHUNTER",
     [1467]="EVOKER",     [1468]="EVOKER",      [1473]="EVOKER",
     [268]="MONK",        [269]="MONK",         [270]="MONK",
     [265]="WARLOCK",     [266]="WARLOCK",      [267]="WARLOCK",
@@ -424,10 +435,11 @@ for specID, list in pairs(HasuCCData.SPEC_CC_DATA) do
     for _, entry in ipairs(list) do
         if not HasuCCData.CC_SPELL_LOOKUP[entry.spellID] then
             HasuCCData.CC_SPELL_LOOKUP[entry.spellID] = {
-                name   = entry.name,
-                class  = cls,
-                dr     = "CC",
-                baseCd = entry.baseCd,
+                name                   = entry.name,
+                class                  = cls,
+                dr                     = "CC",
+                baseCd                 = entry.baseCd,
+                cooldownReducingTalent = entry.cooldownReducingTalent,
             }
         end
     end
@@ -520,14 +532,16 @@ HasuCCData.FindMyCCAbilities = function(myName, myClass, ccAddonUsers)
             -- with Echo of Death talent returns ~2000ms). Guard against
             -- garbage values by rejecting anything < 5s when entry.baseCd
             -- is meaningfully larger, and never accepting a value smaller
-            -- than ~50% of entry.baseCd.
+            -- than ~50% of entry.baseCd — UNLESS a cooldownReducingTalent is
+            -- active, in which case a reduced CD is legitimately expected.
             local actualCd = entry.baseCd
             if entry.baseCd > 0 then
                 local ok_cd, ms = pcall(GetSpellBaseCooldown, spellID)
                 if ok_cd and ms and ms >= 5000 then
                     local cd = math.floor(ms / 1000 + 0.5)
                     local minAccept = math.floor(entry.baseCd * 0.5)
-                    if cd >= 1 and (entry.baseCd < 10 or cd >= minAccept) then
+                    local talentActive = entry.cooldownReducingTalent and IsPlayerTalent(entry.cooldownReducingTalent)
+                    if cd >= 1 and (talentActive or (entry.baseCd < 10 or cd >= minAccept)) then
                         actualCd = cd
                     end
                 end
