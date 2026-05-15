@@ -558,6 +558,8 @@ HasuCCData.FindMyCCAbilities = function(myName, myClass, ccAddonUsers)
                         tostring(ok_cd), tostring(ms), entry.baseCd))
                 end
 
+                -- If GetSpellBaseCooldown succeeds and returns valid data (>= 5s),
+                -- use it (possibly reduced by talent). Otherwise use baseCd as fallback.
                 if ok_cd and ms and ms >= 5000 then
                     local cd = math.floor(ms / 1000 + 0.5)
                     local talentCheck = entry.cooldownReducingTalent and IsPlayerTalent(entry.cooldownReducingTalent)
@@ -586,12 +588,26 @@ HasuCCData.FindMyCCAbilities = function(myName, myClass, ccAddonUsers)
                     -- DEBUG: log Sigil of Misery AFTER applying reduction
                     if spellID == 207684 then
                         print(string.format(
-                            "|cFFFF8800[Hasu Debug Sigil]|r ms=%dms cd=%ds baseCd=%ds → actualCd=%ds",
-                            ms, cd, entry.baseCd, actualCd))
+                            "|cFFFF8800[Hasu Debug Sigil RESULT]|r ms=%dms cd=%ds → actualCd=%ds",
+                            ms, cd, actualCd))
                     end
-                elseif spellID == 207684 then
-                    print(string.format("|cFFFF0000[Hasu Debug Sigil GetCD FAILED]|r Check failed: ok_cd=%s ms=%s",
-                        tostring(ok_cd), tostring(ms)))
+                else
+                    -- GetSpellBaseCooldown failed, returned 0, or returned garbage.
+                    -- Use baseCd as fallback, but check if talent reduces it.
+                    local talentCheck = entry.cooldownReducingTalent and IsPlayerTalent(entry.cooldownReducingTalent)
+                    if talentCheck and entry.cdReduction then
+                        actualCd = entry.baseCd - entry.cdReduction
+                        if spellID == 207684 then
+                            print(string.format("|cFFFF8800[Hasu Debug Sigil FALLBACK]|r Using baseCd=%d - cdReduction=%d = %d",
+                                entry.baseCd, entry.cdReduction, actualCd))
+                        end
+                    else
+                        actualCd = entry.baseCd
+                        if spellID == 207684 then
+                            print(string.format("|cFFFF8800[Hasu Debug Sigil FALLBACK]|r Using baseCd=%d (no talent reduction)",
+                                entry.baseCd))
+                        end
+                    end
                 end
             end
 
