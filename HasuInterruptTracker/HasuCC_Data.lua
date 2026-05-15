@@ -643,13 +643,21 @@ HasuCCData.FindMyCCAbilities = function(myName, myClass, ccAddonUsers)
                 if IsPlayerTalent(entry.extraChargeTalent) then maxCharges = 2 end
             end
 
-            -- DEBUG: Log talent checks for Monk CCs
-            if myName and (spellID == 119381 or spellID == 116844) then
-                print(string.format("|cFFFFFF00[Debug Monk CC]|r spellID=%d name=%s baseCd=%d talent=%s hasTalent=%s actualCd=%d",
-                    spellID, entry.name, entry.baseCd,
-                    tostring(entry.cooldownReducingTalent),
-                    tostring(entry.cooldownReducingTalent and IsPlayerTalent(entry.cooldownReducingTalent)),
-                    actualCd))
+            -- DEBUG: Log ALL CCs to compare baseCd (data) vs GetSpellBaseCooldown (actual)
+            -- Use /run HasuCCData.DEBUG_AUDIT = true ; HasuCCData.FindMyCCAbilities(...)
+            -- to enable. This helps identify wrong baseCd values per class/spec.
+            if HasuCCData.DEBUG_AUDIT then
+                local apiCd = 0
+                local ok_api, ms = pcall(GetSpellBaseCooldown, spellID)
+                if ok_api and ms then apiCd = math.floor(ms / 1000 + 0.5) end
+                local talentActive = entry.cooldownReducingTalent and IsPlayerTalent(entry.cooldownReducingTalent)
+                local marker = ""
+                if entry.baseCd ~= apiCd and apiCd > 0 then marker = " |cFFFF0000<-- MISMATCH|r" end
+                print(string.format(
+                    "|cFFFFFF00[Audit]|r spellID=%d %s | data=%ds | API=%ds | talent=%s active=%s | actualCd=%ds%s",
+                    spellID, entry.name, entry.baseCd, apiCd,
+                    tostring(entry.cooldownReducingTalent or "none"),
+                    tostring(talentActive), actualCd, marker))
             end
 
             -- ── Icon ──────────────────────────────────────────────
