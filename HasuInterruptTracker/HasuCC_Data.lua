@@ -94,7 +94,7 @@ HasuCCData.SPEC_CC_DATA = {
     -- ─────────────────────────────────────────────────────────
     [70] = { -- Retribution Paladin (Vindicte)
         { spellID = 96231,   name = "Rebuke",              baseCd = 15  },
-        { spellID = 853,     name = "Hammer of Justice",   baseCd = 60,
+        { spellID = 853,     name = "Hammer of Justice",   baseCd = 45,
           cooldownReducingTalent = 234299, cdReduction = 15 },
         { spellID = 115750,  name = "Blinding Light",      baseCd = 90,
           cooldownReducingTalent = 469325, cdReduction = 15 },
@@ -103,7 +103,7 @@ HasuCCData.SPEC_CC_DATA = {
     },
     [66] = { -- Protection Paladin
         { spellID = 96231,   name = "Rebuke",              baseCd = 15  },
-        { spellID = 853,     name = "Hammer of Justice",   baseCd = 60,
+        { spellID = 853,     name = "Hammer of Justice",   baseCd = 45,
           cooldownReducingTalent = 234299, cdReduction = 15 },
         { spellID = 115750,  name = "Blinding Light",      baseCd = 90,
           cooldownReducingTalent = 469325, cdReduction = 15 },
@@ -114,7 +114,7 @@ HasuCCData.SPEC_CC_DATA = {
         { spellID = 31935,   name = "Avenger's Shield",    baseCd = 15  },
     },
     [65] = { -- Holy Paladin (Sacré) — no Rebuke
-        { spellID = 853,     name = "Hammer of Justice",   baseCd = 60,
+        { spellID = 853,     name = "Hammer of Justice",   baseCd = 45,
           cooldownReducingTalent = 234299, cdReduction = 15 },
         { spellID = 115750,  name = "Blinding Light",      baseCd = 90,
           cooldownReducingTalent = 469325, cdReduction = 15 },
