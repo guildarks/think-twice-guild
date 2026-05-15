@@ -4997,28 +4997,13 @@ playerCastFrame:SetScript("OnEvent", function(_, _, unit, castGUID, spellID)
                 local ok, r = pcall(IsPlayerSpell, id); return ok and r
             end
             local ccCd = 0
-            -- Try C_Spell.GetSpellCooldown for the ACTUAL CD after all reductions.
-            -- WoW 12.0 marks the duration/modRate fields as "secret" for some
-            -- spells (Paladin Hammer of Justice etc.) — accessing them taints
-            -- the addon. Wrap the WHOLE access (call + read + compare) inside
-            -- a single pcall so a taint error stays contained and we fall back
-            -- to the data-file calculation instead of crashing.
+            -- NOTE: do NOT use C_Spell.GetSpellCooldown here.
+            -- WoW 12.0 marks duration/modRate as "secret" for many CC spells
+            -- (Paladin Hammer of Justice, Divine Toll, etc.) — even accessing
+            -- those fields under pcall propagates taint to the entire addon,
+            -- which then blocks legitimate UI operations downstream.
+            -- Rely on GetSpellBaseCooldown + manual reduction from data file.
             do
-                local ok_sc, sc_cd = pcall(function()
-                    local info = C_Spell.GetSpellCooldown(spellID)
-                    if not info then return nil end
-                    local d = info.duration
-                    if not d or d < 5 then return nil end
-                    local mr = info.modRate
-                    if not mr or mr <= 0 then mr = 1 end
-                    return d / mr
-                end)
-                if ok_sc and sc_cd then
-                    ccCd = math.floor(sc_cd + 0.5)
-                end
-            end
-            -- Fallback to GetSpellBaseCooldown if GetSpellCooldown didn't work
-            if ccCd < 1 then
                 local ok_cd, ms = pcall(GetSpellBaseCooldown, spellID)
                 local cdReducerActive = cdReducer and IsTalentActive(cdReducer)
                 if ok_cd and ms and ms >= 5000 then
