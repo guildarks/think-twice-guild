@@ -4862,6 +4862,11 @@ ef:RegisterEvent("CHALLENGE_MODE_COMPLETED")
 ef:RegisterEvent("CHALLENGE_MODE_RESET")
 ef:RegisterEvent("PLAYER_SPECIALIZATION_CHANGED")
 ef:RegisterEvent("PLAYER_TALENT_UPDATE")
+-- TRAIT_CONFIG_UPDATED: fires in real time whenever the player commits
+-- a talent change in the new (Dragonflight+) talent tree UI. This is
+-- the most reliable signal for live talent edits — PLAYER_TALENT_UPDATE
+-- is legacy and may not fire on every node toggle.
+ef:RegisterEvent("TRAIT_CONFIG_UPDATED")
 ef:RegisterEvent("UNIT_PET")
 ef:RegisterEvent("ROLE_CHANGED_INFORM")
 ef:RegisterEvent("PLAYER_LOGOUT")
@@ -5506,6 +5511,14 @@ ef:SetScript("OnEvent", function(_, event, arg1, arg2, arg3, arg4)
             C_Timer.After(1.5, FindMyInterrupt)
             C_Timer.After(3.0, FindMyInterrupt)
         end
+        -- Spellbook changed (talent learned/unlearned, new spell granted):
+        -- recompute CC list so requireTalent / extraChargeTalent /
+        -- cooldownReducingTalent are re-evaluated and any new CC the
+        -- player just gained access to appears in the tracker.
+        if HasuCCData and HasuCCData.FindMyCCAbilities and myName and myClass then
+            HasuCCData.FindMyCCAbilities(myName, myClass, ccAddonUsers)
+            ccDirty = true
+        end
     elseif event == "PLAYER_REGEN_ENABLED" then
         inCombat = false
         CheckZoneVisibility()
@@ -5536,8 +5549,12 @@ ef:SetScript("OnEvent", function(_, event, arg1, arg2, arg3, arg4)
             C_Timer.After(0.5, ProcessInspectQueue)
         end
 
-    elseif event == "PLAYER_TALENT_UPDATE" then
-        -- Talent changed: re-check requireTalent / extraChargeTalent for self
+    elseif event == "PLAYER_TALENT_UPDATE" or event == "TRAIT_CONFIG_UPDATED" then
+        -- Talent changed: re-check requireTalent / extraChargeTalent /
+        -- cooldownReducingTalent for self. The 0.3s delay lets WoW
+        -- finish committing the new talent config before we read it
+        -- (C_Traits queries can return stale data immediately after
+        -- the event fires).
         C_Timer.After(0.3, function()
             if HasuCCData and HasuCCData.FindMyCCAbilities then
                 HasuCCData.FindMyCCAbilities(myName, myClass, ccAddonUsers)
