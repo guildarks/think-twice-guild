@@ -4890,16 +4890,27 @@ playerCastFrame:SetScript("OnEvent", function(_, _, unit, castGUID, spellID)
             -- Get actual CD via GetSpellBaseCooldown (reflects all talent reductions for self).
             -- Apply same validation as FindMyCCAbilities: reject suspiciously low values
             -- (GCD 1500ms, per-charge recharge, or talent-reduced values when the talent
-            -- is not actually active) by requiring >= 5s AND >= 50% of the expected baseCd.
+            -- is not actually active) by requiring >= 5s AND >= 50% of the expected baseCd —
+            -- UNLESS the spell has a cooldownReducingTalent that is currently active.
             local expectedCd = (hasuCC and hasuCC.baseCd) or (legacyCC and legacyCC.cd) or 0
+            local cdReducer  = hasuCC and hasuCC.cooldownReducingTalent
             local ccCd = 0
             do
                 local ok_cd, ms = pcall(GetSpellBaseCooldown, spellID)
                 if ok_cd and ms and ms >= 5000 then
                     local cd = math.floor(ms / 1000 + 0.5)
-                    local minAccept = math.floor(expectedCd * 0.5)
-                    if cd >= 1 and (expectedCd < 10 or cd >= minAccept) then
+                    local cdReducerActive = false
+                    if cdReducer then
+                        local _ok1, _r1 = pcall(IsPlayerSpell, cdReducer)
+                        cdReducerActive = (_ok1 and _r1) and true or false
+                    end
+                    if cdReducerActive then
                         ccCd = cd
+                    else
+                        local minAccept = math.floor(expectedCd * 0.5)
+                        if cd >= 1 and (expectedCd < 10 or cd >= minAccept) then
+                            ccCd = cd
+                        end
                     end
                 end
             end
