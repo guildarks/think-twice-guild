@@ -5566,16 +5566,10 @@ ef:SetScript("OnEvent", function(_, event, arg1, arg2, arg3, arg4)
         -- finish committing the new talent config before we read it
         -- (C_Traits queries can return stale data immediately after
         -- the event fires).
-        print("|cFFFF8800[Hasu Debug]|r Talent event: " .. event)
         C_Timer.After(0.3, function()
-            print("|cFFFF8800[Hasu Debug]|r Refreshing CC abilities after talent change...")
             if HasuCCData and HasuCCData.FindMyCCAbilities then
                 HasuCCData.FindMyCCAbilities(myName, myClass, ccAddonUsers)
                 ccDirty = true
-                if myName and ccAddonUsers[myName] and ccAddonUsers[myName].ccs[207684] then
-                    print("|cFFFF8800[Hasu Debug]|r Sigil of Misery CD after refresh: " ..
-                        (ccAddonUsers[myName].ccs[207684].baseCd or "N/A") .. "s")
-                end
             end
         end)
 
