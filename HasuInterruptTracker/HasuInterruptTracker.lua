@@ -518,6 +518,7 @@ local function InitCDReductionTalents()
     -- Auto-sync from HasuCC_Data.SPEC_CC_DATA if available
     -- Maps all 66+ cooldownReducingTalent entries to interrupt-applicable spells
     if HasuCCData and HasuCCData.SPEC_CC_DATA then
+        local syncedCount = 0
         for specID, ccList in pairs(HasuCCData.SPEC_CC_DATA) do
             for _, spell in ipairs(ccList) do
                 if spell.cooldownReducingTalent and spell.cdReduction and spell.spellID then
@@ -530,11 +531,17 @@ local function InitCDReductionTalents()
                                 reduction = spell.cdReduction,
                                 name = spell.name
                             }
+                            syncedCount = syncedCount + 1
                         end
                     end
                 end
             end
         end
+        if syncedCount > 0 then
+            print("|cFF00FF00[Hasu]|r CD_REDUCTION_TALENTS synced: " .. syncedCount .. " talents from HasuCC_Data")
+        end
+    else
+        print("|cFFFF8800[Hasu Warning]|r HasuCC_Data not available - using fallback talents only")
     end
 
     return talents
