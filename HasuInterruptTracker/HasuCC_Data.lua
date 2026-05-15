@@ -126,7 +126,7 @@ HasuCCData.SPEC_CC_DATA = {
     -- Arcane = 62 | Fire = 63 | Frost = 64
     -- ─────────────────────────────────────────────────────────
     [62] = { -- Arcane Mage
-        { spellID = 2139,    name = "Counterspell",        baseCd = 24,
+        { spellID = 2139,    name = "Counterspell",        baseCd = 25,
           cooldownReducingTalent = 382297, cdReduction = 5 },
         { spellID = 122,     name = "Frost Nova",          baseCd = 30,
           extraChargeTalent = 205036 },
@@ -141,7 +141,7 @@ HasuCCData.SPEC_CC_DATA = {
           requireTalent = 386763 },
     },
     [63] = { -- Fire Mage
-        { spellID = 2139,    name = "Counterspell",        baseCd = 24,
+        { spellID = 2139,    name = "Counterspell",        baseCd = 25,
           cooldownReducingTalent = 382297, cdReduction = 5 },
         { spellID = 122,     name = "Frost Nova",          baseCd = 30,
           extraChargeTalent = 205036 },
@@ -156,7 +156,7 @@ HasuCCData.SPEC_CC_DATA = {
           requireTalent = 386763 },
     },
     [64] = { -- Frost Mage
-        { spellID = 2139,    name = "Counterspell",        baseCd = 24,
+        { spellID = 2139,    name = "Counterspell",        baseCd = 25,
           cooldownReducingTalent = 382297, cdReduction = 5 },
         { spellID = 122,     name = "Frost Nova",          baseCd = 30,
           extraChargeTalent = 205036 },
