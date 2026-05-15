@@ -1635,15 +1635,24 @@ local function ScanInspectTalents(unit)
                         end
                     end
 
-                    -- Calculate CD with talent-based reduction
+                    -- Calculate CD with talent-based reduction (supports 2 stacking talents)
                     local actualCd = entry.baseCd
                     if entry.cooldownReducingTalent and entry.cdReduction then
                         local hasTalent = activeTalents[entry.cooldownReducingTalent]
                             or (activeTalents[tostring(entry.cooldownReducingTalent)] == true)
                         if hasTalent then
-                            actualCd = math.max(1, entry.baseCd - entry.cdReduction)
+                            actualCd = actualCd - entry.cdReduction
                         end
                     end
+                    -- Second talent (e.g., Holy Priest Nova sacrée stacks with Châtiment)
+                    if entry.cooldownReducingTalent2 and entry.cdReduction2 then
+                        local hasTalent2 = activeTalents[entry.cooldownReducingTalent2]
+                            or (activeTalents[tostring(entry.cooldownReducingTalent2)] == true)
+                        if hasTalent2 then
+                            actualCd = actualCd - entry.cdReduction2
+                        end
+                    end
+                    if actualCd < 1 then actualCd = 1 end
 
                     -- AUDIT: Log inspect CD calculation for party members
                     if HasuCCData and HasuCCData.DEBUG_AUDIT then
@@ -1660,13 +1669,15 @@ local function ScanInspectTalents(unit)
                     local prev = ccAddonUsers[name].ccs[sid]
                     local ok_ic, icon = pcall(C_Spell.GetSpellTexture, sid)
                     ccAddonUsers[name].ccs[sid] = {
-                        name                   = entry.name,
-                        baseCd                 = actualCd,
-                        cdEnd                  = prev and prev.cdEnd or 0,
-                        maxCharges             = maxCharges,
-                        icon                   = (ok_ic and icon) or (prev and prev.icon) or nil,
-                        cooldownReducingTalent = entry.cooldownReducingTalent,
-                        cdReduction            = entry.cdReduction,
+                        name                    = entry.name,
+                        baseCd                  = actualCd,
+                        cdEnd                   = prev and prev.cdEnd or 0,
+                        maxCharges              = maxCharges,
+                        icon                    = (ok_ic and icon) or (prev and prev.icon) or nil,
+                        cooldownReducingTalent  = entry.cooldownReducingTalent,
+                        cdReduction             = entry.cdReduction,
+                        cooldownReducingTalent2 = entry.cooldownReducingTalent2,
+                        cdReduction2            = entry.cdReduction2,
                     }
                     table.insert(ccAddonUsers[name].ccOrder, sid)
                 end
@@ -4997,6 +5008,16 @@ playerCastFrame:SetScript("OnEvent", function(_, _, unit, castGUID, spellID)
                     local cdReducerActive = (_ok1 and _r1) and true or false
                     if cdReducerActive then
                         ccCd = math.max(1, ccCd - cdReduction)
+                    end
+                end
+                -- Apply second talent reduction (e.g., Holy Priest Nova sacrée)
+                local cdReducer2  = hasuCC and hasuCC.cooldownReducingTalent2
+                local cdReduction2 = hasuCC and hasuCC.cdReduction2
+                if cdReduction2 and cdReducer2 then
+                    local _ok2, _r2 = pcall(IsPlayerSpell, cdReducer2)
+                    local cd2Active = (_ok2 and _r2) and true or false
+                    if cd2Active then
+                        ccCd = math.max(1, ccCd - cdReduction2)
                     end
                 end
             end

@@ -18,6 +18,10 @@
       cdReduction            : (optional) seconds to subtract from baseCd when cooldownReducingTalent
                                is active. If specified, the reduced CD is used even if
                                GetSpellBaseCooldown doesn't reflect the talent reduction.
+      cooldownReducingTalent2: (optional) SECOND talent that also reduces CD. Used when multiple
+                               talents can reduce the same spell (e.g. Holy Priest: Châtiment +
+                               Nova sacrée both reduce Holy Word: Chastise).
+      cdReduction2           : (optional) reduction for cooldownReducingTalent2.
 ]]
 
 HasuCCData = HasuCCData or {}
@@ -381,7 +385,8 @@ HasuCCData.SPEC_CC_DATA = {
     },
     [257] = { -- Holy Priest (Sacré) — no Silence
         { spellID = 88625,   name = "Holy Word: Chastise", baseCd = 60,
-          cooldownReducingTalent = 585, cdReduction = 4 },
+          cooldownReducingTalent = 585, cdReduction = 4,
+          cooldownReducingTalent2 = 132157, cdReduction2 = 4 }, -- Châtiment + Nova sacrée
         { spellID = 8122,    name = "Psychic Scream",      baseCd = 45,
           cooldownReducingTalent = 196704, cdReduction = 10 },
         { spellID = 1250691, name = "Void Tendrils",       baseCd = 30  },
@@ -499,12 +504,14 @@ for specID, list in pairs(HasuCCData.SPEC_CC_DATA) do
     for _, entry in ipairs(list) do
         if not HasuCCData.CC_SPELL_LOOKUP[entry.spellID] then
             HasuCCData.CC_SPELL_LOOKUP[entry.spellID] = {
-                name                   = entry.name,
-                class                  = cls,
-                dr                     = "CC",
-                baseCd                 = entry.baseCd,
-                cooldownReducingTalent = entry.cooldownReducingTalent,
-                cdReduction            = entry.cdReduction,
+                name                    = entry.name,
+                class                   = cls,
+                dr                      = "CC",
+                baseCd                  = entry.baseCd,
+                cooldownReducingTalent  = entry.cooldownReducingTalent,
+                cdReduction             = entry.cdReduction,
+                cooldownReducingTalent2 = entry.cooldownReducingTalent2,
+                cdReduction2            = entry.cdReduction2,
             }
         end
     end
@@ -613,11 +620,20 @@ HasuCCData.FindMyCCAbilities = function(myName, myClass, ccAddonUsers)
                     local cd = math.floor(ms / 1000 + 0.5)
                     local talentCheck = entry.cooldownReducingTalent and IsPlayerTalent(entry.cooldownReducingTalent)
                     local cdReducerActive = entry.cooldownReducingTalent and talentCheck
+                    local talent2Active = entry.cooldownReducingTalent2 and IsPlayerTalent(entry.cooldownReducingTalent2)
 
                     -- If talent reduces CD and is active, apply the reduction manually
                     -- in case GetSpellBaseCooldown doesn't reflect the talent
                     if cdReducerActive and entry.cdReduction then
                         actualCd = entry.baseCd - entry.cdReduction
+                        -- Stack second talent reduction if active
+                        if talent2Active and entry.cdReduction2 then
+                            actualCd = actualCd - entry.cdReduction2
+                        end
+                        if actualCd < 1 then actualCd = 1 end
+                    elseif talent2Active and entry.cdReduction2 then
+                        -- Only second talent active
+                        actualCd = math.max(1, entry.baseCd - entry.cdReduction2)
                     else
                         -- Standard validation: accept CD if it's within expected range
                         local minAccept = math.floor(entry.baseCd * 0.5)
@@ -629,11 +645,15 @@ HasuCCData.FindMyCCAbilities = function(myName, myClass, ccAddonUsers)
                     -- GetSpellBaseCooldown failed, returned 0, or returned garbage.
                     -- Use baseCd as fallback, but check if talent reduces it.
                     local talentCheck = entry.cooldownReducingTalent and IsPlayerTalent(entry.cooldownReducingTalent)
+                    local talent2Active = entry.cooldownReducingTalent2 and IsPlayerTalent(entry.cooldownReducingTalent2)
+                    actualCd = entry.baseCd
                     if talentCheck and entry.cdReduction then
-                        actualCd = entry.baseCd - entry.cdReduction
-                    else
-                        actualCd = entry.baseCd
+                        actualCd = actualCd - entry.cdReduction
                     end
+                    if talent2Active and entry.cdReduction2 then
+                        actualCd = actualCd - entry.cdReduction2
+                    end
+                    if actualCd < 1 then actualCd = 1 end
                 end
             end
 
