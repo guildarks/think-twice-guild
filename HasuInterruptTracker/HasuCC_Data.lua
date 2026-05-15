@@ -643,6 +643,15 @@ HasuCCData.FindMyCCAbilities = function(myName, myClass, ccAddonUsers)
                 if IsPlayerTalent(entry.extraChargeTalent) then maxCharges = 2 end
             end
 
+            -- DEBUG: Log talent checks for Monk CCs
+            if myName and (spellID == 119381 or spellID == 116844) then
+                print(string.format("|cFFFFFF00[Debug Monk CC]|r spellID=%d name=%s baseCd=%d talent=%s hasTalent=%s actualCd=%d",
+                    spellID, entry.name, entry.baseCd,
+                    tostring(entry.cooldownReducingTalent),
+                    tostring(entry.cooldownReducingTalent and IsPlayerTalent(entry.cooldownReducingTalent)),
+                    actualCd))
+            end
+
             -- ── Icon ──────────────────────────────────────────────
             local icon = oldCcs[spellID] and oldCcs[spellID].icon
             if not icon then
