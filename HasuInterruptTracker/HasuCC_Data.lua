@@ -551,6 +551,13 @@ HasuCCData.FindMyCCAbilities = function(myName, myClass, ccAddonUsers)
             local actualCd = entry.baseCd
             if entry.baseCd > 0 then
                 local ok_cd, ms = pcall(GetSpellBaseCooldown, spellID)
+
+                -- DEBUG Sigil
+                if spellID == 207684 then
+                    print(string.format("|cFFFF0000[Hasu Debug Sigil GetCD]|r ok_cd=%s ms=%s (baseCd=%d)",
+                        tostring(ok_cd), tostring(ms), entry.baseCd))
+                end
+
                 if ok_cd and ms and ms >= 5000 then
                     local cd = math.floor(ms / 1000 + 0.5)
                     local talentCheck = entry.cooldownReducingTalent and IsPlayerTalent(entry.cooldownReducingTalent)
@@ -582,6 +589,9 @@ HasuCCData.FindMyCCAbilities = function(myName, myClass, ccAddonUsers)
                             "|cFFFF8800[Hasu Debug Sigil]|r ms=%dms cd=%ds baseCd=%ds → actualCd=%ds",
                             ms, cd, entry.baseCd, actualCd))
                     end
+                elseif spellID == 207684 then
+                    print(string.format("|cFFFF0000[Hasu Debug Sigil GetCD FAILED]|r Check failed: ok_cd=%s ms=%s",
+                        tostring(ok_cd), tostring(ms)))
                 end
             end
 
