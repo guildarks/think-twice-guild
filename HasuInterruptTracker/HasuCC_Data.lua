@@ -500,18 +500,27 @@ HasuCCData.FindMyCCAbilities = function(myName, myClass, ccAddonUsers)
         repeat
             local spellID = entry.spellID
 
+            -- DEBUG: trace Sigil of Misery processing
+            if spellID == 207684 then
+                print("|cFFFF0000[Hasu Debug Sigil START]|r Processing Sigil of Misery (207684)")
+            end
+
             -- ── Skip interrupts: they belong to the interrupt window ──
             -- These are excluded from the player's CC list entirely so they
             -- can never accidentally appear in the CC tracker, even if a
             -- legacy ccSpellState[specID][spellID] toggle is set to true.
             if HasuCCData.INTERRUPT_SPELL_IDS
                and HasuCCData.INTERRUPT_SPELL_IDS[spellID] then
+                if spellID == 207684 then print("|cFFFF0000[Hasu Debug Sigil]|r SKIPPED: is interrupt") end
                 break
             end
 
             -- ── requireTalent check (uses full C_Traits scan) ─────────
             if entry.requireTalent then
-                if not IsPlayerTalent(entry.requireTalent) then break end
+                if not IsPlayerTalent(entry.requireTalent) then
+                    if spellID == 207684 then print("|cFFFF0000[Hasu Debug Sigil]|r SKIPPED: requireTalent not met") end
+                    break
+                end
             end
 
             -- ── Is the spell itself known? ────────────────────────
@@ -526,7 +535,10 @@ HasuCCData.FindMyCCAbilities = function(myName, myClass, ccAddonUsers)
             end
             -- For 0-CD spells (Fear, Polymorph…) always include.
             -- Only skip if baseCd > 0 and spell truly not known.
-            if not spellKnown and entry.baseCd > 0 then break end
+            if not spellKnown and entry.baseCd > 0 then
+                if spellID == 207684 then print("|cFFFF0000[Hasu Debug Sigil]|r SKIPPED: spell not known") end
+                break
+            end
 
             -- ── Get actual CD from GetSpellBaseCooldown ───────────
             -- WoW 12.0+ sometimes returns the GCD (1500ms) or the per-charge
