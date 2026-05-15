@@ -541,8 +541,16 @@ HasuCCData.FindMyCCAbilities = function(myName, myClass, ccAddonUsers)
                 local ok_cd, ms = pcall(GetSpellBaseCooldown, spellID)
                 if ok_cd and ms and ms >= 5000 then
                     local cd = math.floor(ms / 1000 + 0.5)
-                    local cdReducerActive = entry.cooldownReducingTalent
-                        and IsPlayerTalent(entry.cooldownReducingTalent)
+                    local talentCheck = entry.cooldownReducingTalent and IsPlayerTalent(entry.cooldownReducingTalent)
+                    local cdReducerActive = entry.cooldownReducingTalent and talentCheck
+
+                    -- DEBUG: log Sigil of Misery BEFORE applying reduction
+                    if spellID == 207684 then
+                        print(string.format(
+                            "|cFFFF8800[Hasu Debug Sigil]|r talent=%s has_talent=%s cdReducerActive=%s cdReduction=%s",
+                            tostring(entry.cooldownReducingTalent), tostring(talentCheck),
+                            tostring(cdReducerActive), tostring(entry.cdReduction)))
+                    end
 
                     -- If talent reduces CD and is active, apply the reduction manually
                     -- in case GetSpellBaseCooldown doesn't reflect the talent
@@ -556,14 +564,11 @@ HasuCCData.FindMyCCAbilities = function(myName, myClass, ccAddonUsers)
                         end
                     end
 
-                    -- DEBUG: log Sigil of Misery to diagnose cooldownReducingTalent
+                    -- DEBUG: log Sigil of Misery AFTER applying reduction
                     if spellID == 207684 then
                         print(string.format(
-                            "|cFFFF8800[Hasu Debug]|r Sigil of Misery: ms=%dms cd=%ds "
-                            .. "talent=%s active=%s reduction=%s → actualCd=%ds",
-                            ms, cd, entry.cooldownReducingTalent or "none",
-                            tostring(cdReducerActive), tostring(entry.cdReduction),
-                            actualCd))
+                            "|cFFFF8800[Hasu Debug Sigil]|r ms=%dms cd=%ds baseCd=%ds → actualCd=%ds",
+                            ms, cd, entry.baseCd, actualCd))
                     end
                 end
             end
