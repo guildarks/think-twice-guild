@@ -5000,10 +5000,16 @@ playerCastFrame:SetScript("OnEvent", function(_, _, unit, castGUID, spellID)
             -- PREFER C_Spell.GetSpellCooldown which returns the ACTUAL CD after
             -- all reductions (talents, haste, etc.) — most accurate source.
             -- Called right after cast, this reflects the real cooldown applied.
+            -- IMPORTANT: divide by modRate — the cooldown bar progresses at
+            -- modRate-times the normal rate when haste-scaling is active, so
+            -- the player perceives the CD as duration / modRate (e.g. 45s
+            -- duration with 12.5% haste shows ~40s on the bar).
             do
                 local ok_sc, scInfo = pcall(C_Spell.GetSpellCooldown, spellID)
                 if ok_sc and scInfo and scInfo.duration and scInfo.duration >= 5 then
-                    ccCd = math.floor(scInfo.duration + 0.5)
+                    local modRate = scInfo.modRate or 1
+                    if not modRate or modRate <= 0 then modRate = 1 end
+                    ccCd = math.floor(scInfo.duration / modRate + 0.5)
                 end
             end
             -- Fallback to GetSpellBaseCooldown if GetSpellCooldown didn't work
