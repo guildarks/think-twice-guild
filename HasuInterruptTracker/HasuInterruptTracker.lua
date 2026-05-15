@@ -4920,10 +4920,20 @@ playerCastFrame:SetScript("OnEvent", function(_, _, unit, castGUID, spellID)
                     end
                 end
             end
-            -- For 0-CD spells (Polymorph, Hex, Fear…) or rejected values, use data fallback
+            -- For 0-CD spells (Polymorph, Hex, Fear…) or rejected values, use data fallback.
+            -- Apply talent-based CD reduction if available.
             if ccCd < 1 then
                 ccCd = expectedCd > 0 and expectedCd or 2
                 if ccCd < 1 then ccCd = 2 end
+                -- Apply cooldownReducingTalent reduction to fallback CD if talent is active
+                local cdReduction = hasuCC and hasuCC.cdReduction
+                if cdReduction and cdReducer then
+                    local _ok1, _r1 = pcall(IsPlayerSpell, cdReducer)
+                    local cdReducerActive = (_ok1 and _r1) and true or false
+                    if cdReducerActive then
+                        ccCd = math.max(1, ccCd - cdReduction)
+                    end
+                end
             end
 
             -- Resolve maxCharges for this spell (talent + active charge data).
