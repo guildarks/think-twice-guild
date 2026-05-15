@@ -1625,6 +1625,12 @@ local function ScanInspectTalents(unit)
                     allowed = activeTalents[entry.requireTalent]
                         or (activeTalents[tostring(entry.requireTalent)] == true)
                 end
+                -- Check replacedByTalent: HIDE if replacement talent is active
+                if allowed and entry.replacedByTalent then
+                    local isReplaced = activeTalents[entry.replacedByTalent]
+                        or (activeTalents[tostring(entry.replacedByTalent)] == true)
+                    if isReplaced then allowed = false end
+                end
                 if allowed then
                     local sid = entry.spellID
                     local maxCharges = 1
@@ -1653,6 +1659,12 @@ local function ScanInspectTalents(unit)
                         end
                     end
                     if actualCd < 1 then actualCd = 1 end
+                    -- cdNullifyTalent: makes spell instant (CD = 1)
+                    if entry.cdNullifyTalent then
+                        local hasNullify = activeTalents[entry.cdNullifyTalent]
+                            or (activeTalents[tostring(entry.cdNullifyTalent)] == true)
+                        if hasNullify then actualCd = 1 end
+                    end
 
                     -- AUDIT: Log inspect CD calculation for party members
                     if HasuCCData and HasuCCData.DEBUG_AUDIT then
@@ -1678,6 +1690,8 @@ local function ScanInspectTalents(unit)
                         cdReduction             = entry.cdReduction,
                         cooldownReducingTalent2 = entry.cooldownReducingTalent2,
                         cdReduction2            = entry.cdReduction2,
+                        cdNullifyTalent         = entry.cdNullifyTalent,
+                        replacedByTalent        = entry.replacedByTalent,
                     }
                     table.insert(ccAddonUsers[name].ccOrder, sid)
                 end
@@ -5019,6 +5033,17 @@ playerCastFrame:SetScript("OnEvent", function(_, _, unit, castGUID, spellID)
                     if cd2Active then
                         ccCd = math.max(1, ccCd - cdReduction2)
                     end
+                end
+            end
+
+            -- Check cdNullifyTalent: makes spell instant (CD = 1)
+            -- e.g. DK Death Grip with Portée de la mort
+            -- e.g. Paladin Turn Evil with Renvoi du mal amélioration
+            local cdNullifier = hasuCC and hasuCC.cdNullifyTalent
+            if cdNullifier then
+                local _okN, _rN = pcall(IsPlayerSpell, cdNullifier)
+                if _okN and _rN then
+                    ccCd = 1
                 end
             end
 

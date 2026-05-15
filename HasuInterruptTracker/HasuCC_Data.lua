@@ -22,6 +22,12 @@
                                talents can reduce the same spell (e.g. Holy Priest: Châtiment +
                                Nova sacrée both reduce Holy Word: Chastise).
       cdReduction2           : (optional) reduction for cooldownReducingTalent2.
+      cdNullifyTalent        : (optional) talent that makes the spell instant (CD ≈ 1s).
+                               e.g. DK Death Grip: Portée de la mort (276079) makes Death Grip have no CD.
+                               e.g. Paladin Turn Evil: Renvoi du mal (460720) makes Turn Evil instant.
+      replacedByTalent       : (optional) if this talent is active, HIDE this spell (replaced by another).
+                               e.g. Mage Cone of Cold replaced by Ice Nova when Froid glacial active.
+                               e.g. DH Vengeance Sigil of Misery replaced by Sigil of Chains.
 ]]
 
 HasuCCData = HasuCCData or {}
@@ -46,13 +52,14 @@ HasuCCData.SPEC_CC_DATA = {
     -- ─────────────────────────────────────────────────────────
     [250] = { -- Blood DK
         { spellID = 47528,   name = "Mind Freeze",         baseCd = 15,
-          cooldownReducingTalent = 378848, cdReduction = 3 },
+          cooldownReducingTalent = 378848, cdReduction = 3 }, -- Soif algide
         { spellID = 45524,   name = "Chains of Ice",       baseCd = 0   },
         { spellID = 221562,  name = "Asphyxiate",          baseCd = 45  },
         { spellID = 49576,   name = "Death Grip",          baseCd = 25,
-          extraChargeTalent = 356367 },
+          extraChargeTalent = 356367, -- Écho de la mort
+          cdNullifyTalent = 276079 }, -- Portée de la mort: instant
         { spellID = 43265,   name = "Death and Decay",     baseCd = 30,
-          requireTalent = 273952 },
+          requireTalent = 273952 }, -- Poigne des morts
         { spellID = 207167,  name = "Blinding Sleet",      baseCd = 60  },
         { spellID = 108199,  name = "Grip of the Undying", baseCd = 45  },
         { spellID = 1263569, name = "Abominable Limb",     baseCd = 120 },
@@ -63,7 +70,8 @@ HasuCCData.SPEC_CC_DATA = {
         { spellID = 45524,   name = "Chains of Ice",       baseCd = 0   },
         { spellID = 221562,  name = "Asphyxiate",          baseCd = 45  },
         { spellID = 49576,   name = "Death Grip",          baseCd = 25,
-          extraChargeTalent = 356367 },
+          extraChargeTalent = 356367,
+          cdNullifyTalent = 276079 }, -- Portée de la mort: instant
         { spellID = 43265,   name = "Death and Decay",     baseCd = 30,
           requireTalent = 273952 },
         { spellID = 207167,  name = "Blinding Sleet",      baseCd = 60  },
@@ -74,7 +82,8 @@ HasuCCData.SPEC_CC_DATA = {
         { spellID = 45524,   name = "Chains of Ice",       baseCd = 0   },
         { spellID = 221562,  name = "Asphyxiate",          baseCd = 45  },
         { spellID = 49576,   name = "Death Grip",          baseCd = 25,
-          extraChargeTalent = 356367 },
+          extraChargeTalent = 356367,
+          cdNullifyTalent = 276079 }, -- Portée de la mort: instant
         { spellID = 43265,   name = "Death and Decay",     baseCd = 30,
           requireTalent = 273952 },
         { spellID = 207167,  name = "Blinding Sleet",      baseCd = 60  },
@@ -90,7 +99,7 @@ HasuCCData.SPEC_CC_DATA = {
         { spellID = 115750,  name = "Blinding Light",      baseCd = 90,
           cooldownReducingTalent = 469325, cdReduction = 15 },
         { spellID = 10326,   name = "Turn Evil",           baseCd = 15,
-          cooldownReducingTalent = 460720, cdReduction = 15 },
+          cdNullifyTalent = 460720 }, -- Renvoi du mal amélioration: rend instantané
     },
     [66] = { -- Protection Paladin
         { spellID = 96231,   name = "Rebuke",              baseCd = 15  },
@@ -99,7 +108,7 @@ HasuCCData.SPEC_CC_DATA = {
         { spellID = 115750,  name = "Blinding Light",      baseCd = 90,
           cooldownReducingTalent = 469325, cdReduction = 15 },
         { spellID = 10326,   name = "Turn Evil",           baseCd = 15,
-          cooldownReducingTalent = 460720, cdReduction = 15 },
+          cdNullifyTalent = 460720 }, -- Renvoi du mal amélioration: rend instantané
         { spellID = 375576,  name = "Divine Toll",         baseCd = 60,
           cooldownReducingTalent = 379391, cdReduction = 15 },
         { spellID = 31935,   name = "Avenger's Shield",    baseCd = 15  },
@@ -110,7 +119,7 @@ HasuCCData.SPEC_CC_DATA = {
         { spellID = 115750,  name = "Blinding Light",      baseCd = 90,
           cooldownReducingTalent = 469325, cdReduction = 15 },
         { spellID = 10326,   name = "Turn Evil",           baseCd = 15,
-          cooldownReducingTalent = 460720, cdReduction = 15 },
+          cdNullifyTalent = 460720 }, -- Renvoi du mal amélioration: rend instantané
     },
 
     -- ── MAGE ─────────────────────────────────────────────────
@@ -126,7 +135,8 @@ HasuCCData.SPEC_CC_DATA = {
         { spellID = 383121,  name = "Mass Polymorph",      baseCd = 60  },
         { spellID = 31661,   name = "Dragon's Breath",     baseCd = 20  },
         { spellID = 157980,  name = "Supernova",           baseCd = 25  },
-        { spellID = 120,     name = "Cone of Cold",        baseCd = 12  },
+        { spellID = 120,     name = "Cone of Cold",        baseCd = 12,
+          replacedByTalent = 386763 }, -- Hidden if Froid glacial active (Ice Nova replaces)
         { spellID = 157997,  name = "Ice Nova",            baseCd = 25,
           requireTalent = 386763 },
     },
@@ -140,7 +150,8 @@ HasuCCData.SPEC_CC_DATA = {
         { spellID = 383121,  name = "Mass Polymorph",      baseCd = 60  },
         { spellID = 31661,   name = "Dragon's Breath",     baseCd = 20  },
         { spellID = 157980,  name = "Supernova",           baseCd = 25  },
-        { spellID = 120,     name = "Cone of Cold",        baseCd = 12  },
+        { spellID = 120,     name = "Cone of Cold",        baseCd = 12,
+          replacedByTalent = 386763 }, -- Hidden if Froid glacial active (Ice Nova replaces)
         { spellID = 157997,  name = "Ice Nova",            baseCd = 25,
           requireTalent = 386763 },
     },
@@ -154,7 +165,8 @@ HasuCCData.SPEC_CC_DATA = {
         { spellID = 383121,  name = "Mass Polymorph",      baseCd = 60  },
         { spellID = 31661,   name = "Dragon's Breath",     baseCd = 20  },
         { spellID = 157980,  name = "Supernova",           baseCd = 25  },
-        { spellID = 120,     name = "Cone of Cold",        baseCd = 12  },
+        { spellID = 120,     name = "Cone of Cold",        baseCd = 12,
+          replacedByTalent = 386763 }, -- Hidden if Froid glacial active (Ice Nova replaces)
         { spellID = 157997,  name = "Ice Nova",            baseCd = 25,
           requireTalent = 386763 },
     },
@@ -162,15 +174,14 @@ HasuCCData.SPEC_CC_DATA = {
     -- ── DEMON HUNTER ─────────────────────────────────────────
     -- Havoc = 577 | Vengeance = 581 | Dévoration = 1480
     -- ─────────────────────────────────────────────────────────
-    [577] = { -- Havoc DH (Dévastation)
+    [577] = { -- Havoc DH (Dévastation) — uses Chaos Nova (NOT Void Nova)
         { spellID = 183752,  name = "Disrupt",             baseCd = 15  },
         { spellID = 179057,  name = "Chaos Nova",          baseCd = 60  },
         { spellID = 217832,  name = "Imprison",            baseCd = 45  },
         { spellID = 207684,  name = "Sigil of Misery",     baseCd = 120,
           cooldownReducingTalent = 320418, cdReduction = 30 }, -- Sceau Amélioré
-        { spellID = 1234195, name = "Void Nova",           baseCd = 60  },
     },
-    [581] = { -- Vengeance DH
+    [581] = { -- Vengeance DH — uses Chaos Nova, has Sigil of Chains + Silence
         { spellID = 183752,  name = "Disrupt",             baseCd = 15  },
         { spellID = 179057,  name = "Chaos Nova",          baseCd = 60  },
         { spellID = 217832,  name = "Imprison",            baseCd = 45  },
@@ -178,15 +189,13 @@ HasuCCData.SPEC_CC_DATA = {
           cooldownReducingTalent = 320418, cdReduction = 30 },
         { spellID = 202138,  name = "Sigil of Chains",     baseCd = 90  }, -- Sigil de chaînes
         { spellID = 202137,  name = "Sigil of Silence",    baseCd = 60  }, -- Sigil de silence
-        { spellID = 1234195, name = "Void Nova",           baseCd = 60  },
     },
-    [1480] = { -- Dévoration DH (WoW 12.0 Midnight)
+    [1480] = { -- Dévoration DH — uses Void Nova INSTEAD of Chaos Nova (WoW 12.0 Midnight)
         { spellID = 183752,  name = "Disrupt",             baseCd = 15  },
-        { spellID = 179057,  name = "Chaos Nova",          baseCd = 60  },
+        { spellID = 1234195, name = "Void Nova",           baseCd = 60  },
         { spellID = 217832,  name = "Imprison",            baseCd = 45  },
         { spellID = 207684,  name = "Sigil of Misery",     baseCd = 120,
           cooldownReducingTalent = 320418, cdReduction = 30 },
-        { spellID = 1234195, name = "Void Nova",           baseCd = 60  },
     },
 
     -- ── EVOKER ───────────────────────────────────────────────
@@ -512,6 +521,8 @@ for specID, list in pairs(HasuCCData.SPEC_CC_DATA) do
                 cdReduction             = entry.cdReduction,
                 cooldownReducingTalent2 = entry.cooldownReducingTalent2,
                 cdReduction2            = entry.cdReduction2,
+                cdNullifyTalent         = entry.cdNullifyTalent,
+                replacedByTalent        = entry.replacedByTalent,
             }
         end
     end
@@ -586,6 +597,14 @@ HasuCCData.FindMyCCAbilities = function(myName, myClass, ccAddonUsers)
                 end
             end
 
+            -- ── replacedByTalent: HIDE spell if its replacement talent is active ──
+            -- e.g. Mage Cone of Cold hidden when Froid glacial (Ice Nova replaces it)
+            if entry.replacedByTalent then
+                if IsPlayerTalent(entry.replacedByTalent) then
+                    break
+                end
+            end
+
             -- ── Is the spell itself known? ────────────────────────
             local spellKnown = false
             do
@@ -655,6 +674,13 @@ HasuCCData.FindMyCCAbilities = function(myName, myClass, ccAddonUsers)
                     end
                     if actualCd < 1 then actualCd = 1 end
                 end
+            end
+
+            -- ── cdNullifyTalent: makes spell instant (CD = 1) ──
+            -- e.g. DK Portée de la mort makes Death Grip instant
+            -- e.g. Paladin Renvoi du mal (improved) makes Turn Evil instant
+            if entry.cdNullifyTalent and IsPlayerTalent(entry.cdNullifyTalent) then
+                actualCd = 1
             end
 
             -- ── extraChargeTalent ─────────────────────────────────
