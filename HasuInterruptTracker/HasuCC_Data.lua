@@ -541,6 +541,13 @@ HasuCCData.FindMyCCAbilities = function(myName, myClass, ccAddonUsers)
                     local cd = math.floor(ms / 1000 + 0.5)
                     local cdReducerActive = entry.cooldownReducingTalent
                         and IsPlayerTalent(entry.cooldownReducingTalent)
+                    -- DEBUG: log Sigil of Misery to diagnose cooldownReducingTalent
+                    if spellID == 207684 then
+                        print(string.format(
+                            "|cFFFF8800[Hasu Debug]|r Sigil of Misery: ms=%d cd=%ds baseCd=%ds talent=%s active=%s",
+                            ms, cd, entry.baseCd, entry.cooldownReducingTalent or "none",
+                            tostring(cdReducerActive)))
+                    end
                     if cdReducerActive then
                         actualCd = cd
                     else
