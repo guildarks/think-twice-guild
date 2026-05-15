@@ -506,14 +506,45 @@ local SPEC_NO_INTERRUPT = {
 }
 
 -- Talents that PERMANENTLY reduce interrupt cooldowns (scanned via inspect)
-local CD_REDUCTION_TALENTS = {
-    -- Hunter: Lone Survivor - "Counter Shot and Muzzle CD reduced by 2 sec" (passive)
-    [388039] = { affects = 147362, reduction = 2, name = "Lone Survivor" },
-    -- Evoker: Interwoven Threads - "All spell CDs reduced by 10%" (percentage)
-    [412713] = { affects = 351338, pctReduction = 10, name = "Interwoven Threads" },
-}
+-- Built dynamically from HasuCC_Data to stay synchronized with talent-aware CC system.
+-- This ensures interrupt tracker uses same talent reductions as CC tracker.
+local function InitCDReductionTalents()
+    local talents = {
+        -- Fallback hardcoded values (old pre-HasuCC_Data talents)
+        [388039] = { affects = 147362, reduction = 2, name = "Lone Survivor" },
+        [412713] = { affects = 351338, pctReduction = 10, name = "Interwoven Threads" },
+    }
+
+    -- Auto-sync from HasuCC_Data.SPEC_CC_DATA if available
+    -- Maps all 66+ cooldownReducingTalent entries to interrupt-applicable spells
+    if HasuCCData and HasuCCData.SPEC_CC_DATA then
+        for specID, ccList in pairs(HasuCCData.SPEC_CC_DATA) do
+            for _, spell in ipairs(ccList) do
+                if spell.cooldownReducingTalent and spell.cdReduction and spell.spellID then
+                    local talentID = spell.cooldownReducingTalent
+                    -- Only process interrupt-related spells (check if it's in ALL_INTERRUPTS)
+                    if ALL_INTERRUPTS[spell.spellID] then
+                        if not talents[talentID] then
+                            talents[talentID] = {
+                                affects = spell.spellID,
+                                reduction = spell.cdReduction,
+                                name = spell.name
+                            }
+                        end
+                    end
+                end
+            end
+        end
+    end
+
+    return talents
+end
+
+local CD_REDUCTION_TALENTS = InitCDReductionTalents()
 
 -- Talents that reduce CD only on SUCCESSFUL interrupt (applied per-kick, not on baseCd)
+-- Note: These are typically DK-specific (Coldthirst affects Mind Freeze on successful interrupt)
+-- Other talents in HasuCC_Data reduce CD permanently and are handled via CD_REDUCTION_TALENTS above
 local CD_ON_KICK_TALENTS = {
     -- DK: Coldthirst - "Mind Freeze CD reduced by 3 sec on successful interrupt"
     [378848] = { reduction = 3, name = "Coldthirst" },
