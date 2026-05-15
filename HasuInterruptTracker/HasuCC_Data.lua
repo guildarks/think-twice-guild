@@ -14,9 +14,10 @@
                                For self, GetSpellBaseCooldown() is used instead (reflects talents).
       requireTalent          : (optional) talent spellID — only show this CC if the talent is active
       extraChargeTalent      : (optional) talent spellID — if active, maxCharges = 2
-      cooldownReducingTalent : (optional) talent spellID — if active, accept reduced CD values
-                               from GetSpellBaseCooldown (otherwise validation rejects values
-                               significantly lower than baseCd).
+      cooldownReducingTalent : (optional) talent spellID — if active, reduce the CD by cdReduction
+      cdReduction            : (optional) seconds to subtract from baseCd when cooldownReducingTalent
+                               is active. If specified, the reduced CD is used even if
+                               GetSpellBaseCooldown doesn't reflect the talent reduction.
 ]]
 
 HasuCCData = HasuCCData or {}
@@ -146,7 +147,7 @@ HasuCCData.SPEC_CC_DATA = {
         { spellID = 179057,  name = "Chaos Nova",          baseCd = 60  },
         { spellID = 217832,  name = "Imprison",            baseCd = 45  },
         { spellID = 207684,  name = "Sigil of Misery",     baseCd = 120,
-          cooldownReducingTalent = 320418 }, -- Sceau Amélioré réduit le CD de 30s
+          cooldownReducingTalent = 320418, cdReduction = 30 }, -- Sceau Amélioré
         { spellID = 1234195, name = "Void Nova",           baseCd = 60  },
     },
     [581] = { -- Vengeance DH
@@ -154,7 +155,7 @@ HasuCCData.SPEC_CC_DATA = {
         { spellID = 179057,  name = "Chaos Nova",          baseCd = 60  },
         { spellID = 217832,  name = "Imprison",            baseCd = 45  },
         { spellID = 207684,  name = "Sigil of Misery",     baseCd = 120,
-          cooldownReducingTalent = 320418 },
+          cooldownReducingTalent = 320418, cdReduction = 30 },
         { spellID = 202138,  name = "Sigil of Chains",     baseCd = 90  }, -- Sigil de chaînes
         { spellID = 202137,  name = "Sigil of Silence",    baseCd = 60  }, -- Sigil de silence
         { spellID = 1234195, name = "Void Nova",           baseCd = 60  },
@@ -164,7 +165,7 @@ HasuCCData.SPEC_CC_DATA = {
         { spellID = 179057,  name = "Chaos Nova",          baseCd = 60  },
         { spellID = 217832,  name = "Imprison",            baseCd = 45  },
         { spellID = 207684,  name = "Sigil of Misery",     baseCd = 120,
-          cooldownReducingTalent = 320418 },
+          cooldownReducingTalent = 320418, cdReduction = 30 },
         { spellID = 1234195, name = "Void Nova",           baseCd = 60  },
     },
 
@@ -440,6 +441,7 @@ for specID, list in pairs(HasuCCData.SPEC_CC_DATA) do
                 dr                     = "CC",
                 baseCd                 = entry.baseCd,
                 cooldownReducingTalent = entry.cooldownReducingTalent,
+                cdReduction            = entry.cdReduction,
             }
         end
     end
@@ -541,20 +543,27 @@ HasuCCData.FindMyCCAbilities = function(myName, myClass, ccAddonUsers)
                     local cd = math.floor(ms / 1000 + 0.5)
                     local cdReducerActive = entry.cooldownReducingTalent
                         and IsPlayerTalent(entry.cooldownReducingTalent)
-                    -- DEBUG: log Sigil of Misery to diagnose cooldownReducingTalent
-                    if spellID == 207684 then
-                        print(string.format(
-                            "|cFFFF8800[Hasu Debug]|r Sigil of Misery: ms=%d cd=%ds baseCd=%ds talent=%s active=%s",
-                            ms, cd, entry.baseCd, entry.cooldownReducingTalent or "none",
-                            tostring(cdReducerActive)))
-                    end
-                    if cdReducerActive then
-                        actualCd = cd
+
+                    -- If talent reduces CD and is active, apply the reduction manually
+                    -- in case GetSpellBaseCooldown doesn't reflect the talent
+                    if cdReducerActive and entry.cdReduction then
+                        actualCd = entry.baseCd - entry.cdReduction
                     else
+                        -- Standard validation: accept CD if it's within expected range
                         local minAccept = math.floor(entry.baseCd * 0.5)
                         if cd >= 1 and (entry.baseCd < 10 or cd >= minAccept) then
                             actualCd = cd
                         end
+                    end
+
+                    -- DEBUG: log Sigil of Misery to diagnose cooldownReducingTalent
+                    if spellID == 207684 then
+                        print(string.format(
+                            "|cFFFF8800[Hasu Debug]|r Sigil of Misery: ms=%dms cd=%ds "
+                            .. "talent=%s active=%s reduction=%s → actualCd=%ds",
+                            ms, cd, entry.cooldownReducingTalent or "none",
+                            tostring(cdReducerActive), tostring(entry.cdReduction),
+                            actualCd))
                     end
                 end
             end
