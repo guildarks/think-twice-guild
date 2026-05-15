@@ -1645,6 +1645,18 @@ local function ScanInspectTalents(unit)
                         end
                     end
 
+                    -- AUDIT: Log inspect CD calculation for party members
+                    if HasuCCData and HasuCCData.DEBUG_AUDIT then
+                        local talentActive = entry.cooldownReducingTalent and (
+                            activeTalents[entry.cooldownReducingTalent]
+                            or (activeTalents[tostring(entry.cooldownReducingTalent)] == true))
+                        print(string.format(
+                            "|cFFFF00FF[Audit Inspect]|r %s spellID=%d %s | data=%ds | talent=%s active=%s | actualCd=%ds",
+                            name, sid, entry.name, entry.baseCd,
+                            tostring(entry.cooldownReducingTalent or "none"),
+                            tostring(talentActive), actualCd))
+                    end
+
                     local prev = ccAddonUsers[name].ccs[sid]
                     local ok_ic, icon = pcall(C_Spell.GetSpellTexture, sid)
                     ccAddonUsers[name].ccs[sid] = {
@@ -4987,6 +4999,18 @@ playerCastFrame:SetScript("OnEvent", function(_, _, unit, castGUID, spellID)
                         ccCd = math.max(1, ccCd - cdReduction)
                     end
                 end
+            end
+
+            -- AUDIT: Log cast handler CD calculation when audit mode is on
+            -- Helps verify HasuInterruptTracker.lua uses correct values from HasuCC_Data.lua
+            if HasuCCData and HasuCCData.DEBUG_AUDIT then
+                local ok_api, ms = pcall(GetSpellBaseCooldown, spellID)
+                local apiCd = (ok_api and ms) and math.floor(ms / 1000 + 0.5) or 0
+                local marker = ""
+                if expectedCd ~= apiCd and apiCd > 0 then marker = " |cFFFF0000<-- MISMATCH|r" end
+                print(string.format(
+                    "|cFF00FFFF[Audit Cast]|r spellID=%d %s | data=%ds | API=%ds | final ccCd=%ds%s",
+                    spellID, ccName, expectedCd, apiCd, ccCd, marker))
             end
 
             -- Resolve maxCharges for this spell (talent + active charge data).
