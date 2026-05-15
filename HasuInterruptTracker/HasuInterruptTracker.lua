@@ -951,11 +951,13 @@ local function OnAddonMessage(prefix, message, channel, sender)
                 if not ccs[spellID] then
                     local ok, icon = pcall(C_Spell.GetSpellTexture, spellID)
                     ccs[spellID] = {
-                        name       = ccName,
-                        baseCd     = cd,
-                        cdEnd      = 0,
-                        maxCharges = peerMaxC,
-                        icon       = ok and icon or nil,
+                        name                   = ccName,
+                        baseCd                 = cd,
+                        cdEnd                  = 0,
+                        maxCharges             = peerMaxC,
+                        icon                   = ok and icon or nil,
+                        cooldownReducingTalent = ccEntry and ccEntry.cooldownReducingTalent,
+                        cdReduction            = ccEntry and ccEntry.cdReduction,
                     }
                     -- Insert into order if not already present
                     local found = false
@@ -1594,14 +1596,27 @@ local function ScanInspectTalents(unit)
                             maxCharges = 2
                         end
                     end
+
+                    -- Calculate CD with talent-based reduction
+                    local actualCd = entry.baseCd
+                    if entry.cooldownReducingTalent and entry.cdReduction then
+                        local hasTalent = activeTalents[entry.cooldownReducingTalent]
+                            or (activeTalents[tostring(entry.cooldownReducingTalent)] == true)
+                        if hasTalent then
+                            actualCd = math.max(1, entry.baseCd - entry.cdReduction)
+                        end
+                    end
+
                     local prev = ccAddonUsers[name].ccs[sid]
                     local ok_ic, icon = pcall(C_Spell.GetSpellTexture, sid)
                     ccAddonUsers[name].ccs[sid] = {
-                        name       = entry.name,
-                        baseCd     = entry.baseCd,
-                        cdEnd      = prev and prev.cdEnd or 0,
-                        maxCharges = maxCharges,
-                        icon       = (ok_ic and icon) or (prev and prev.icon) or nil,
+                        name                   = entry.name,
+                        baseCd                 = actualCd,
+                        cdEnd                  = prev and prev.cdEnd or 0,
+                        maxCharges             = maxCharges,
+                        icon                   = (ok_ic and icon) or (prev and prev.icon) or nil,
+                        cooldownReducingTalent = entry.cooldownReducingTalent,
+                        cdReduction            = entry.cdReduction,
                     }
                     table.insert(ccAddonUsers[name].ccOrder, sid)
                 end
