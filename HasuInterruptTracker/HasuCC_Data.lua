@@ -141,7 +141,7 @@ HasuCCData.SPEC_CC_DATA = {
     -- ── DEMON HUNTER ─────────────────────────────────────────
     -- Havoc = 577 | Vengeance = 581
     -- ─────────────────────────────────────────────────────────
-    [577] = { -- Havoc DH (Dévastation / Dévoration)
+    [577] = { -- Havoc DH (Dévastation)
         { spellID = 183752,  name = "Disrupt",             baseCd = 15  },
         { spellID = 179057,  name = "Chaos Nova",          baseCd = 60  },
         { spellID = 217832,  name = "Imprison",            baseCd = 45  },
@@ -156,6 +156,24 @@ HasuCCData.SPEC_CC_DATA = {
           cooldownReducingTalent = 320418 },
         { spellID = 202138,  name = "Sigil of Chains",     baseCd = 90  }, -- Sigil de chaînes
         { spellID = 202137,  name = "Sigil of Silence",    baseCd = 60  }, -- Sigil de silence
+    },
+    -- TODO: verify specID for Dévoration (DH WoW 12.0 Midnight).
+    -- Provided IDs: 1475 or 1480. Both are listed below so the addon
+    -- works regardless of which is correct. Remove the unused one
+    -- after testing in-game.
+    [1475] = { -- Dévoration DH (3e spec WoW 12.0) — primary guess
+        { spellID = 183752,  name = "Disrupt",             baseCd = 15  },
+        { spellID = 179057,  name = "Chaos Nova",          baseCd = 60  },
+        { spellID = 217832,  name = "Imprison",            baseCd = 45  },
+        { spellID = 207684,  name = "Sigil of Misery",     baseCd = 90,
+          cooldownReducingTalent = 320418 },
+    },
+    [1480] = { -- Dévoration DH (alternate specID, in case 1475 is wrong)
+        { spellID = 183752,  name = "Disrupt",             baseCd = 15  },
+        { spellID = 179057,  name = "Chaos Nova",          baseCd = 60  },
+        { spellID = 217832,  name = "Imprison",            baseCd = 45  },
+        { spellID = 207684,  name = "Sigil of Misery",     baseCd = 90,
+          cooldownReducingTalent = 320418 },
     },
 
     -- ── EVOKER ───────────────────────────────────────────────
@@ -408,6 +426,7 @@ local CLASS_FOR_SPEC = {
     [65]="PALADIN",      [66]="PALADIN",       [70]="PALADIN",
     [62]="MAGE",         [63]="MAGE",          [64]="MAGE",
     [577]="DEMONHUNTER", [581]="DEMONHUNTER",
+    [1475]="DEMONHUNTER", [1480]="DEMONHUNTER", -- Dévoration (3e spec 12.0 — l'un des deux)
     [1467]="EVOKER",     [1468]="EVOKER",      [1473]="EVOKER",
     [268]="MONK",        [269]="MONK",         [270]="MONK",
     [265]="WARLOCK",     [266]="WARLOCK",      [267]="WARLOCK",

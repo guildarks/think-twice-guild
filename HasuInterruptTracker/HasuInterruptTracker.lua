@@ -6161,7 +6161,7 @@ local ccSpellConfigFrame = nil
 
 local CC_SPEC_LIST = {
     {"Chev. mort",  "DEATHKNIGHT",{{250,"Sang"},{251,"Givre"},{252,"Impie"}}},
-    {"Chass. démon","DEMONHUNTER",{{577,"Dévastat."},{581,"Vengeance"}}},
+    {"Chass. démon","DEMONHUNTER",{{577,"Dévastat."},{581,"Vengeance"},{1475,"Dévoration"}}},
     {"Évocateur",   "EVOKER",     {{1467,"Dévastat."},{1468,"Préservat."},{1473,"Augmentat."}}},
     {"Druide",      "DRUID",      {{102,"Équilibre"},{103,"Farouche"},{104,"Gardien"},{105,"Restaur."}}},
     {"Chasseur",    "HUNTER",     {{253,"Maîtrise"},{254,"Précision"},{255,"Survie"}}},
