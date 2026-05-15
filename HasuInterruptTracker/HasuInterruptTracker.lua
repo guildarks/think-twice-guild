@@ -4997,7 +4997,17 @@ playerCastFrame:SetScript("OnEvent", function(_, _, unit, castGUID, spellID)
                 local ok, r = pcall(IsPlayerSpell, id); return ok and r
             end
             local ccCd = 0
+            -- PREFER C_Spell.GetSpellCooldown which returns the ACTUAL CD after
+            -- all reductions (talents, haste, etc.) — most accurate source.
+            -- Called right after cast, this reflects the real cooldown applied.
             do
+                local ok_sc, scInfo = pcall(C_Spell.GetSpellCooldown, spellID)
+                if ok_sc and scInfo and scInfo.duration and scInfo.duration >= 5 then
+                    ccCd = math.floor(scInfo.duration + 0.5)
+                end
+            end
+            -- Fallback to GetSpellBaseCooldown if GetSpellCooldown didn't work
+            if ccCd < 1 then
                 local ok_cd, ms = pcall(GetSpellBaseCooldown, spellID)
                 local cdReducerActive = cdReducer and IsTalentActive(cdReducer)
                 if ok_cd and ms and ms >= 5000 then
