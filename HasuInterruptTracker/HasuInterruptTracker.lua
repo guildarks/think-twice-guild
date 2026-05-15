@@ -4990,18 +4990,22 @@ playerCastFrame:SetScript("OnEvent", function(_, _, unit, castGUID, spellID)
             -- UNLESS the spell has a cooldownReducingTalent that is currently active.
             local expectedCd = (hasuCC and hasuCC.baseCd) or (legacyCC and legacyCC.cd) or 0
             local cdReducer  = hasuCC and hasuCC.cooldownReducingTalent
+            local cdReduction = hasuCC and hasuCC.cdReduction
+            -- Use HasuCCData.IsPlayerTalent (C_Traits scan) instead of IsPlayerSpell
+            -- because passive talents (e.g. Paix et prospérité) aren't in spellbook.
+            local IsTalentActive = (HasuCCData and HasuCCData.IsPlayerTalent) or function(id)
+                local ok, r = pcall(IsPlayerSpell, id); return ok and r
+            end
             local ccCd = 0
             do
                 local ok_cd, ms = pcall(GetSpellBaseCooldown, spellID)
+                local cdReducerActive = cdReducer and IsTalentActive(cdReducer)
                 if ok_cd and ms and ms >= 5000 then
                     local cd = math.floor(ms / 1000 + 0.5)
-                    local cdReducerActive = false
-                    if cdReducer then
-                        local _ok1, _r1 = pcall(IsPlayerSpell, cdReducer)
-                        cdReducerActive = (_ok1 and _r1) and true or false
-                    end
-                    if cdReducerActive then
-                        ccCd = cd
+                    if cdReducerActive and cdReduction then
+                        -- Apply manual reduction since GetSpellBaseCooldown
+                        -- doesn't reflect talent reductions in WoW 12.0
+                        ccCd = math.max(1, expectedCd - cdReduction)
                     else
                         local minAccept = math.floor(expectedCd * 0.5)
                         if cd >= 1 and (expectedCd < 10 or cd >= minAccept) then
@@ -5016,23 +5020,20 @@ playerCastFrame:SetScript("OnEvent", function(_, _, unit, castGUID, spellID)
                 ccCd = expectedCd > 0 and expectedCd or 2
                 if ccCd < 1 then ccCd = 2 end
                 -- Apply cooldownReducingTalent reduction to fallback CD if talent is active
-                local cdReduction = hasuCC and hasuCC.cdReduction
                 if cdReduction and cdReducer then
-                    local _ok1, _r1 = pcall(IsPlayerSpell, cdReducer)
-                    local cdReducerActive = (_ok1 and _r1) and true or false
-                    if cdReducerActive then
+                    if IsTalentActive(cdReducer) then
                         ccCd = math.max(1, ccCd - cdReduction)
                     end
                 end
-                -- Apply second talent reduction (e.g., Holy Priest Nova sacrée)
-                local cdReducer2  = hasuCC and hasuCC.cooldownReducingTalent2
-                local cdReduction2 = hasuCC and hasuCC.cdReduction2
-                if cdReduction2 and cdReducer2 then
-                    local _ok2, _r2 = pcall(IsPlayerSpell, cdReducer2)
-                    local cd2Active = (_ok2 and _r2) and true or false
-                    if cd2Active then
-                        ccCd = math.max(1, ccCd - cdReduction2)
-                    end
+            end
+
+            -- Apply second talent reduction (e.g., Holy Priest Nova sacrée)
+            -- Done OUTSIDE the fallback block so it stacks with the first reduction
+            local cdReducer2  = hasuCC and hasuCC.cooldownReducingTalent2
+            local cdReduction2 = hasuCC and hasuCC.cdReduction2
+            if cdReduction2 and cdReducer2 then
+                if IsTalentActive(cdReducer2) then
+                    ccCd = math.max(1, ccCd - cdReduction2)
                 end
             end
 
@@ -5040,11 +5041,8 @@ playerCastFrame:SetScript("OnEvent", function(_, _, unit, castGUID, spellID)
             -- e.g. DK Death Grip with Portée de la mort
             -- e.g. Paladin Turn Evil with Renvoi du mal amélioration
             local cdNullifier = hasuCC and hasuCC.cdNullifyTalent
-            if cdNullifier then
-                local _okN, _rN = pcall(IsPlayerSpell, cdNullifier)
-                if _okN and _rN then
-                    ccCd = 1
-                end
+            if cdNullifier and IsTalentActive(cdNullifier) then
+                ccCd = 1
             end
 
             -- AUDIT: Log cast handler CD calculation when audit mode is on
