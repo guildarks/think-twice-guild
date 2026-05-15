@@ -4997,19 +4997,24 @@ playerCastFrame:SetScript("OnEvent", function(_, _, unit, castGUID, spellID)
                 local ok, r = pcall(IsPlayerSpell, id); return ok and r
             end
             local ccCd = 0
-            -- PREFER C_Spell.GetSpellCooldown which returns the ACTUAL CD after
-            -- all reductions (talents, haste, etc.) — most accurate source.
-            -- Called right after cast, this reflects the real cooldown applied.
-            -- IMPORTANT: divide by modRate — the cooldown bar progresses at
-            -- modRate-times the normal rate when haste-scaling is active, so
-            -- the player perceives the CD as duration / modRate (e.g. 45s
-            -- duration with 12.5% haste shows ~40s on the bar).
+            -- Try C_Spell.GetSpellCooldown for the ACTUAL CD after all reductions.
+            -- WoW 12.0 marks the duration/modRate fields as "secret" for some
+            -- spells (Paladin Hammer of Justice etc.) — accessing them taints
+            -- the addon. Wrap the WHOLE access (call + read + compare) inside
+            -- a single pcall so a taint error stays contained and we fall back
+            -- to the data-file calculation instead of crashing.
             do
-                local ok_sc, scInfo = pcall(C_Spell.GetSpellCooldown, spellID)
-                if ok_sc and scInfo and scInfo.duration and scInfo.duration >= 5 then
-                    local modRate = scInfo.modRate or 1
-                    if not modRate or modRate <= 0 then modRate = 1 end
-                    ccCd = math.floor(scInfo.duration / modRate + 0.5)
+                local ok_sc, sc_cd = pcall(function()
+                    local info = C_Spell.GetSpellCooldown(spellID)
+                    if not info then return nil end
+                    local d = info.duration
+                    if not d or d < 5 then return nil end
+                    local mr = info.modRate
+                    if not mr or mr <= 0 then mr = 1 end
+                    return d / mr
+                end)
+                if ok_sc and sc_cd then
+                    ccCd = math.floor(sc_cd + 0.5)
                 end
             end
             -- Fallback to GetSpellBaseCooldown if GetSpellCooldown didn't work
