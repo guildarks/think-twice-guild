@@ -28,6 +28,10 @@
       replacedByTalent       : (optional) if this talent is active, HIDE this spell (replaced by another).
                                e.g. Mage Cone of Cold replaced by Ice Nova when Froid glacial active.
                                e.g. DH Vengeance Sigil of Misery replaced by Sigil of Chains.
+      castTime               : (optional) cast/incantation time in seconds. When the player starts
+                               casting this spell (UNIT_SPELLCAST_START), the CC bar displays this
+                               countdown so the team can see the cast progress.
+                               e.g. Mage Polymorph: 1.5s cast time.
 ]]
 
 HasuCCData = HasuCCData or {}
@@ -138,8 +142,8 @@ HasuCCData.SPEC_CC_DATA = {
           cooldownReducingTalent = 382297, cdReduction = 5 },
         { spellID = 122,     name = "Frost Nova",          baseCd = 30,
           extraChargeTalent = 205036 },
-        { spellID = 118,     name = "Polymorph",           baseCd = 1.5, -- 1.5s cast time
-          cdNullifyTalent = 205036 }, -- Icy Veins makes it instant
+        { spellID = 118,     name = "Polymorph",           baseCd = 0, castTime = 1.5,
+          cdNullifyTalent = 205036 }, -- Icy Veins makes it instant (no cast time)
         { spellID = 113724,  name = "Ring of Frost",       baseCd = 45  },
         { spellID = 383121,  name = "Mass Polymorph",      baseCd = 60  },
         { spellID = 31661,   name = "Dragon's Breath",     baseCd = 45  },
@@ -154,8 +158,8 @@ HasuCCData.SPEC_CC_DATA = {
           cooldownReducingTalent = 382297, cdReduction = 5 },
         { spellID = 122,     name = "Frost Nova",          baseCd = 30,
           extraChargeTalent = 205036 },
-        { spellID = 118,     name = "Polymorph",           baseCd = 1.5, -- 1.5s cast time
-          cdNullifyTalent = 205036 }, -- Icy Veins makes it instant
+        { spellID = 118,     name = "Polymorph",           baseCd = 0, castTime = 1.5,
+          cdNullifyTalent = 205036 }, -- Icy Veins makes it instant (no cast time)
         { spellID = 113724,  name = "Ring of Frost",       baseCd = 45  },
         { spellID = 383121,  name = "Mass Polymorph",      baseCd = 60  },
         { spellID = 31661,   name = "Dragon's Breath",     baseCd = 45  },
@@ -170,8 +174,8 @@ HasuCCData.SPEC_CC_DATA = {
           cooldownReducingTalent = 382297, cdReduction = 5 },
         { spellID = 122,     name = "Frost Nova",          baseCd = 30,
           extraChargeTalent = 205036 },
-        { spellID = 118,     name = "Polymorph",           baseCd = 1.5, -- 1.5s cast time
-          cdNullifyTalent = 205036 }, -- Icy Veins makes it instant
+        { spellID = 118,     name = "Polymorph",           baseCd = 0, castTime = 1.5,
+          cdNullifyTalent = 205036 }, -- Icy Veins makes it instant (no cast time)
         { spellID = 113724,  name = "Ring of Frost",       baseCd = 45  },
         { spellID = 383121,  name = "Mass Polymorph",      baseCd = 60  },
         { spellID = 31661,   name = "Dragon's Breath",     baseCd = 45  },

@@ -5149,11 +5149,16 @@ playerCastFrame:SetScript("OnEvent", function(_, _, unit, castGUID, spellID)
                             ccs[spellID].maxCharges = _maxC
                         end
                     end
-                    local newEnd = GetTime() + ccCd
-                    if newEnd > (ccs[spellID].cdEnd or 0) then
-                        ccs[spellID].cdEnd  = newEnd
-                        ccs[spellID].baseCd = ccCd
-                        ccDirty = true
+                    -- Spells with baseCd=0 in the data have no real cooldown (e.g.,
+                    -- Polymorph: only a cast time). The cast-time tracker manages
+                    -- their cdEnd via UNIT_SPELLCAST_START; don't overwrite it here.
+                    if expectedCd > 0 then
+                        local newEnd = GetTime() + ccCd
+                        if newEnd > (ccs[spellID].cdEnd or 0) then
+                            ccs[spellID].cdEnd  = newEnd
+                            ccs[spellID].baseCd = ccCd
+                            ccDirty = true
+                        end
                     end
                 else
                     DLog("CC_SELF", "requireTalent not met for spellID=" .. tostring(spellID) .. " reqTalent=" .. tostring(_reqTalent))
@@ -5235,6 +5240,66 @@ playerCastFrame:SetScript("OnEvent", function(_, _, unit, castGUID, spellID)
     else
         OnSpellCastSucceeded(unit, castGUID, spellID, false)
     end
+end)
+
+-- ──────────────────────────────────────────────────────────────
+-- Cast-time tracker for spells with an incantation time
+-- (Polymorph, Fear, Hex, Cyclone…). When the player starts
+-- casting one of these, display the cast countdown in the CC
+-- window so the team can see the progress. Reset on interrupt
+-- or failure so the spell becomes ready again immediately.
+-- ──────────────────────────────────────────────────────────────
+local playerCastStartFrame = CreateFrame("Frame")
+playerCastStartFrame:RegisterUnitEvent("UNIT_SPELLCAST_START",       "player")
+playerCastStartFrame:RegisterUnitEvent("UNIT_SPELLCAST_INTERRUPTED", "player")
+playerCastStartFrame:RegisterUnitEvent("UNIT_SPELLCAST_FAILED",      "player")
+playerCastStartFrame:RegisterUnitEvent("UNIT_SPELLCAST_STOP",        "player")
+playerCastStartFrame:SetScript("OnEvent", function(_, event, unit, _castGUID, spellID)
+    if unit ~= "player" then return end
+    local hasuCC = HasuCCData and HasuCCData.GetSpellDataForCurrentSpec
+                   and HasuCCData.GetSpellDataForCurrentSpec(spellID)
+                   or (HasuCCData and HasuCCData.CC_SPELL_LOOKUP and HasuCCData.CC_SPELL_LOOKUP[spellID])
+    if not hasuCC or not hasuCC.castTime or hasuCC.castTime <= 0 then return end
+
+    if not (myName and ccAddonUsers[myName] and ccAddonUsers[myName].ccs
+            and ccAddonUsers[myName].ccs[spellID]) then
+        return
+    end
+
+    if event == "UNIT_SPELLCAST_START" then
+        -- If the talent that nullifies cast time is active, skip (cast is instant).
+        local cdNullifier = hasuCC.cdNullifyTalent
+        local IsTalentActive = (HasuCCData and HasuCCData.IsPlayerTalent) or function(id)
+            local ok, r = pcall(IsPlayerSpell, id); return ok and r
+        end
+        if cdNullifier and IsTalentActive(cdNullifier) then return end
+
+        -- Use UnitCastingInfo for accurate cast duration; fall back to data castTime.
+        local castStart, castEnd, castDur
+        local ok, _name, _text, _tex, startMS, endMS = pcall(UnitCastingInfo, "player")
+        if ok and startMS and endMS and endMS > startMS then
+            castStart = startMS / 1000
+            castEnd   = endMS / 1000
+            castDur   = castEnd - castStart
+        else
+            castEnd = GetTime() + hasuCC.castTime
+            castDur = hasuCC.castTime
+        end
+        -- Set baseCd so the progress bar scales correctly (Details!-style fill).
+        ccAddonUsers[myName].ccs[spellID].baseCd = castDur
+        ccAddonUsers[myName].ccs[spellID].cdEnd  = castEnd
+        SetDisplayDirty()
+        DLog("CC_CAST", "START " .. tostring(hasuCC.name)
+            .. " dur=" .. string.format("%.2f", castDur)
+            .. "s castEnd=" .. string.format("%.2f", castEnd))
+    elseif event == "UNIT_SPELLCAST_INTERRUPTED" or event == "UNIT_SPELLCAST_FAILED" then
+        -- Cast was interrupted/cancelled: clear the cast countdown so the bar resets.
+        ccAddonUsers[myName].ccs[spellID].cdEnd = 0
+        SetDisplayDirty()
+        DLog("CC_CAST", event .. " " .. tostring(hasuCC.name) .. " → reset")
+    end
+    -- UNIT_SPELLCAST_STOP: do nothing. STOP fires for both success and cancellation,
+    -- but SUCCEEDED/INTERRUPTED/FAILED already handle the outcome.
 end)
 
 
