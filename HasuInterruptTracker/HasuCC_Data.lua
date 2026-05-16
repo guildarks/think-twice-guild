@@ -296,9 +296,9 @@ HasuCCData.SPEC_CC_DATA = {
         { spellID = 5484,    name = "Howl of Terror",      baseCd = 40  },
         { spellID = 30283,   name = "Shadowfury",          baseCd = 60  },
         { spellID = 1122,    name = "Summon Infernal",     baseCd = 90  },
-        { spellID = 5782,    name = "Fear",                baseCd = 2,   -- 1.4s cast time
+        { spellID = 5782,    name = "Fear",                baseCd = 0, castTime = 1.4,
           requireTalent = 281490 }, -- Requires talent
-        { spellID = 710,     name = "Banish",              baseCd = 2,   -- 1.3s cast time
+        { spellID = 710,     name = "Banish",              baseCd = 0, castTime = 1.3,
           requireTalent = 281490 },
     },
     [266] = { -- Demonology Warlock
@@ -307,9 +307,9 @@ HasuCCData.SPEC_CC_DATA = {
         { spellID = 5484,    name = "Howl of Terror",      baseCd = 40  },
         { spellID = 30283,   name = "Shadowfury",          baseCd = 60  },
         { spellID = 1122,    name = "Summon Infernal",     baseCd = 90  },
-        { spellID = 5782,    name = "Fear",                baseCd = 2,   -- 1.4s cast time
+        { spellID = 5782,    name = "Fear",                baseCd = 0, castTime = 1.4,
           requireTalent = 281490 },
-        { spellID = 710,     name = "Banish",              baseCd = 2,   -- 1.3s cast time
+        { spellID = 710,     name = "Banish",              baseCd = 0, castTime = 1.3,
           requireTalent = 281490 },
     },
     [267] = { -- Destruction Warlock
@@ -317,10 +317,10 @@ HasuCCData.SPEC_CC_DATA = {
         { spellID = 6789,    name = "Mortal Coil",         baseCd = 45  },
         { spellID = 5484,    name = "Howl of Terror",      baseCd = 40  },
         { spellID = 30283,   name = "Shadowfury",          baseCd = 60  },
-        { spellID = 1122,    name = "Summon Infernal",     baseCd = 90  },
-        { spellID = 5782,    name = "Fear",                baseCd = 2,   -- 1.4s cast time
+        { spellID = 1122,    name = "Summon Infernal",     baseCd = 120 },
+        { spellID = 5782,    name = "Fear",                baseCd = 0, castTime = 1.4,
           requireTalent = 281490 },
-        { spellID = 710,     name = "Banish",              baseCd = 2,   -- 1.3s cast time
+        { spellID = 710,     name = "Banish",              baseCd = 0, castTime = 1.3,
           requireTalent = 281490 },
     },
 
