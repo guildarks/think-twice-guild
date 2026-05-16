@@ -669,9 +669,14 @@ HasuCCData.FindMyCCAbilities = function(myName, myClass, ccAddonUsers)
             end
 
             -- ── requireTalent check (uses full C_Traits scan) ─────────
+            -- Exception: 0-CD spells with castTime (Fear, Polymorph, etc.)
+            -- are included even without talent for cast-time tracking.
             if entry.requireTalent then
                 if not IsPlayerTalent(entry.requireTalent) then
-                    break
+                    -- Allow 0-CD spells with castTime to pass (cast tracking)
+                    if not (entry.baseCd == 0 and entry.castTime and entry.castTime > 0) then
+                        break
+                    end
                 end
             end
 
