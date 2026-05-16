@@ -217,9 +217,9 @@ HasuCCData.SPEC_CC_DATA = {
     -- Devastation = 1467 | Preservation = 1468 | Augmentation = 1473
     -- ─────────────────────────────────────────────────────────
     [1473] = { -- Augmentation Evoker
-        { spellID = 372048,  name = "Oppressive Roar",     baseCd = 90,
+        { spellID = 372048,  name = "Oppressive Roar",     baseCd = 120,
           cooldownReducingTalent = 374346, cdReduction = 30, forceShow = true,
-          castAliasIDs = { [406971] = true } }, -- Roaring Intimidation modifier
+          castAliasIDs = { [406971] = true } }, -- Roaring Intimidation: -30s (120 → 90s)
         { spellID = 351338,  name = "Quell",               baseCd = 20  },
         { spellID = 368970,  name = "Tail Swipe",          baseCd = 180,
           cooldownReducingTalent = 375443, cdReduction = 120, forceShow = true },
@@ -227,9 +227,9 @@ HasuCCData.SPEC_CC_DATA = {
           cooldownReducingTalent = 368838, cdReduction = 120, forceShow = true },
     },
     [1467] = { -- Devastation Evoker
-        { spellID = 372048,  name = "Oppressive Roar",     baseCd = 90,
+        { spellID = 372048,  name = "Oppressive Roar",     baseCd = 120,
           cooldownReducingTalent = 374346, cdReduction = 30, forceShow = true,
-          castAliasIDs = { [406971] = true } }, -- Roaring Intimidation modifier
+          castAliasIDs = { [406971] = true } }, -- Roaring Intimidation: -30s (120 → 90s)
         { spellID = 351338,  name = "Quell",               baseCd = 20  },
         { spellID = 368970,  name = "Tail Swipe",          baseCd = 180,
           cooldownReducingTalent = 375443, cdReduction = 120, forceShow = true },
@@ -237,9 +237,9 @@ HasuCCData.SPEC_CC_DATA = {
           cooldownReducingTalent = 368838, cdReduction = 120, forceShow = true },
     },
     [1468] = { -- Preservation Evoker (no Quell)
-        { spellID = 372048,  name = "Oppressive Roar",     baseCd = 90,
+        { spellID = 372048,  name = "Oppressive Roar",     baseCd = 120,
           cooldownReducingTalent = 374346, cdReduction = 30, forceShow = true,
-          castAliasIDs = { [406971] = true } }, -- Roaring Intimidation modifier
+          castAliasIDs = { [406971] = true } }, -- Roaring Intimidation: -30s (120 → 90s)
         { spellID = 368970,  name = "Tail Swipe",          baseCd = 180,
           cooldownReducingTalent = 375443, cdReduction = 120, forceShow = true },
         { spellID = 357214,  name = "Wing Buffet",         baseCd = 180,
