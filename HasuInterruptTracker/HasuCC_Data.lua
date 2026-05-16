@@ -105,9 +105,9 @@ HasuCCData.SPEC_CC_DATA = {
         { spellID = 2139,    name = "Counterspell",        baseCd = 25,
           cooldownReducingTalent = 382297, cdReduction = 5 },
         { spellID = 122,     name = "Frost Nova",          baseCd = 30,
-          extraChargeTalent = 205036 }, -- Garde glaciale → 2 charges
-        { spellID = 118,     name = "Polymorph",           baseCd = 2,   -- 1.5s cast time
-          cooldownReducingTalent = 205036, cdReduction = 1 }, -- Icy Veins makes it instant
+          extraChargeTalent = 205036 },
+        { spellID = 118,     name = "Polymorph",           baseCd = 1.5, -- 1.5s cast time
+          cdNullifyTalent = 205036 }, -- Icy Veins makes it instant
         { spellID = 113724,  name = "Ring of Frost",       baseCd = 45  },
         { spellID = 383121,  name = "Mass Polymorph",      baseCd = 60  },
         { spellID = 31661,   name = "Dragon's Breath",     baseCd = 20  },
@@ -121,8 +121,8 @@ HasuCCData.SPEC_CC_DATA = {
           cooldownReducingTalent = 382297, cdReduction = 5 },
         { spellID = 122,     name = "Frost Nova",          baseCd = 30,
           extraChargeTalent = 205036 },
-        { spellID = 118,     name = "Polymorph",           baseCd = 2,   -- 1.5s cast time
-          cooldownReducingTalent = 205036, cdReduction = 1 }, -- Icy Veins makes it instant
+        { spellID = 118,     name = "Polymorph",           baseCd = 1.5, -- 1.5s cast time
+          cdNullifyTalent = 205036 }, -- Icy Veins makes it instant
         { spellID = 113724,  name = "Ring of Frost",       baseCd = 45  },
         { spellID = 383121,  name = "Mass Polymorph",      baseCd = 60  },
         { spellID = 31661,   name = "Dragon's Breath",     baseCd = 20  },
@@ -136,8 +136,8 @@ HasuCCData.SPEC_CC_DATA = {
           cooldownReducingTalent = 382297, cdReduction = 5 },
         { spellID = 122,     name = "Frost Nova",          baseCd = 30,
           extraChargeTalent = 205036 },
-        { spellID = 118,     name = "Polymorph",           baseCd = 2,   -- 1.5s cast time
-          cooldownReducingTalent = 205036, cdReduction = 1 }, -- Icy Veins makes it instant
+        { spellID = 118,     name = "Polymorph",           baseCd = 1.5, -- 1.5s cast time
+          cdNullifyTalent = 205036 }, -- Icy Veins makes it instant
         { spellID = 113724,  name = "Ring of Frost",       baseCd = 45  },
         { spellID = 383121,  name = "Mass Polymorph",      baseCd = 60  },
         { spellID = 31661,   name = "Dragon's Breath",     baseCd = 20  },
