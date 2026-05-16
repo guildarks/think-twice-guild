@@ -33,11 +33,11 @@
 HasuCCData = HasuCCData or {}
 
 -- Forward declaration so FindMyCCAbilities (defined below) can resolve
--- IsPlayerTalent as an upvalue instead of a (nil) global lookup.
--- Without this, requireTalent / extraChargeTalent checks silently no-op
--- because the local declaration further down is not yet in scope when
--- the FindMyCCAbilities closure is compiled.
+-- IsPlayerTalent and GetPlayerTalentRank as upvalues instead of (nil)
+-- global lookups. Without this, the closure captures nil at compile time
+-- and crashes with "attempt to call a nil value" when invoked.
 local IsPlayerTalent
+local GetPlayerTalentRank
 
 -- ============================================================
 --  SPEC_CC_DATA
@@ -843,7 +843,7 @@ HasuCCData.INTERRUPT_SPELL_IDS = {
 --  GetPlayerTalentRank(spellID)
 --  Returns the rank (0, 1, 2…) of the given talent. 0 if not active.
 -- ============================================================
-local function GetPlayerTalentRank(spellID)
+GetPlayerTalentRank = function(spellID)
     if not (C_ClassTalents and C_ClassTalents.GetActiveConfigID) then
         -- Fallback: only know if active (rank 1) or not (rank 0)
         local ok1, r1 = pcall(IsPlayerSpell, spellID)
