@@ -3865,6 +3865,58 @@ local function SetupSlash()
             end
             print("  Tip: /hasu ping tests the addon-message channel.")
             print("  Tip: /hasu spy enables verbose cast logging.")
+            print("  Tip: /hasu ccscan inspects per-spell detection state.")
+        elseif cmd == "ccscan" or cmd == "cc-scan" then
+            -- Per-spell detection diagnostic for the current spec.
+            -- Helps identify why a CC ability isn't appearing on the bar.
+            local specIndex = GetSpecialization and GetSpecialization()
+            local specID = nil
+            if specIndex then
+                local ok, sid = pcall(GetSpecializationInfo, specIndex)
+                if ok and sid then specID = sid end
+            end
+            print(string.format("|cFF00DDDD[HASU]|r === CC SCAN === spec=%s", tostring(specID)))
+            if not (HasuCCData and HasuCCData.SPEC_CC_DATA and specID and HasuCCData.SPEC_CC_DATA[specID]) then
+                print("  No SPEC_CC_DATA entry for this spec.")
+            else
+                local ccList = HasuCCData.SPEC_CC_DATA[specID]
+                for _, e in ipairs(ccList) do
+                    local sid = e.spellID
+                    local kn1 = select(2, pcall(IsSpellKnown, sid))
+                    local kn2 = select(2, pcall(IsPlayerSpell, sid))
+                    local kn3 = HasuCCData.IsPlayerTalent and HasuCCData.IsPlayerTalent(sid) or false
+                    local rank = HasuCCData.GetPlayerTalentRank and HasuCCData.GetPlayerTalentRank(sid) or 0
+                    local talActive = e.cooldownReducingTalent and HasuCCData.IsPlayerTalent
+                                      and HasuCCData.IsPlayerTalent(e.cooldownReducingTalent) or false
+                    local _, apiMs = pcall(GetSpellBaseCooldown, sid)
+                    local apiCd = (type(apiMs) == "number" and apiMs > 0) and math.floor(apiMs/1000 + 0.5) or 0
+                    local cur = ccAddonUsers[myName] and ccAddonUsers[myName].ccs and ccAddonUsers[myName].ccs[sid]
+                    print(string.format("  %s sid=%d data=%ds force=%s known=%s,%s,%s rank=%d redTal=%s active=%s api=%ds shown=%s curCd=%s",
+                        tostring(e.name), sid, e.baseCd or 0,
+                        tostring(e.forceShow and true or false),
+                        tostring(kn1 and true or false), tostring(kn2 and true or false), tostring(kn3),
+                        rank,
+                        tostring(e.cooldownReducingTalent or "none"),
+                        tostring(talActive),
+                        apiCd,
+                        cur and "YES" or "NO",
+                        cur and tostring(cur.baseCd) or "-"))
+                end
+            end
+            -- Dump tree IDs we found, useful to confirm multi-tree scan
+            if C_ClassTalents and C_ClassTalents.GetActiveConfigID then
+                local okC, cid = pcall(C_ClassTalents.GetActiveConfigID)
+                if okC and cid then
+                    local okI, ci = pcall(C_Traits.GetConfigInfo, cid)
+                    if okI and ci and ci.treeIDs then
+                        local treeStr = ""
+                        for i, t in ipairs(ci.treeIDs) do
+                            treeStr = treeStr .. (i > 1 and ", " or "") .. tostring(t)
+                        end
+                        print("  Trait config trees: " .. treeStr)
+                    end
+                end
+            end
         elseif cmd == "stats" then
             ShowStatsWindow()
         elseif cmd == "stats clear" then
