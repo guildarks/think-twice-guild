@@ -549,7 +549,8 @@ HasuCCData.CC_SPELL_LOOKUP = {}
 for specID, list in pairs(HasuCCData.SPEC_CC_DATA) do
     local cls = CLASS_FOR_SPEC[specID] or "UNKNOWN"
     for _, entry in ipairs(list) do
-        if not HasuCCData.CC_SPELL_LOOKUP[entry.spellID] then
+        local existing = HasuCCData.CC_SPELL_LOOKUP[entry.spellID]
+        if not existing then
             HasuCCData.CC_SPELL_LOOKUP[entry.spellID] = {
                 name                    = entry.name,
                 class                   = cls,
@@ -565,8 +566,37 @@ for specID, list in pairs(HasuCCData.SPEC_CC_DATA) do
                 extraChargeTalent       = entry.extraChargeTalent,
                 forceBaseCd             = entry.forceBaseCd,
             }
+        else
+            -- Spell defined in multiple specs (e.g. Death and Decay 15/25/30s):
+            -- keep the highest baseCd as fallback for the flat lookup,
+            -- and OR the forceBaseCd flag so cast handler uses the safer path.
+            if (entry.baseCd or 0) > (existing.baseCd or 0) then
+                existing.baseCd = entry.baseCd
+            end
+            if entry.forceBaseCd then existing.forceBaseCd = true end
         end
     end
+end
+
+-- ============================================================
+--  GetSpellDataForCurrentSpec(spellID)
+--  Returns the spec-specific data entry for the local player's
+--  current specialization, falling back to CC_SPELL_LOOKUP if
+--  the spell isn't defined for that spec.
+--  Used by cast handler to get the correct baseCd for spells
+--  that vary by spec (e.g. Death and Decay 15/25/30s).
+-- ============================================================
+HasuCCData.GetSpellDataForCurrentSpec = function(spellID)
+    local specIndex = GetSpecialization and GetSpecialization()
+    if specIndex then
+        local ok, sid = pcall(GetSpecializationInfo, specIndex)
+        if ok and sid and HasuCCData.SPEC_CC_DATA[sid] then
+            for _, entry in ipairs(HasuCCData.SPEC_CC_DATA[sid]) do
+                if entry.spellID == spellID then return entry end
+            end
+        end
+    end
+    return HasuCCData.CC_SPELL_LOOKUP[spellID]
 end
 
 -- ============================================================

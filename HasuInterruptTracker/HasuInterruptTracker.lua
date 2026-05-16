@@ -4985,7 +4985,11 @@ playerCastFrame:SetScript("OnEvent", function(_, _, unit, castGUID, spellID)
         DLog("SELF", "spellID=" .. tostring(spellID) .. " interrupt=" .. isInterrupt .. " extra=" .. isExtra)
         -- Detect self CC casts: sync to party and update self CC entry
         -- Check Hasu CC lookup first, fall back to legacy CC_SPELLS
-        local hasuCC   = HasuCCData and HasuCCData.CC_SPELL_LOOKUP and HasuCCData.CC_SPELL_LOOKUP[spellID]
+        -- Prefer spec-specific data (handles spells like Death and Decay
+        -- which have different CDs per spec: Blood 15s, Frost 30s, Unholy 25s).
+        local hasuCC   = HasuCCData and HasuCCData.GetSpellDataForCurrentSpec
+                         and HasuCCData.GetSpellDataForCurrentSpec(spellID)
+                         or (HasuCCData and HasuCCData.CC_SPELL_LOOKUP and HasuCCData.CC_SPELL_LOOKUP[spellID])
         local legacyCC = (not hasuCC) and CC_SPELLS[spellID]
         if hasuCC or legacyCC then
             local ccName = (hasuCC and hasuCC.name) or (legacyCC and legacyCC.name) or "?"
