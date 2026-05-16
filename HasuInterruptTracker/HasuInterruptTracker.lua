@@ -5067,17 +5067,19 @@ playerCastFrame:SetScript("OnEvent", function(_, _, unit, castGUID, spellID)
                          and HasuCCData.GetSpellDataForCurrentSpec(spellID)
                          or (HasuCCData and HasuCCData.CC_SPELL_LOOKUP and HasuCCData.CC_SPELL_LOOKUP[spellID])
         -- Fallback: the cast may arrive with a talent-modified spellID instead
-        -- of the base tracked one (e.g. Roaring Intimidation 374346 replaces
-        -- Oppressive Roar 372048). Search the current spec's CC list for any
-        -- entry whose CD-reducer / extra-charge / cdNullify talent matches the
-        -- cast spellID, and remap to the base entry so its CD bar updates.
+        -- of the base tracked one (e.g. Evoker Oppressive Roar 372048 becomes
+        -- 406971 when Roaring Intimidation is talented). Search the current
+        -- spec's CC list for any entry whose castAliasIDs / CD-reducer /
+        -- extra-charge / cdNullify talent matches the cast spellID, and
+        -- remap to the base entry so its CD bar updates.
         if not hasuCC and HasuCCData and HasuCCData.SPEC_CC_DATA then
             local specIdx = GetSpecialization and GetSpecialization()
             local ok_sp, sid = pcall(function() return select(1, GetSpecializationInfo(specIdx)) end)
             local list = ok_sp and sid and HasuCCData.SPEC_CC_DATA[sid]
             if list then
                 for _, e in ipairs(list) do
-                    if e.cooldownReducingTalent  == spellID
+                    if (e.castAliasIDs and e.castAliasIDs[spellID])
+                       or e.cooldownReducingTalent  == spellID
                        or e.cooldownReducingTalent2 == spellID
                        or e.extraChargeTalent      == spellID
                        or e.cdNullifyTalent        == spellID

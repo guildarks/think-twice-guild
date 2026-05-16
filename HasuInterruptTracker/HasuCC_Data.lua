@@ -218,7 +218,8 @@ HasuCCData.SPEC_CC_DATA = {
     -- ─────────────────────────────────────────────────────────
     [1473] = { -- Augmentation Evoker
         { spellID = 372048,  name = "Oppressive Roar",     baseCd = 90,
-          cooldownReducingTalent = 374346, cdReduction = 30, forceShow = true },
+          cooldownReducingTalent = 374346, cdReduction = 30, forceShow = true,
+          castAliasIDs = { [406971] = true } }, -- Roaring Intimidation modifier
         { spellID = 351338,  name = "Quell",               baseCd = 20  },
         { spellID = 368970,  name = "Tail Swipe",          baseCd = 180,
           cooldownReducingTalent = 375443, cdReduction = 120, forceShow = true },
@@ -227,7 +228,8 @@ HasuCCData.SPEC_CC_DATA = {
     },
     [1467] = { -- Devastation Evoker
         { spellID = 372048,  name = "Oppressive Roar",     baseCd = 90,
-          cooldownReducingTalent = 374346, cdReduction = 30, forceShow = true },
+          cooldownReducingTalent = 374346, cdReduction = 30, forceShow = true,
+          castAliasIDs = { [406971] = true } }, -- Roaring Intimidation modifier
         { spellID = 351338,  name = "Quell",               baseCd = 20  },
         { spellID = 368970,  name = "Tail Swipe",          baseCd = 180,
           cooldownReducingTalent = 375443, cdReduction = 120, forceShow = true },
@@ -236,7 +238,8 @@ HasuCCData.SPEC_CC_DATA = {
     },
     [1468] = { -- Preservation Evoker (no Quell)
         { spellID = 372048,  name = "Oppressive Roar",     baseCd = 90,
-          cooldownReducingTalent = 374346, cdReduction = 30, forceShow = true },
+          cooldownReducingTalent = 374346, cdReduction = 30, forceShow = true,
+          castAliasIDs = { [406971] = true } }, -- Roaring Intimidation modifier
         { spellID = 368970,  name = "Tail Swipe",          baseCd = 180,
           cooldownReducingTalent = 375443, cdReduction = 120, forceShow = true },
         { spellID = 357214,  name = "Wing Buffet",         baseCd = 180,
