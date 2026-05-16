@@ -55,13 +55,13 @@ HasuCCData.SPEC_CC_DATA = {
           cooldownReducingTalent = 378848, cdReduction = 3 }, -- Soif algide
         { spellID = 45524,   name = "Chains of Ice",       baseCd = 0   },
         { spellID = 221562,  name = "Asphyxiate",          baseCd = 45  },
-        { spellID = 49576,   name = "Death Grip",          baseCd = 25,
+        { spellID = 49576,   name = "Death Grip",          baseCd = 15,
           extraChargeTalent = 356367, -- Écho de la mort
           cdNullifyTalent = 276079 }, -- Portée de la mort: instant
-        { spellID = 43265,   name = "Death and Decay",     baseCd = 30,
-          requireTalent = 273952 }, -- Poigne des morts
+        { spellID = 43265,   name = "Death and Decay",     baseCd = 15,
+          requireTalent = 273952 }, -- Poigne des morts (Blood: 15s)
         { spellID = 207167,  name = "Blinding Sleet",      baseCd = 60  },
-        { spellID = 108199,  name = "Grip of the Undying", baseCd = 45  },
+        { spellID = 108199,  name = "Grip of the Undying", baseCd = 90  },
         { spellID = 1263569, name = "Abominable Limb",     baseCd = 120 },
     },
     [251] = { -- Frost DK
@@ -69,11 +69,11 @@ HasuCCData.SPEC_CC_DATA = {
           cooldownReducingTalent = 378848, cdReduction = 3 },
         { spellID = 45524,   name = "Chains of Ice",       baseCd = 0   },
         { spellID = 221562,  name = "Asphyxiate",          baseCd = 45  },
-        { spellID = 49576,   name = "Death Grip",          baseCd = 25,
+        { spellID = 49576,   name = "Death Grip",          baseCd = 15,
           extraChargeTalent = 356367,
           cdNullifyTalent = 276079 }, -- Portée de la mort: instant
         { spellID = 43265,   name = "Death and Decay",     baseCd = 30,
-          requireTalent = 273952 },
+          requireTalent = 273952 }, -- Frost: 30s
         { spellID = 207167,  name = "Blinding Sleet",      baseCd = 60  },
     },
     [252] = { -- Unholy DK
@@ -81,11 +81,11 @@ HasuCCData.SPEC_CC_DATA = {
           cooldownReducingTalent = 378848, cdReduction = 3 },
         { spellID = 45524,   name = "Chains of Ice",       baseCd = 0   },
         { spellID = 221562,  name = "Asphyxiate",          baseCd = 45  },
-        { spellID = 49576,   name = "Death Grip",          baseCd = 25,
+        { spellID = 49576,   name = "Death Grip",          baseCd = 15,
           extraChargeTalent = 356367,
           cdNullifyTalent = 276079 }, -- Portée de la mort: instant
-        { spellID = 43265,   name = "Death and Decay",     baseCd = 30,
-          requireTalent = 273952 },
+        { spellID = 43265,   name = "Death and Decay",     baseCd = 25,
+          requireTalent = 273952 }, -- Unholy: 25s
         { spellID = 207167,  name = "Blinding Sleet",      baseCd = 60  },
     },
 
@@ -133,9 +133,9 @@ HasuCCData.SPEC_CC_DATA = {
         { spellID = 118,     name = "Polymorph",           baseCd = 0   },
         { spellID = 113724,  name = "Ring of Frost",       baseCd = 45  },
         { spellID = 383121,  name = "Mass Polymorph",      baseCd = 60  },
-        { spellID = 31661,   name = "Dragon's Breath",     baseCd = 20  },
-        { spellID = 157980,  name = "Supernova",           baseCd = 25  },
-        { spellID = 120,     name = "Cone of Cold",        baseCd = 12,
+        { spellID = 31661,   name = "Dragon's Breath",     baseCd = 45  },
+        { spellID = 157980,  name = "Supernova",           baseCd = 45  },
+        { spellID = 120,     name = "Cone of Cold",        baseCd = 25,
           replacedByTalent = 386763 }, -- Hidden if Froid glacial active (Ice Nova replaces)
         { spellID = 157997,  name = "Ice Nova",            baseCd = 25,
           requireTalent = 386763 },
@@ -148,9 +148,9 @@ HasuCCData.SPEC_CC_DATA = {
         { spellID = 118,     name = "Polymorph",           baseCd = 0   },
         { spellID = 113724,  name = "Ring of Frost",       baseCd = 45  },
         { spellID = 383121,  name = "Mass Polymorph",      baseCd = 60  },
-        { spellID = 31661,   name = "Dragon's Breath",     baseCd = 20  },
-        { spellID = 157980,  name = "Supernova",           baseCd = 25  },
-        { spellID = 120,     name = "Cone of Cold",        baseCd = 12,
+        { spellID = 31661,   name = "Dragon's Breath",     baseCd = 45  },
+        { spellID = 157980,  name = "Supernova",           baseCd = 45  },
+        { spellID = 120,     name = "Cone of Cold",        baseCd = 25,
           replacedByTalent = 386763 }, -- Hidden if Froid glacial active (Ice Nova replaces)
         { spellID = 157997,  name = "Ice Nova",            baseCd = 25,
           requireTalent = 386763 },
@@ -163,9 +163,9 @@ HasuCCData.SPEC_CC_DATA = {
         { spellID = 118,     name = "Polymorph",           baseCd = 0   },
         { spellID = 113724,  name = "Ring of Frost",       baseCd = 45  },
         { spellID = 383121,  name = "Mass Polymorph",      baseCd = 60  },
-        { spellID = 31661,   name = "Dragon's Breath",     baseCd = 20  },
-        { spellID = 157980,  name = "Supernova",           baseCd = 25  },
-        { spellID = 120,     name = "Cone of Cold",        baseCd = 12,
+        { spellID = 31661,   name = "Dragon's Breath",     baseCd = 45  },
+        { spellID = 157980,  name = "Supernova",           baseCd = 45  },
+        { spellID = 120,     name = "Cone of Cold",        baseCd = 25,
           replacedByTalent = 386763 }, -- Hidden if Froid glacial active (Ice Nova replaces)
         { spellID = 157997,  name = "Ice Nova",            baseCd = 25,
           requireTalent = 386763 },
@@ -234,7 +234,7 @@ HasuCCData.SPEC_CC_DATA = {
     [269] = { -- Windwalker Monk
         { spellID = 116705,  name = "Spear Hand Strike",   baseCd = 15,
           cooldownReducingTalent = 450631, cdReduction = 5 },
-        { spellID = 115078,  name = "Paralysis",           baseCd = 15,
+        { spellID = 115078,  name = "Paralysis",           baseCd = 45,
           extraChargeTalent = 344359,
           cooldownReducingTalent = 344359, cdReduction = 15 },
         { spellID = 119381,  name = "Leg Sweep",           baseCd = 60,
@@ -245,7 +245,7 @@ HasuCCData.SPEC_CC_DATA = {
         { spellID = 198898,  name = "Song of Chi-Ji",      baseCd = 30  },
     },
     [270] = { -- Mistweaver Monk (no Spear Hand Strike in 12.0)
-        { spellID = 115078,  name = "Paralysis",           baseCd = 15,
+        { spellID = 115078,  name = "Paralysis",           baseCd = 45,
           extraChargeTalent = 344359,
           cooldownReducingTalent = 344359, cdReduction = 15 },
         { spellID = 119381,  name = "Leg Sweep",           baseCd = 60,
@@ -258,7 +258,7 @@ HasuCCData.SPEC_CC_DATA = {
     [268] = { -- Brewmaster Monk
         { spellID = 116705,  name = "Spear Hand Strike",   baseCd = 15,
           cooldownReducingTalent = 450631, cdReduction = 5 },
-        { spellID = 115078,  name = "Paralysis",           baseCd = 15,
+        { spellID = 115078,  name = "Paralysis",           baseCd = 45,
           extraChargeTalent = 344359,
           cooldownReducingTalent = 344359, cdReduction = 15 },
         { spellID = 119381,  name = "Leg Sweep",           baseCd = 60,
@@ -273,31 +273,31 @@ HasuCCData.SPEC_CC_DATA = {
     -- Affliction = 265 | Demonology = 266 | Destruction = 267
     -- ─────────────────────────────────────────────────────────
     [265] = { -- Affliction Warlock
-        { spellID = 119910,  name = "Spell Lock",          baseCd = 24  }, -- Command Demon
+        { spellID = 119910,  name = "Spell Lock",          baseCd = 25  }, -- Command Demon
         { spellID = 6789,    name = "Mortal Coil",         baseCd = 45  },
         { spellID = 5484,    name = "Howl of Terror",      baseCd = 40  },
-        { spellID = 30283,   name = "Shadowfury",          baseCd = 30  },
-        { spellID = 1122,    name = "Summon Infernal",     baseCd = 180 },
+        { spellID = 30283,   name = "Shadowfury",          baseCd = 60  },
+        { spellID = 1122,    name = "Summon Infernal",     baseCd = 90  },
         { spellID = 5782,    name = "Fear",                baseCd = 0   },
-        { spellID = 710,     name = "Banish",              baseCd = 30  },
+        { spellID = 710,     name = "Banish",              baseCd = 0   },
     },
     [266] = { -- Demonology Warlock
-        { spellID = 119910,  name = "Spell Lock",          baseCd = 24  },
+        { spellID = 119910,  name = "Spell Lock",          baseCd = 25  },
         { spellID = 6789,    name = "Mortal Coil",         baseCd = 45  },
         { spellID = 5484,    name = "Howl of Terror",      baseCd = 40  },
-        { spellID = 30283,   name = "Shadowfury",          baseCd = 30  },
-        { spellID = 1122,    name = "Summon Infernal",     baseCd = 180 },
+        { spellID = 30283,   name = "Shadowfury",          baseCd = 60  },
+        { spellID = 1122,    name = "Summon Infernal",     baseCd = 90  },
         { spellID = 5782,    name = "Fear",                baseCd = 0   },
-        { spellID = 710,     name = "Banish",              baseCd = 30  },
+        { spellID = 710,     name = "Banish",              baseCd = 0   },
     },
     [267] = { -- Destruction Warlock
-        { spellID = 119910,  name = "Spell Lock",          baseCd = 24  },
+        { spellID = 119910,  name = "Spell Lock",          baseCd = 25  },
         { spellID = 6789,    name = "Mortal Coil",         baseCd = 45  },
         { spellID = 5484,    name = "Howl of Terror",      baseCd = 40  },
-        { spellID = 30283,   name = "Shadowfury",          baseCd = 30  },
-        { spellID = 1122,    name = "Summon Infernal",     baseCd = 180 },
+        { spellID = 30283,   name = "Shadowfury",          baseCd = 60  },
+        { spellID = 1122,    name = "Summon Infernal",     baseCd = 90  },
         { spellID = 5782,    name = "Fear",                baseCd = 0   },
-        { spellID = 710,     name = "Banish",              baseCd = 30  },
+        { spellID = 710,     name = "Banish",              baseCd = 0   },
     },
 
     -- ── DRUID ────────────────────────────────────────────────
@@ -355,7 +355,7 @@ HasuCCData.SPEC_CC_DATA = {
         { spellID = 147362,  name = "Counter Shot",        baseCd = 24  },
         { spellID = 19577,   name = "Intimidation",        baseCd = 60,
           cooldownReducingTalent = 459507, cdReduction = 20 },
-        { spellID = 187650,  name = "Freezing Trap",       baseCd = 25,
+        { spellID = 187650,  name = "Freezing Trap",       baseCd = 30,
           cooldownReducingTalent = 343247, cdReduction = 5 },
         { spellID = 109248,  name = "Binding Shot",        baseCd = 45  },
         { spellID = 187698,  name = "Tar Trap",            baseCd = 30,
@@ -365,7 +365,7 @@ HasuCCData.SPEC_CC_DATA = {
         { spellID = 147362,  name = "Counter Shot",        baseCd = 24  },
         { spellID = 19577,   name = "Intimidation",        baseCd = 60,
           cooldownReducingTalent = 459507, cdReduction = 20 },
-        { spellID = 187650,  name = "Freezing Trap",       baseCd = 25,
+        { spellID = 187650,  name = "Freezing Trap",       baseCd = 30,
           cooldownReducingTalent = 343247, cdReduction = 5 },
         { spellID = 109248,  name = "Binding Shot",        baseCd = 45  },
         { spellID = 187698,  name = "Tar Trap",            baseCd = 30,
@@ -375,7 +375,7 @@ HasuCCData.SPEC_CC_DATA = {
         { spellID = 187707,  name = "Muzzle",              baseCd = 15  },
         { spellID = 19577,   name = "Intimidation",        baseCd = 60,
           cooldownReducingTalent = 459507, cdReduction = 20 },
-        { spellID = 187650,  name = "Freezing Trap",       baseCd = 25,
+        { spellID = 187650,  name = "Freezing Trap",       baseCd = 30,
           cooldownReducingTalent = 343247, cdReduction = 5 },
         { spellID = 109248,  name = "Binding Shot",        baseCd = 45  },
         { spellID = 187698,  name = "Tar Trap",            baseCd = 30,
@@ -387,7 +387,7 @@ HasuCCData.SPEC_CC_DATA = {
     -- ─────────────────────────────────────────────────────────
     [258] = { -- Shadow Priest
         { spellID = 15487,   name = "Silence",             baseCd = 30  }, -- interrupt
-        { spellID = 8122,    name = "Psychic Scream",      baseCd = 45,
+        { spellID = 8122,    name = "Psychic Scream",      baseCd = 40,
           cooldownReducingTalent = 196704, cdReduction = 10 },
         { spellID = 1250691, name = "Void Tendrils",       baseCd = 30  },
         { spellID = 9484,    name = "Shackle Undead",      baseCd = 0   },
@@ -396,13 +396,13 @@ HasuCCData.SPEC_CC_DATA = {
         { spellID = 88625,   name = "Holy Word: Chastise", baseCd = 60,
           cooldownReducingTalent = 585, cdReduction = 4,
           cooldownReducingTalent2 = 132157, cdReduction2 = 4 }, -- Châtiment + Nova sacrée
-        { spellID = 8122,    name = "Psychic Scream",      baseCd = 45,
+        { spellID = 8122,    name = "Psychic Scream",      baseCd = 40,
           cooldownReducingTalent = 196704, cdReduction = 10 },
         { spellID = 1250691, name = "Void Tendrils",       baseCd = 30  },
         { spellID = 9484,    name = "Shackle Undead",      baseCd = 0   },
     },
     [256] = { -- Discipline Priest — no Silence
-        { spellID = 8122,    name = "Psychic Scream",      baseCd = 45,
+        { spellID = 8122,    name = "Psychic Scream",      baseCd = 40,
           cooldownReducingTalent = 196704, cdReduction = 10 },
         { spellID = 1250691, name = "Void Tendrils",       baseCd = 30  },
         { spellID = 9484,    name = "Shackle Undead",      baseCd = 0   },
@@ -412,23 +412,29 @@ HasuCCData.SPEC_CC_DATA = {
     -- Arms = 71 | Fury = 72 | Protection = 73
     -- ─────────────────────────────────────────────────────────
     [71] = { -- Arms Warrior
-        { spellID = 6552,    name = "Pummel",              baseCd = 15  }, -- interrupt
-        { spellID = 107570,  name = "Storm Bolt",          baseCd = 30  },
+        { spellID = 6552,    name = "Pummel",              baseCd = 14  }, -- interrupt
+        { spellID = 107570,  name = "Storm Bolt",          baseCd = 27  },
         { spellID = 46968,   name = "Shockwave",           baseCd = 40,
           cooldownReducingTalent = 275339, cdReduction = 15 },
+        { spellID = 5246,    name = "Intimidating Shout",  baseCd = 80  },
+        { spellID = 12323,   name = "Piercing Howl",       baseCd = 90  },
     },
     [72] = { -- Fury Warrior
-        { spellID = 6552,    name = "Pummel",              baseCd = 15  },
-        { spellID = 107570,  name = "Storm Bolt",          baseCd = 30  },
+        { spellID = 6552,    name = "Pummel",              baseCd = 14  },
+        { spellID = 107570,  name = "Storm Bolt",          baseCd = 27  },
         { spellID = 46968,   name = "Shockwave",           baseCd = 40,
           cooldownReducingTalent = 275339, cdReduction = 15 },
+        { spellID = 5246,    name = "Intimidating Shout",  baseCd = 80  },
+        { spellID = 12323,   name = "Piercing Howl",       baseCd = 90  },
     },
     [73] = { -- Protection Warrior
-        { spellID = 6552,    name = "Pummel",              baseCd = 15  },
-        { spellID = 107570,  name = "Storm Bolt",          baseCd = 30  },
+        { spellID = 6552,    name = "Pummel",              baseCd = 14  },
+        { spellID = 107570,  name = "Storm Bolt",          baseCd = 27  },
         { spellID = 46968,   name = "Shockwave",           baseCd = 40,
           cooldownReducingTalent = 275339, cdReduction = 15 },
-        { spellID = 385952,  name = "Shield Charge",       baseCd = 20  }, -- Charge de bouclier
+        { spellID = 5246,    name = "Intimidating Shout",  baseCd = 80  },
+        { spellID = 12323,   name = "Piercing Howl",       baseCd = 90  },
+        { spellID = 385952,  name = "Shield Charge",       baseCd = 45  }, -- Charge de bouclier
     },
 
     -- ── SHAMAN ───────────────────────────────────────────────
@@ -436,28 +442,30 @@ HasuCCData.SPEC_CC_DATA = {
     -- ─────────────────────────────────────────────────────────
     [262] = { -- Elemental Shaman
         { spellID = 57994,   name = "Wind Shear",          baseCd = 12  }, -- interrupt
-        { spellID = 51514,   name = "Hex",                 baseCd = 0   },
+        { spellID = 51514,   name = "Hex",                 baseCd = 30  },
         { spellID = 192058,  name = "Capacitor Totem",     baseCd = 60,
           extraChargeTalent = 265046,
           cooldownReducingTalent = 265046, cdReduction = 10 },
         { spellID = 51485,   name = "Earthgrab Totem",     baseCd = 30  },
-        { spellID = 51490,   name = "Thunderstorm",        baseCd = 45  },
+        { spellID = 51490,   name = "Thunderstorm",        baseCd = 30  },
     },
     [263] = { -- Enhancement Shaman
         { spellID = 57994,   name = "Wind Shear",          baseCd = 12  },
-        { spellID = 51514,   name = "Hex",                 baseCd = 0   },
+        { spellID = 51514,   name = "Hex",                 baseCd = 30  },
         { spellID = 192058,  name = "Capacitor Totem",     baseCd = 60,
           extraChargeTalent = 265046,
           cooldownReducingTalent = 265046, cdReduction = 10 },
         { spellID = 51485,   name = "Earthgrab Totem",     baseCd = 30  },
+        { spellID = 51490,   name = "Thunderstorm",        baseCd = 30  },
     },
     [264] = { -- Restoration Shaman (30s Wind Shear)
         { spellID = 57994,   name = "Wind Shear",          baseCd = 30  },
-        { spellID = 51514,   name = "Hex",                 baseCd = 0   },
+        { spellID = 51514,   name = "Hex",                 baseCd = 30  },
         { spellID = 192058,  name = "Capacitor Totem",     baseCd = 60,
           extraChargeTalent = 265046,
           cooldownReducingTalent = 265046, cdReduction = 10 },
         { spellID = 51485,   name = "Earthgrab Totem",     baseCd = 30  },
+        { spellID = 51490,   name = "Thunderstorm",        baseCd = 30  },
     },
 
     -- ── ROGUE ────────────────────────────────────────────────
@@ -467,21 +475,21 @@ HasuCCData.SPEC_CC_DATA = {
         { spellID = 1766,    name = "Kick",                baseCd = 15  }, -- interrupt
         { spellID = 2094,    name = "Blind",               baseCd = 120,
           cooldownReducingTalent = 200733, cdReduction = 60 },
-        { spellID = 1776,    name = "Gouge",               baseCd = 15  },
-        { spellID = 703,     name = "Garrote (Silence)",   baseCd = 15,
+        { spellID = 1776,    name = "Gouge",               baseCd = 25  },
+        { spellID = 703,     name = "Garrote (Silence)",   baseCd = 6,
           requireTalent = 196861 }, -- Fil de fer: Garrote silences the target
     },
     [260] = { -- Outlaw Rogue (Hors-la-loi)
         { spellID = 1766,    name = "Kick",                baseCd = 15  },
         { spellID = 2094,    name = "Blind",               baseCd = 120,
           cooldownReducingTalent = 200733, cdReduction = 60 },
-        { spellID = 1776,    name = "Gouge",               baseCd = 15  },
+        { spellID = 1776,    name = "Gouge",               baseCd = 25  },
     },
     [261] = { -- Subtlety Rogue (Finesse)
         { spellID = 1766,    name = "Kick",                baseCd = 15  },
         { spellID = 2094,    name = "Blind",               baseCd = 120,
           cooldownReducingTalent = 200733, cdReduction = 60 },
-        { spellID = 1776,    name = "Gouge",               baseCd = 15  },
+        { spellID = 1776,    name = "Gouge",               baseCd = 25  },
     },
 }
 

@@ -54,7 +54,7 @@ local L = HasuL or {}     -- localization table (set by localization.lua)
 -- Spell data (multiple possible interrupts per class/spec)
 ------------------------------------------------------------
 local ALL_INTERRUPTS = {
-    [6552]    = { name = "Pummel", cd = 15, icon = 132938 },
+    [6552]    = { name = "Pummel", cd = 14, icon = 132938 },
     [1766]    = { name = "Kick", cd = 15, icon = 132219 },
     [2139]    = { name = "Counterspell", cd = 25, icon = 135856 },
     [57994]   = { name = "Wind Shear", cd = 12, icon = 136018 },
@@ -458,7 +458,7 @@ local EXTRA_KICK_TALENTS_STR   = {}
 
 -- Class → primary interrupt mapping (for auto-detection when mob gets interrupted)
 local CLASS_INTERRUPTS         = {
-    WARRIOR     = { id = 6552, cd = 15, name = "Pummel" },
+    WARRIOR     = { id = 6552, cd = 14, name = "Pummel" },
     ROGUE       = { id = 1766, cd = 15, name = "Kick" },
     MAGE        = { id = 2139, cd = 25, name = "Counterspell" },
     SHAMAN      = { id = 57994, cd = 12, name = "Wind Shear" },
