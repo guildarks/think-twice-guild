@@ -60,7 +60,8 @@ HasuCCData.SPEC_CC_DATA = {
           extraChargeTalent = 356367, -- Écho de la mort
           cdNullifyTalent = 276079 }, -- Portée de la mort: instant
         { spellID = 43265,   name = "Death and Decay",     baseCd = 15,
-          requireTalent = 273952 }, -- Poigne des morts (Blood: 15s)
+          requireTalent = 273952,
+          extraChargeTalent = 356367 }, -- Poigne des morts (Blood: 15s), 2 charges avec Écho de la mort
         { spellID = 207167,  name = "Blinding Sleet",      baseCd = 60  },
         { spellID = 108199,  name = "Grip of the Undying", baseCd = 90  },
         { spellID = 1263569, name = "Abominable Limb",     baseCd = 120 },
@@ -75,7 +76,9 @@ HasuCCData.SPEC_CC_DATA = {
           extraChargeTalent = 356367,
           cdNullifyTalent = 276079 }, -- Portée de la mort: instant
         { spellID = 43265,   name = "Death and Decay",     baseCd = 30,
-          requireTalent = 273952 }, -- Frost: 30s
+          requireTalent = 273952,
+          extraChargeTalent = 356367,
+          forceBaseCd = true }, -- Frost: 30s, 2 charges avec Écho de la mort
         { spellID = 207167,  name = "Blinding Sleet",      baseCd = 60  },
     },
     [252] = { -- Unholy DK
@@ -88,7 +91,9 @@ HasuCCData.SPEC_CC_DATA = {
           extraChargeTalent = 356367,
           cdNullifyTalent = 276079 }, -- Portée de la mort: instant
         { spellID = 43265,   name = "Death and Decay",     baseCd = 25,
-          requireTalent = 273952 }, -- Unholy: 25s
+          requireTalent = 273952,
+          extraChargeTalent = 356367,
+          forceBaseCd = true }, -- Unholy: 25s, 2 charges avec Écho de la mort
         { spellID = 207167,  name = "Blinding Sleet",      baseCd = 60  },
     },
 
@@ -553,6 +558,8 @@ for specID, list in pairs(HasuCCData.SPEC_CC_DATA) do
                 cdReduction2            = entry.cdReduction2,
                 cdNullifyTalent         = entry.cdNullifyTalent,
                 replacedByTalent        = entry.replacedByTalent,
+                extraChargeTalent       = entry.extraChargeTalent,
+                forceBaseCd             = entry.forceBaseCd,
             }
         end
     end
@@ -654,13 +661,16 @@ HasuCCData.FindMyCCAbilities = function(myName, myClass, ccAddonUsers)
             -- ── Get actual CD from GetSpellBaseCooldown ───────────
             -- WoW 12.0+ sometimes returns the GCD (1500ms) or the per-charge
             -- recharge time instead of the real base CD (e.g. Death Grip
-            -- with Echo of Death talent returns ~2000ms). Guard against
+            -- with Echo of Death talent returns ~2000ms, or Death and Decay
+            -- which returns 15s in combat regardless of spec). Guard against
             -- garbage values by rejecting anything < 5s when entry.baseCd
             -- is meaningfully larger, and never accepting a value smaller
             -- than ~50% of entry.baseCd — UNLESS a cooldownReducingTalent is
             -- active, in which case a reduced CD is legitimately expected.
+            -- forceBaseCd: bypass GetSpellBaseCooldown entirely (use for spells
+            -- known to return wrong values, e.g. Death and Decay).
             local actualCd = entry.baseCd
-            if entry.baseCd > 0 then
+            if entry.baseCd > 0 and not entry.forceBaseCd then
                 local ok_cd, ms = pcall(GetSpellBaseCooldown, spellID)
 
                 -- If GetSpellBaseCooldown succeeds and returns valid data (>= 5s),
@@ -684,8 +694,10 @@ HasuCCData.FindMyCCAbilities = function(myName, myClass, ccAddonUsers)
                         -- Only second talent active
                         actualCd = math.max(1, entry.baseCd - entry.cdReduction2)
                     else
-                        -- Standard validation: accept CD if it's within expected range
-                        local minAccept = math.floor(entry.baseCd * 0.5)
+                        -- Stricter validation: accept CD only if it's at least 75%
+                        -- of expected baseCd. This rejects the 15s GCD-modifier
+                        -- value that some spells return in combat.
+                        local minAccept = math.floor(entry.baseCd * 0.75)
                         if cd >= 1 and (entry.baseCd < 10 or cd >= minAccept) then
                             actualCd = cd
                         end
