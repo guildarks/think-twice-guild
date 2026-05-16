@@ -1629,11 +1629,17 @@ local function ScanInspectTalents(unit)
             end
 
             for _, entry in ipairs(ccList) do
-                -- Check requireTalent: only include if the talent is active
+                -- Check requireTalent: only include if the talent is active.
+                -- Exception: 0-CD spells with castTime (Fear, Polymorph, etc.)
+                -- are always included for cast-time tracking and golden border.
                 local allowed = true
                 if entry.requireTalent then
                     allowed = activeTalents[entry.requireTalent]
                         or (activeTalents[tostring(entry.requireTalent)] == true)
+                    -- Allow 0-CD spells with castTime to pass
+                    if not allowed and entry.baseCd == 0 and entry.castTime and entry.castTime > 0 then
+                        allowed = true
+                    end
                 end
                 -- Check replacedByTalent: HIDE if replacement talent is active
                 if allowed and entry.replacedByTalent then
