@@ -5160,6 +5160,11 @@ playerCastFrame:SetScript("OnEvent", function(_, _, unit, castGUID, spellID)
                             ccDirty = true
                         end
                     end
+                    -- Cast completed: clear the isCasting flag
+                    if ccs[spellID].isCasting then
+                        ccs[spellID].isCasting = false
+                        ccDirty = true
+                    end
                 else
                     DLog("CC_SELF", "requireTalent not met for spellID=" .. tostring(spellID) .. " reqTalent=" .. tostring(_reqTalent))
                 end
@@ -5256,14 +5261,59 @@ playerCastStartFrame:RegisterUnitEvent("UNIT_SPELLCAST_FAILED",      "player")
 playerCastStartFrame:RegisterUnitEvent("UNIT_SPELLCAST_STOP",        "player")
 playerCastStartFrame:SetScript("OnEvent", function(_, event, unit, _castGUID, spellID)
     if unit ~= "player" then return end
+    DLog("CAST_EVENT", event .. " spellID=" .. tostring(spellID))
+
     local hasuCC = HasuCCData and HasuCCData.GetSpellDataForCurrentSpec
                    and HasuCCData.GetSpellDataForCurrentSpec(spellID)
                    or (HasuCCData and HasuCCData.CC_SPELL_LOOKUP and HasuCCData.CC_SPELL_LOOKUP[spellID])
-    if not hasuCC or not hasuCC.castTime or hasuCC.castTime <= 0 then return end
 
-    if not (myName and ccAddonUsers[myName] and ccAddonUsers[myName].ccs
-            and ccAddonUsers[myName].ccs[spellID]) then
+    if not hasuCC then
+        DLog("CAST_EVENT", "  → spell not in CC data")
         return
+    end
+
+    if not hasuCC.castTime or hasuCC.castTime <= 0 then
+        DLog("CAST_EVENT", "  → no castTime defined")
+        return
+    end
+
+    DLog("CAST_EVENT", "  → found in data: " .. hasuCC.name .. " castTime=" .. hasuCC.castTime .. "s")
+
+    if not myName then
+        DLog("CAST_EVENT", "  → no myName yet")
+        return
+    end
+
+    if not ccAddonUsers[myName] then
+        DLog("CAST_EVENT", "  → creating ccAddonUsers[" .. myName .. "]")
+        ccAddonUsers[myName] = {
+            class         = (select(2, UnitClass("player"))),
+            specID        = GetSpecialization and GetSpecialization() or 0,
+            isSelf        = true,
+            hasAddon      = true,
+            activeTalents = {},
+            ccs           = {},
+            ccOrder       = {},
+        }
+    end
+
+    if not ccAddonUsers[myName].ccs then
+        ccAddonUsers[myName].ccs = {}
+    end
+
+    if not ccAddonUsers[myName].ccs[spellID] then
+        DLog("CAST_EVENT", "  → creating ccs[" .. spellID .. "]")
+        local ok_ic, icon = pcall(C_Spell.GetSpellTexture, spellID)
+        ccAddonUsers[myName].ccs[spellID] = {
+            name       = hasuCC.name,
+            baseCd     = 0,
+            cdEnd      = 0,
+            maxCharges = 1,
+            icon       = ok_ic and icon or nil,
+            castTime   = hasuCC.castTime,
+        }
+        if not ccAddonUsers[myName].ccOrder then ccAddonUsers[myName].ccOrder = {} end
+        table.insert(ccAddonUsers[myName].ccOrder, spellID)
     end
 
     if event == "UNIT_SPELLCAST_START" then
@@ -5272,7 +5322,10 @@ playerCastStartFrame:SetScript("OnEvent", function(_, event, unit, _castGUID, sp
         local IsTalentActive = (HasuCCData and HasuCCData.IsPlayerTalent) or function(id)
             local ok, r = pcall(IsPlayerSpell, id); return ok and r
         end
-        if cdNullifier and IsTalentActive(cdNullifier) then return end
+        if cdNullifier and IsTalentActive(cdNullifier) then
+            DLog("CAST_EVENT", "  → cdNullifyTalent active, cast is instant")
+            return
+        end
 
         -- Use UnitCastingInfo for accurate cast duration; fall back to data castTime.
         local castStart, castEnd, castDur
@@ -5281,22 +5334,26 @@ playerCastStartFrame:SetScript("OnEvent", function(_, event, unit, _castGUID, sp
             castStart = startMS / 1000
             castEnd   = endMS / 1000
             castDur   = castEnd - castStart
+            DLog("CAST_EVENT", "  → UnitCastingInfo: dur=" .. string.format("%.2f", castDur) .. "s")
         else
             castEnd = GetTime() + hasuCC.castTime
             castDur = hasuCC.castTime
+            DLog("CAST_EVENT", "  → fallback: dur=" .. string.format("%.2f", castDur) .. "s")
         end
         -- Set baseCd so the progress bar scales correctly (Details!-style fill).
         ccAddonUsers[myName].ccs[spellID].baseCd = castDur
         ccAddonUsers[myName].ccs[spellID].cdEnd  = castEnd
+        ccAddonUsers[myName].ccs[spellID].isCasting = true
         SetDisplayDirty()
-        DLog("CC_CAST", "START " .. tostring(hasuCC.name)
+        DLog("CAST_EVENT", "START " .. tostring(hasuCC.name)
             .. " dur=" .. string.format("%.2f", castDur)
             .. "s castEnd=" .. string.format("%.2f", castEnd))
     elseif event == "UNIT_SPELLCAST_INTERRUPTED" or event == "UNIT_SPELLCAST_FAILED" then
         -- Cast was interrupted/cancelled: clear the cast countdown so the bar resets.
         ccAddonUsers[myName].ccs[spellID].cdEnd = 0
+        ccAddonUsers[myName].ccs[spellID].isCasting = false
         SetDisplayDirty()
-        DLog("CC_CAST", event .. " " .. tostring(hasuCC.name) .. " → reset")
+        DLog("CAST_EVENT", event .. " " .. tostring(hasuCC.name) .. " → reset")
     end
     -- UNIT_SPELLCAST_STOP: do nothing. STOP fires for both success and cancellation,
     -- but SUCCEEDED/INTERRUPTED/FAILED already handle the outcome.
@@ -6092,6 +6149,34 @@ local function BuildOneCCBar(parent)
     f.cdFontSz  = cdFontSize
     f.readyFontSz = readyFontSz
 
+    -- Golden border texture for casting indicator
+    local glowBorder = {}
+    for side = 1, 4 do
+        local border = f:CreateTexture(nil, "OVERLAY")
+        border:SetTexture(BAR_TEXTURE)
+        border:SetVertexColor(1, 0.84, 0, 0.6)  -- Gold
+        if side == 1 then  -- Top
+            border:SetPoint("TOPLEFT", iconS - 2, 2)
+            border:SetPoint("TOPRIGHT", 2, 2)
+            border:SetHeight(2)
+        elseif side == 2 then  -- Bottom
+            border:SetPoint("BOTTOMLEFT", iconS - 2, -2)
+            border:SetPoint("BOTTOMRIGHT", 2, -2)
+            border:SetHeight(2)
+        elseif side == 3 then  -- Left
+            border:SetPoint("TOPLEFT", iconS - 2, 2)
+            border:SetPoint("BOTTOMLEFT", iconS - 2, -2)
+            border:SetWidth(2)
+        else  -- Right
+            border:SetPoint("TOPRIGHT", 2, 2)
+            border:SetPoint("BOTTOMRIGHT", 2, -2)
+            border:SetWidth(2)
+        end
+        border:Hide()
+        glowBorder[side] = border
+    end
+    sb.glowTexture = glowBorder  -- Store all 4 borders
+
     f:Hide()
     return f
 end
@@ -6126,7 +6211,7 @@ end
 -- isUnknown : true when no CCCAST received and not self
 -- chargeIdx : 1..chargeMax when spell has multiple charges, else nil
 -- chargeMax : total charges (>=2) when spell has multiple charges, else nil
-local function RenderCCBar(bar, playerName, ccInfo, userInfo, rem, isUnknown, chargeIdx, chargeMax)
+local function RenderCCBar(bar, playerName, ccInfo, userInfo, rem, isUnknown, chargeIdx, chargeMax, spellID)
     bar:Show()
     local col  = CLASS_COLORS[userInfo.class] or { 1, 1, 1 }
     local icon = ccInfo.icon
@@ -6164,6 +6249,51 @@ local function RenderCCBar(bar, playerName, ccInfo, userInfo, rem, isUnknown, ch
             bar.cdText:SetTextColor(unpack(FONT_READY_COLOR))
         end
     end
+
+    -- Golden border when casting (isCasting flag set by cast tracker)
+    if ccInfo.isCasting then
+        bar.cdBar:SetStatusBarColor(1, 0.84, 0, 1)  -- Gold color
+        if bar.cdBar.glowTexture then
+            if type(bar.cdBar.glowTexture) == "table" then
+                for _, border in ipairs(bar.cdBar.glowTexture) do
+                    border:Show()
+                end
+            else
+                bar.cdBar.glowTexture:Show()
+            end
+        end
+    else
+        if bar.cdBar.glowTexture then
+            if type(bar.cdBar.glowTexture) == "table" then
+                for _, border in ipairs(bar.cdBar.glowTexture) do
+                    border:Hide()
+                end
+            else
+                bar.cdBar.glowTexture:Hide()
+            end
+        end
+    end
+
+    -- Tooltip on hover showing cast time info
+    bar:SetScript("OnEnter", function()
+        GameTooltip:SetOwner(bar, "ANCHOR_RIGHT")
+        GameTooltip:ClearLines()
+        GameTooltip:AddLine(ccInfo.name or "?", 1, 0.82, 0)
+        GameTooltip:AddLine("Player: " .. playerName, 0.7, 0.7, 0.7)
+        if ccInfo.castTime and ccInfo.castTime > 0 then
+            GameTooltip:AddLine("Cast Time: " .. string.format("%.1f", ccInfo.castTime) .. "s", 0.3, 0.8, 1)
+        end
+        if spellID then
+            GameTooltip:AddLine("Spell ID: " .. spellID, 0.5, 0.5, 0.5)
+        end
+        if ccInfo.isCasting then
+            GameTooltip:AddLine("|cFFFFD700CASTING...|r", 1, 0.84, 0)
+        end
+        GameTooltip:Show()
+    end)
+    bar:SetScript("OnLeave", function()
+        GameTooltip:Hide()
+    end)
 end
 
 -- Tick: update CC bars.
@@ -6296,7 +6426,7 @@ local function UpdateCCDisplay()
         if barIdx > MAX_BARS then break end
         local bar = ccBars[barIdx]
         if not bar then break end
-        RenderCCBar(bar, e.playerName, e.cc, e.userInfo, e.rem, e.isUnknown, e.chargeIdx, e.chargeMax)
+        RenderCCBar(bar, e.playerName, e.cc, e.userInfo, e.rem, e.isUnknown, e.chargeIdx, e.chargeMax, e.spellID)
         barIdx = barIdx + 1
     end
     for i = barIdx, MAX_BARS do if ccBars[i] then ccBars[i]:Hide() end end
