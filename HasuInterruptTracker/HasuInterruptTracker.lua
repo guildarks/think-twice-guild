@@ -445,7 +445,7 @@ local CC_CLASS_PRIMARY = {
     DEMONHUNTER = { spellID = 217832, name = "Imprison",              cd = 15  },
     DEATHKNIGHT = { spellID = 108194, name = "Asphyxiate",            cd = 45  },
     PRIEST      = { spellID = 8122,   name = "Psychic Scream",        cd = 45  },
-    WARRIOR     = { spellID = 5246,   name = "Intimidating Shout",    cd = 90  },
+    WARRIOR     = { spellID = 5246,   name = "Intimidating Shout",    cd = 75  },
     EVOKER      = { spellID = 360806, name = "Sleep Walk",            cd = 0   },
 }
 
