@@ -3866,6 +3866,26 @@ local function SetupSlash()
             print("  Tip: /hasu ping tests the addon-message channel.")
             print("  Tip: /hasu spy enables verbose cast logging.")
             print("  Tip: /hasu ccscan inspects per-spell detection state.")
+        elseif cmd == "castdbg" or cmd == "cast-dbg" then
+            -- Log the next 30s of the player's spell casts (UNIT_SPELLCAST_SUCCEEDED)
+            -- so we can identify the actual spellID arriving (useful when a talent
+            -- like Roaring Intimidation may replace the base spell with a new ID).
+            local f = CreateFrame("Frame")
+            f:RegisterUnitEvent("UNIT_SPELLCAST_SUCCEEDED", "player")
+            f:SetScript("OnEvent", function(_, _, _, _, sid)
+                local nm = "?"
+                if C_Spell and C_Spell.GetSpellName then
+                    local ok, n = pcall(C_Spell.GetSpellName, sid)
+                    if ok and n then nm = n end
+                end
+                print(string.format("|cFFFFD700[HASU castdbg]|r spellID=%d name=%s", sid, nm))
+            end)
+            C_Timer.After(30, function()
+                f:UnregisterAllEvents()
+                f:SetScript("OnEvent", nil)
+                print("|cFFFFD700[HASU castdbg]|r recording window closed")
+            end)
+            print("|cFFFFD700[HASU castdbg]|r logging player casts for 30s — cast your spells now")
         elseif cmd == "ccscan" or cmd == "cc-scan" then
             -- Per-spell detection diagnostic for the current spec.
             -- Helps identify why a CC ability isn't appearing on the bar.
@@ -5046,6 +5066,29 @@ playerCastFrame:SetScript("OnEvent", function(_, _, unit, castGUID, spellID)
         local hasuCC   = HasuCCData and HasuCCData.GetSpellDataForCurrentSpec
                          and HasuCCData.GetSpellDataForCurrentSpec(spellID)
                          or (HasuCCData and HasuCCData.CC_SPELL_LOOKUP and HasuCCData.CC_SPELL_LOOKUP[spellID])
+        -- Fallback: the cast may arrive with a talent-modified spellID instead
+        -- of the base tracked one (e.g. Roaring Intimidation 374346 replaces
+        -- Oppressive Roar 372048). Search the current spec's CC list for any
+        -- entry whose CD-reducer / extra-charge / cdNullify talent matches the
+        -- cast spellID, and remap to the base entry so its CD bar updates.
+        if not hasuCC and HasuCCData and HasuCCData.SPEC_CC_DATA then
+            local specIdx = GetSpecialization and GetSpecialization()
+            local ok_sp, sid = pcall(function() return select(1, GetSpecializationInfo(specIdx)) end)
+            local list = ok_sp and sid and HasuCCData.SPEC_CC_DATA[sid]
+            if list then
+                for _, e in ipairs(list) do
+                    if e.cooldownReducingTalent  == spellID
+                       or e.cooldownReducingTalent2 == spellID
+                       or e.extraChargeTalent      == spellID
+                       or e.cdNullifyTalent        == spellID
+                       or e.replacedByTalent       == spellID then
+                        hasuCC  = e
+                        spellID = e.spellID  -- track CD under the base spell
+                        break
+                    end
+                end
+            end
+        end
         local legacyCC = (not hasuCC) and CC_SPELLS[spellID]
         if hasuCC or legacyCC then
             local ccName = (hasuCC and hasuCC.name) or (legacyCC and legacyCC.name) or "?"
