@@ -477,7 +477,7 @@ local CLASS_INTERRUPTS         = {
 local SPEC_INTERRUPT_OVERRIDES = {
     [255]  = { id = 187707, cd = 15, name = "Muzzle" },        -- Survival Hunter
     [264]  = { id = 57994,  cd = 30, name = "Wind Shear" },   -- Restoration Shaman (30s in 12.0.1)
-    [1473] = { id = 351338, cd = 18, name = "Quell" },        -- Augmentation Evoker (18s)
+    [1473] = { id = 351338, cd = 20, name = "Quell" },        -- Augmentation Evoker (20s)
     -- Devastation uses base CLASS_INTERRUPTS (20s)
     [266]  = { id = 119914, cd = 30, name = "Axe Toss", isPet = true, petSpellID = 89766 }, -- Demonology: Axe Toss primary (30s)
 }
