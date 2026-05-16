@@ -758,6 +758,8 @@ local function ReadMyBaseCd()
         HasuLogError("ReadMyBaseCd failed spellID=" .. tostring(mySpellID) .. ": " .. tostring(ms))
         return
     end
+    -- Expected reference CD from our data tables (authoritative).
+    local refCd = ALL_INTERRUPTS[mySpellID] and ALL_INTERRUPTS[mySpellID].cd or 0
     if ok and ms then
         local clean = tonumber(string.format("%.0f", ms))
         if clean and clean > 0 then
@@ -765,12 +767,19 @@ local function ReadMyBaseCd()
             -- Ignore GCD values (< 5s) — GetSpellBaseCooldown can return 1500ms
             -- (the GCD) instead of the real CD for some spells in Midnight 12.0.
             -- No real interrupt has a base CD < 5s (shortest is Wind Shear at 12s).
-            if cd >= 5 then
+            -- Also reject values < 75% of the reference CD: Counter Shot
+            -- sometimes returns 2-5s in combat, which is not a real cooldown.
+            if cd >= 5 and (refCd == 0 or cd >= math.floor(refCd * 0.75)) then
                 myBaseCd = cd
             else
-                DLog("SELF", "ReadMyBaseCd GCD-corrupted value=" .. tostring(cd) .. "s ignored")
+                DLog("SELF", "ReadMyBaseCd value=" .. tostring(cd) .. "s ignored (ref=" .. refCd .. "s)")
+                if refCd > 0 then myBaseCd = refCd end
             end
+        elseif refCd > 0 then
+            myBaseCd = refCd
         end
+    elseif refCd > 0 then
+        myBaseCd = refCd
     end
     -- TryCacheCD gives actual observed CD (after all modifiers)
     if myCachedCD and myCachedCD > 1.5 then
@@ -4991,10 +5000,15 @@ playerCastFrame:SetScript("OnEvent", function(_, _, unit, castGUID, spellID)
             local expectedCd = (hasuCC and hasuCC.baseCd) or (legacyCC and legacyCC.cd) or 0
             local cdReducer  = hasuCC and hasuCC.cooldownReducingTalent
             local cdReduction = hasuCC and hasuCC.cdReduction
+            local cdReductionPerRank = hasuCC and hasuCC.cdReductionPerRank
+            local forceBaseCd = hasuCC and hasuCC.forceBaseCd
             -- Use HasuCCData.IsPlayerTalent (C_Traits scan) instead of IsPlayerSpell
             -- because passive talents (e.g. Paix et prospérité) aren't in spellbook.
             local IsTalentActive = (HasuCCData and HasuCCData.IsPlayerTalent) or function(id)
                 local ok, r = pcall(IsPlayerSpell, id); return ok and r
+            end
+            local GetTalentRank = (HasuCCData and HasuCCData.GetPlayerTalentRank) or function(id)
+                return IsTalentActive(id) and 1 or 0
             end
             local ccCd = 0
             -- NOTE: do NOT use C_Spell.GetSpellCooldown here.
@@ -5003,32 +5017,40 @@ playerCastFrame:SetScript("OnEvent", function(_, _, unit, castGUID, spellID)
             -- those fields under pcall propagates taint to the entire addon,
             -- which then blocks legitimate UI operations downstream.
             -- Rely on GetSpellBaseCooldown + manual reduction from data file.
-            do
+            -- forceBaseCd: bypass GetSpellBaseCooldown for spells with known bad values.
+            if not forceBaseCd then
                 local ok_cd, ms = pcall(GetSpellBaseCooldown, spellID)
-                local cdReducerActive = cdReducer and IsTalentActive(cdReducer)
+                local talentRank = cdReducer and GetTalentRank(cdReducer) or 0
+                local cdReducerActive = cdReducer and talentRank > 0
                 if ok_cd and ms and ms >= 5000 then
                     local cd = math.floor(ms / 1000 + 0.5)
-                    if cdReducerActive and cdReduction then
+                    if cdReducerActive and (cdReduction or cdReductionPerRank) then
                         -- Apply manual reduction since GetSpellBaseCooldown
                         -- doesn't reflect talent reductions in WoW 12.0
-                        ccCd = math.max(1, expectedCd - cdReduction)
+                        local reduction = cdReductionPerRank and (cdReductionPerRank * talentRank)
+                                          or cdReduction
+                        ccCd = math.max(1, expectedCd - reduction)
                     else
-                        local minAccept = math.floor(expectedCd * 0.5)
+                        -- Stricter validation: 75% of expected CD
+                        local minAccept = math.floor(expectedCd * 0.75)
                         if cd >= 1 and (expectedCd < 10 or cd >= minAccept) then
                             ccCd = cd
                         end
                     end
                 end
             end
-            -- For 0-CD spells (Polymorph, Hex, Fear…) or rejected values, use data fallback.
+            -- For 0-CD spells (Polymorph, Hex, Fear…), rejected values, or forceBaseCd: use data fallback.
             -- Apply talent-based CD reduction if available.
             if ccCd < 1 then
                 ccCd = expectedCd > 0 and expectedCd or 2
                 if ccCd < 1 then ccCd = 2 end
                 -- Apply cooldownReducingTalent reduction to fallback CD if talent is active
-                if cdReduction and cdReducer then
-                    if IsTalentActive(cdReducer) then
-                        ccCd = math.max(1, ccCd - cdReduction)
+                if (cdReduction or cdReductionPerRank) and cdReducer then
+                    local talentRank = GetTalentRank(cdReducer)
+                    if talentRank > 0 then
+                        local reduction = cdReductionPerRank and (cdReductionPerRank * talentRank)
+                                          or cdReduction
+                        ccCd = math.max(1, ccCd - reduction)
                     end
                 end
             end
