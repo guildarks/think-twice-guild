@@ -697,6 +697,23 @@ HasuCCData.FindMyCCAbilities = function(myName, myClass, ccAddonUsers)
             if not spellKnown then
                 if IsPlayerTalent(spellID) then spellKnown = true end
             end
+            -- Inferred-known fallback: if a CD-reducing or extra-charge talent
+            -- for this spell is active, the spell MUST be in the player's tree
+            -- (since these talents require the base spell as a prerequisite).
+            -- This rescues sorts like Evoker Oppressive Roar when the base spell
+            -- ID can't be matched via IsSpellKnown / C_Traits definitionID.
+            if not spellKnown and entry.cooldownReducingTalent then
+                if IsPlayerTalent(entry.cooldownReducingTalent) then spellKnown = true end
+            end
+            if not spellKnown and entry.cooldownReducingTalent2 then
+                if IsPlayerTalent(entry.cooldownReducingTalent2) then spellKnown = true end
+            end
+            if not spellKnown and entry.extraChargeTalent then
+                if IsPlayerTalent(entry.extraChargeTalent) then spellKnown = true end
+            end
+            if not spellKnown and entry.cdNullifyTalent then
+                if IsPlayerTalent(entry.cdNullifyTalent) then spellKnown = true end
+            end
             -- For 0-CD spells (Fear, Polymorph…) always include.
             -- Only skip if baseCd > 0 and spell truly not known.
             if not spellKnown and entry.baseCd > 0 then
