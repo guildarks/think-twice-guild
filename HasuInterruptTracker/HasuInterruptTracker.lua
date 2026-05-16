@@ -5090,15 +5090,25 @@ playerCastFrame:SetScript("OnEvent", function(_, _, unit, castGUID, spellID)
             end
 
             -- Resolve maxCharges for this spell (talent + active charge data).
-            -- Fall back to a prior FindMyCCAbilities entry if the API is unavailable.
+            -- Priority: extraChargeTalent (authoritative from data) >
+            --           C_Spell.GetSpellCharges (live API) >
+            --           prior FindMyCCAbilities entry.
             local _maxC = 1
             do
-                local ok_ch, chInfo = pcall(C_Spell.GetSpellCharges, spellID)
-                if ok_ch and chInfo and chInfo.maxCharges and chInfo.maxCharges > 1 then
-                    _maxC = chInfo.maxCharges
-                elseif myName and ccAddonUsers[myName] and ccAddonUsers[myName].ccs
-                   and ccAddonUsers[myName].ccs[spellID] then
-                    _maxC = ccAddonUsers[myName].ccs[spellID].maxCharges or 1
+                -- Check extraChargeTalent first: if the talent is active, ALWAYS use 2.
+                -- C_Spell.GetSpellCharges may return maxCharges=1 in combat even when
+                -- the talent grants 2 max charges, so trust the data file's talent info.
+                local extraCT = hasuCC and hasuCC.extraChargeTalent
+                if extraCT and IsTalentActive(extraCT) then
+                    _maxC = 2
+                else
+                    local ok_ch, chInfo = pcall(C_Spell.GetSpellCharges, spellID)
+                    if ok_ch and chInfo and chInfo.maxCharges and chInfo.maxCharges > 1 then
+                        _maxC = chInfo.maxCharges
+                    elseif myName and ccAddonUsers[myName] and ccAddonUsers[myName].ccs
+                       and ccAddonUsers[myName].ccs[spellID] then
+                        _maxC = ccAddonUsers[myName].ccs[spellID].maxCharges or 1
+                    end
                 end
             end
 
