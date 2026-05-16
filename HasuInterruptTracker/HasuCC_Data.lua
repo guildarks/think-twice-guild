@@ -32,6 +32,12 @@
                                casting this spell (UNIT_SPELLCAST_START), the CC bar displays this
                                countdown so the team can see the cast progress.
                                e.g. Mage Polymorph: 1.5s cast time.
+      castReducerSpells      : (optional) table of { [casterSpellID] = secondsReduction }.
+                               When the player successfully casts one of the listed spells,
+                               this CC's remaining cdEnd is reduced by the specified seconds.
+                               e.g. Holy Priest: { [585] = 4, [132157] = 4 } — each cast of
+                               Smite (585) or Holy Nova (132157) reduces Holy Word: Chastise CD
+                               by 4 seconds.
 ]]
 
 HasuCCData = HasuCCData or {}
@@ -429,8 +435,7 @@ HasuCCData.SPEC_CC_DATA = {
     },
     [257] = { -- Holy Priest (Sacré) — no Silence, no Void Tendrils
         { spellID = 88625,   name = "Holy Word: Chastise", baseCd = 60,
-          cooldownReducingTalent = 585, cdReduction = 4,
-          cooldownReducingTalent2 = 132157, cdReduction2 = 4 }, -- Châtiment + Nova sacrée
+          castReducerSpells = { [585] = 4, [132157] = 4 } }, -- Smite/Holy Nova each cast -4s
         { spellID = 8122,    name = "Psychic Scream",      baseCd = 40,
           cooldownReducingTalent = 196704, cdReduction = 10 },
     },

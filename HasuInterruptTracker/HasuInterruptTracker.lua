@@ -5067,6 +5067,38 @@ playerCastFrame:SetScript("OnEvent", function(_, _, unit, castGUID, spellID)
         local isInterrupt = ALL_INTERRUPTS[spellID] and "YES" or "no"
         local isExtra = myExtraKicks[spellID] and "YES" or "no"
         DLog("SELF", "spellID=" .. tostring(spellID) .. " interrupt=" .. isInterrupt .. " extra=" .. isExtra)
+
+        -- ── castReducerSpells: per-cast CD reduction (e.g. Holy Priest Smite/Holy Nova) ──
+        -- When the player casts a spell listed as a reducer for a tracked CC,
+        -- subtract the configured seconds from that CC's remaining cdEnd
+        -- without resetting it to full. Skip the normal cast-handling flow
+        -- afterwards so we don't restart the CD.
+        if myName and HasuCCData and HasuCCData.SPEC_CC_DATA then
+            local _specIdx = GetSpecialization and GetSpecialization()
+            local _ok_sp, _sid = pcall(function() return select(1, GetSpecializationInfo(_specIdx)) end)
+            local _list = _ok_sp and _sid and HasuCCData.SPEC_CC_DATA[_sid]
+            if _list then
+                for _, _e in ipairs(_list) do
+                    if _e.castReducerSpells and _e.castReducerSpells[spellID] then
+                        local _reduction = _e.castReducerSpells[spellID]
+                        local _targetID  = _e.spellID
+                        if ccAddonUsers[myName] and ccAddonUsers[myName].ccs
+                           and ccAddonUsers[myName].ccs[_targetID] then
+                            local _entry = ccAddonUsers[myName].ccs[_targetID]
+                            if _entry.cdEnd and _entry.cdEnd > GetTime() then
+                                _entry.cdEnd = math.max(GetTime(), _entry.cdEnd - _reduction)
+                                ccDirty = true
+                                local _remCd = math.floor(_entry.cdEnd - GetTime() + 0.5)
+                                SendHasu("CCCAST:" .. tostring(_targetID) .. ":" .. tostring(_remCd) .. ":" .. tostring(_entry.maxCharges or 1))
+                                DLog("CC_SELF", "castReducer: " .. tostring(spellID) .. " -" .. tostring(_reduction) .. "s on " .. tostring(_targetID))
+                            end
+                        end
+                        return -- Skip normal cast handling for reducer casts
+                    end
+                end
+            end
+        end
+
         -- Detect self CC casts: sync to party and update self CC entry
         -- Check Hasu CC lookup first, fall back to legacy CC_SPELLS
         -- Prefer spec-specific data (handles spells like Death and Decay
