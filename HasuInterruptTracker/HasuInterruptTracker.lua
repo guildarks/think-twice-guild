@@ -511,7 +511,9 @@ local SPEC_NO_INTERRUPT = {
 local function InitCDReductionTalents()
     local talents = {
         -- Fallback hardcoded values (old pre-HasuCC_Data talents)
-        [388039] = { affects = 147362, reduction = 2, name = "Lone Survivor" },
+        -- Lone Survivor (388039): removed — reduction is conditional on Multi-Shot
+        -- cast, not a permanent CD reduction. Applying it as permanent caused
+        -- Counter Shot to show 22s instead of the correct 24s base CD.
         [412713] = { affects = 351338, pctReduction = 10, name = "Interwoven Threads" },
     }
 
