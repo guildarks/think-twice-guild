@@ -71,7 +71,7 @@ local ALL_INTERRUPTS = {
     [119914]  = { name = "Axe Toss", cd = 30, icon = "Interface\\Icons\\ability_warrior_titansgrip" },
     [1276467] = { name = "Fel Ravager", cd = 25, icon = "Interface\\Icons\\spell_shadow_summonfelhunter" },
     [351338]  = { name = "Quell", cd = 20, icon = 4622469 },  -- Devastation: 20s / Augmentation: 18s (override) / Preservation: no kick
-    [15487]   = { name = "Silence", cd = 30, icon = 136207 },  -- Shadow Priest (Disc/Holy filtered by SPEC_NO_INTERRUPT)
+    [15487]   = { name = "Silence", cd = 30, icon = 458230 },  -- Shadow Priest (Disc/Holy filtered by SPEC_NO_INTERRUPT)
 }
 
 -- Which spells to check per class (order matters: first found wins)
