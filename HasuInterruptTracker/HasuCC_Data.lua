@@ -217,7 +217,7 @@ HasuCCData.SPEC_CC_DATA = {
     -- Devastation = 1467 | Preservation = 1468 | Augmentation = 1473
     -- ─────────────────────────────────────────────────────────
     [1473] = { -- Augmentation Evoker
-        { spellID = 372048,  name = "Oppressive Roar",     baseCd = 120,
+        { spellID = 372048,  name = "Oppressive Roar",     baseCd = 90,
           cooldownReducingTalent = 374346, cdReduction = 30 },
         { spellID = 351338,  name = "Quell",               baseCd = 20  },
         { spellID = 368970,  name = "Tail Swipe",          baseCd = 180,
@@ -226,7 +226,7 @@ HasuCCData.SPEC_CC_DATA = {
           cooldownReducingTalent = 368838, cdReduction = 120 },
     },
     [1467] = { -- Devastation Evoker
-        { spellID = 372048,  name = "Oppressive Roar",     baseCd = 120,
+        { spellID = 372048,  name = "Oppressive Roar",     baseCd = 90,
           cooldownReducingTalent = 374346, cdReduction = 30 },
         { spellID = 351338,  name = "Quell",               baseCd = 20  },
         { spellID = 368970,  name = "Tail Swipe",          baseCd = 180,
@@ -235,7 +235,7 @@ HasuCCData.SPEC_CC_DATA = {
           cooldownReducingTalent = 368838, cdReduction = 120 },
     },
     [1468] = { -- Preservation Evoker (no Quell)
-        { spellID = 372048,  name = "Oppressive Roar",     baseCd = 120,
+        { spellID = 372048,  name = "Oppressive Roar",     baseCd = 90,
           cooldownReducingTalent = 374346, cdReduction = 30 },
         { spellID = 368970,  name = "Tail Swipe",          baseCd = 180,
           cooldownReducingTalent = 375443, cdReduction = 120 },
