@@ -1476,19 +1476,18 @@ local function ScanInspectTalents(unit)
         return
     end
 
-    local treeID = configInfo.treeIDs[1]
-    local ok2, nodeIDs = pcall(C_Traits.GetTreeNodes, treeID)
-    if not ok2 or not nodeIDs then
-        if spyMode then print("|cFF00DDDD[SPY]|r No tree nodes for " .. name) end
-        return
-    end
-
-    if spyMode then
-        print("|cFF00DDDD[SPY]|r Scanning " .. #nodeIDs .. " talent nodes for " .. name)
-    end
-
     -- Hasu: collect ALL active talent spellIDs during the scan (used for CC detection below)
     local activeTalents = {}
+
+    -- Scan ALL trees (class, spec, hero, dragon talents). Previously only treeIDs[1]
+    -- was scanned, which missed spec-tree CD-reduction talents (e.g. Evoker Roaring
+    -- Intimidation 374346) and caused those reductions never to apply.
+    for _, treeID in ipairs(configInfo.treeIDs) do
+    local ok2, nodeIDs = pcall(C_Traits.GetTreeNodes, treeID)
+    if ok2 and nodeIDs then
+    if spyMode then
+        print("|cFF00DDDD[SPY]|r Scanning " .. #nodeIDs .. " talent nodes for " .. name .. " (tree " .. tostring(treeID) .. ")")
+    end
 
     for _, nodeID in ipairs(nodeIDs) do
         local ok3, nodeInfo = pcall(C_Traits.GetNodeInfo, configID, nodeID)
@@ -1606,6 +1605,8 @@ local function ScanInspectTalents(unit)
             end
         end
     end
+    end  -- end of: if ok2 and nodeIDs then
+    end  -- end of: for _, treeID in ipairs(configInfo.treeIDs)
 
     -- ── Hasu: CC ability detection from inspect talent tree ──────────
     if HasuCCData and specID and specID > 0 then
@@ -2667,7 +2668,9 @@ local function FindMyInterrupt()
         if configID then
             local ok1, configInfo = pcall(C_Traits.GetConfigInfo, configID)
             if ok1 and configInfo and configInfo.treeIDs and #configInfo.treeIDs > 0 then
-                local treeID = configInfo.treeIDs[1]
+                -- Scan ALL trees (class, spec, hero, dragon talents). Previously
+                -- only treeIDs[1] was scanned, missing spec-tree talents.
+                for _, treeID in ipairs(configInfo.treeIDs) do
                 local ok2, nodeIDs = pcall(C_Traits.GetTreeNodes, treeID)
                 if ok2 and nodeIDs then
                     for _, nodeID in ipairs(nodeIDs) do
@@ -2706,6 +2709,7 @@ local function FindMyInterrupt()
                         end
                     end
                 end
+                end  -- end of: for _, treeID in ipairs(configInfo.treeIDs)
             end
         end
     end

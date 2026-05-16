@@ -690,6 +690,13 @@ HasuCCData.FindMyCCAbilities = function(myName, myClass, ccAddonUsers)
                 local ok, r = pcall(IsPlayerSpell, spellID)
                 if ok and r then spellKnown = true end
             end
+            -- Fallback: scan C_Traits for talents that are spells themselves
+            -- (e.g. Evoker dragon abilities like Oppressive Roar 372048,
+            -- Tail Swipe, Wing Buffet — these may not appear in IsSpellKnown
+            -- but are detectable via the talent tree).
+            if not spellKnown then
+                if IsPlayerTalent(spellID) then spellKnown = true end
+            end
             -- For 0-CD spells (Fear, Polymorph…) always include.
             -- Only skip if baseCd > 0 and spell truly not known.
             if not spellKnown and entry.baseCd > 0 then
@@ -859,26 +866,30 @@ GetPlayerTalentRank = function(spellID)
     if not okC or not configID then return 0 end
     local okI, ci = pcall(C_Traits.GetConfigInfo, configID)
     if not okI or not ci or not ci.treeIDs then return 0 end
-    local treeID = ci.treeIDs[1]
-    if not treeID then return 0 end
-    local okN, nodeIDs = pcall(C_Traits.GetTreeNodes, treeID)
-    if not okN or not nodeIDs then return 0 end
 
     local target = tostring(spellID)
-    for _, nodeID in ipairs(nodeIDs) do
-        local ok3, ni = pcall(C_Traits.GetNodeInfo, configID, nodeID)
-        if ok3 and ni and ni.activeEntry and (ni.activeRank or 0) > 0 then
-            local ok4, ei = pcall(C_Traits.GetEntryInfo, configID, ni.activeEntry.entryID)
-            if ok4 and ei and ei.definitionID then
-                local ok5, di = pcall(C_Traits.GetDefinitionInfo, ei.definitionID)
-                if ok5 and di and di.spellID then
-                    local sok, s = pcall(tostring, di.spellID)
-                    local match = (sok and s == target)
-                    if not match then
-                        local nok, n = pcall(tonumber, di.spellID)
-                        if nok and n and n == spellID then match = true end
+    -- Scan ALL trees (class, spec, hero, and dragon talents for Evokers/Dracthyr).
+    -- Previously only treeIDs[1] was scanned, which missed spec-tree talents like
+    -- Roaring Intimidation (374346) for Evokers — causing the CD reduction not to apply.
+    for _, treeID in ipairs(ci.treeIDs) do
+        local okN, nodeIDs = pcall(C_Traits.GetTreeNodes, treeID)
+        if okN and nodeIDs then
+            for _, nodeID in ipairs(nodeIDs) do
+                local ok3, ni = pcall(C_Traits.GetNodeInfo, configID, nodeID)
+                if ok3 and ni and ni.activeEntry and (ni.activeRank or 0) > 0 then
+                    local ok4, ei = pcall(C_Traits.GetEntryInfo, configID, ni.activeEntry.entryID)
+                    if ok4 and ei and ei.definitionID then
+                        local ok5, di = pcall(C_Traits.GetDefinitionInfo, ei.definitionID)
+                        if ok5 and di and di.spellID then
+                            local sok, s = pcall(tostring, di.spellID)
+                            local match = (sok and s == target)
+                            if not match then
+                                local nok, n = pcall(tonumber, di.spellID)
+                                if nok and n and n == spellID then match = true end
+                            end
+                            if match then return ni.activeRank or 1 end
+                        end
                     end
-                    if match then return ni.activeRank or 1 end
                 end
             end
         end
