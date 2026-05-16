@@ -5152,7 +5152,7 @@ playerCastFrame:SetScript("OnEvent", function(_, _, unit, castGUID, spellID)
                     end
                 end
             end
-            -- For 0-CD spells (Polymorph, Hex, Fear…), rejected values, or forceBaseCd: use data fallback.
+            -- For 0-CD spells (Polymorph, Hex, Fear, Banish…), rejected values, or forceBaseCd: use data fallback.
             -- Apply talent-based CD reduction if available.
             if ccCd < 1 then
                 ccCd = expectedCd > 0 and expectedCd or 2
@@ -5358,7 +5358,7 @@ end)
 
 -- ──────────────────────────────────────────────────────────────
 -- Cast-time tracker for spells with an incantation time
--- (Polymorph, Fear, Hex, Cyclone…). Uses a periodic ticker that
+-- (Polymorph 1.5s, Fear 1.4s, Banish 1.3s, Hex, Cyclone…). Uses a periodic ticker that
 -- polls UnitCastingInfo("player") instead of relying on
 -- UNIT_SPELLCAST_START events (some events are restricted in
 -- WoW 12.0 Midnight). Updates the CC bar with the cast countdown
