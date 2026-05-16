@@ -218,29 +218,29 @@ HasuCCData.SPEC_CC_DATA = {
     -- ─────────────────────────────────────────────────────────
     [1473] = { -- Augmentation Evoker
         { spellID = 372048,  name = "Oppressive Roar",     baseCd = 90,
-          cooldownReducingTalent = 374346, cdReduction = 30 },
+          cooldownReducingTalent = 374346, cdReduction = 30, forceShow = true },
         { spellID = 351338,  name = "Quell",               baseCd = 20  },
         { spellID = 368970,  name = "Tail Swipe",          baseCd = 180,
-          cooldownReducingTalent = 375443, cdReduction = 120 },
+          cooldownReducingTalent = 375443, cdReduction = 120, forceShow = true },
         { spellID = 357214,  name = "Wing Buffet",         baseCd = 180,
-          cooldownReducingTalent = 368838, cdReduction = 120 },
+          cooldownReducingTalent = 368838, cdReduction = 120, forceShow = true },
     },
     [1467] = { -- Devastation Evoker
         { spellID = 372048,  name = "Oppressive Roar",     baseCd = 90,
-          cooldownReducingTalent = 374346, cdReduction = 30 },
+          cooldownReducingTalent = 374346, cdReduction = 30, forceShow = true },
         { spellID = 351338,  name = "Quell",               baseCd = 20  },
         { spellID = 368970,  name = "Tail Swipe",          baseCd = 180,
-          cooldownReducingTalent = 375443, cdReduction = 120 },
+          cooldownReducingTalent = 375443, cdReduction = 120, forceShow = true },
         { spellID = 357214,  name = "Wing Buffet",         baseCd = 180,
-          cooldownReducingTalent = 368838, cdReduction = 120 },
+          cooldownReducingTalent = 368838, cdReduction = 120, forceShow = true },
     },
     [1468] = { -- Preservation Evoker (no Quell)
         { spellID = 372048,  name = "Oppressive Roar",     baseCd = 90,
-          cooldownReducingTalent = 374346, cdReduction = 30 },
+          cooldownReducingTalent = 374346, cdReduction = 30, forceShow = true },
         { spellID = 368970,  name = "Tail Swipe",          baseCd = 180,
-          cooldownReducingTalent = 375443, cdReduction = 120 },
+          cooldownReducingTalent = 375443, cdReduction = 120, forceShow = true },
         { spellID = 357214,  name = "Wing Buffet",         baseCd = 180,
-          cooldownReducingTalent = 368838, cdReduction = 120 },
+          cooldownReducingTalent = 368838, cdReduction = 120, forceShow = true },
     },
 
     -- ── MONK ─────────────────────────────────────────────────
@@ -714,6 +714,11 @@ HasuCCData.FindMyCCAbilities = function(myName, myClass, ccAddonUsers)
             if not spellKnown and entry.cdNullifyTalent then
                 if IsPlayerTalent(entry.cdNullifyTalent) then spellKnown = true end
             end
+            -- forceShow: bypass spellKnown check entirely. Used for spells like
+            -- Evoker dragon abilities that aren't reliably detectable via any of
+            -- the IsSpellKnown/IsPlayerSpell/IsPlayerTalent paths in WoW 12.0
+            -- (their talent definitionID.spellID does not match the cast spellID).
+            if entry.forceShow then spellKnown = true end
             -- For 0-CD spells (Fear, Polymorph…) always include.
             -- Only skip if baseCd > 0 and spell truly not known.
             if not spellKnown and entry.baseCd > 0 then
@@ -762,6 +767,18 @@ HasuCCData.FindMyCCAbilities = function(myName, myClass, ccAddonUsers)
                         -- of expected baseCd. This rejects the 15s GCD-modifier
                         -- value that some spells return in combat.
                         local minAccept = math.floor(entry.baseCd * 0.75)
+                        -- If a cdReducer is defined for this spell, the API may
+                        -- legitimately return the reduced CD even if we couldn't
+                        -- detect the talent as active (C_Traits can miss talents
+                        -- whose definitionID.spellID differs from the spell's
+                        -- cast ID — common for Evoker dragon talents). Accept
+                        -- the reduced value too.
+                        if entry.cooldownReducingTalent and entry.cdReduction then
+                            local reducedMin = math.floor((entry.baseCd - entry.cdReduction) * 0.95)
+                            if reducedMin > 0 and reducedMin < minAccept then
+                                minAccept = reducedMin
+                            end
+                        end
                         if cd >= 1 and (entry.baseCd < 10 or cd >= minAccept) then
                             actualCd = cd
                         end

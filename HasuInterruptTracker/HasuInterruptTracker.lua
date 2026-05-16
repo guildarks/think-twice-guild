@@ -5041,6 +5041,14 @@ playerCastFrame:SetScript("OnEvent", function(_, _, unit, castGUID, spellID)
                     else
                         -- Stricter validation: 75% of expected CD
                         local minAccept = math.floor(expectedCd * 0.75)
+                        -- If a cdReducer is defined, the API may return the reduced
+                        -- CD even when we can't detect the talent as active.
+                        if cdReducer and cdReduction then
+                            local reducedMin = math.floor((expectedCd - cdReduction) * 0.95)
+                            if reducedMin > 0 and reducedMin < minAccept then
+                                minAccept = reducedMin
+                            end
+                        end
                         if cd >= 1 and (expectedCd < 10 or cd >= minAccept) then
                             ccCd = cd
                         end
