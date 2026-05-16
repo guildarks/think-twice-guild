@@ -426,7 +426,6 @@ HasuCCData.SPEC_CC_DATA = {
           cooldownReducingTalent = 196704, cdReduction = 10 },
         { spellID = 1250691, name = "Void Tendrils",       baseCd = 30,
           requireTalent = 391109 }, -- Shadow-exclusive talent
-        { spellID = 9484,    name = "Shackle Undead",      baseCd = 0   },
     },
     [257] = { -- Holy Priest (Sacré) — no Silence, no Void Tendrils
         { spellID = 88625,   name = "Holy Word: Chastise", baseCd = 60,
@@ -434,12 +433,10 @@ HasuCCData.SPEC_CC_DATA = {
           cooldownReducingTalent2 = 132157, cdReduction2 = 4 }, -- Châtiment + Nova sacrée
         { spellID = 8122,    name = "Psychic Scream",      baseCd = 40,
           cooldownReducingTalent = 196704, cdReduction = 10 },
-        { spellID = 9484,    name = "Shackle Undead",      baseCd = 0   },
     },
     [256] = { -- Discipline Priest — no Silence, no Void Tendrils
         { spellID = 8122,    name = "Psychic Scream",      baseCd = 40,
           cooldownReducingTalent = 196704, cdReduction = 10 },
-        { spellID = 9484,    name = "Shackle Undead",      baseCd = 0   },
     },
 
     -- ── WARRIOR ──────────────────────────────────────────────
