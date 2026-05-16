@@ -244,7 +244,7 @@ HasuCCData.SPEC_CC_DATA = {
     -- ─────────────────────────────────────────────────────────
     [269] = { -- Windwalker Monk
         { spellID = 116705,  name = "Spear Hand Strike",   baseCd = 15,
-          cooldownReducingTalent = 450631, cdReduction = 5 },
+          forceBaseCd = true }, -- always 15s, no talent reduction
         { spellID = 115078,  name = "Paralysis",           baseCd = 45,
           extraChargeTalent = 344359,
           cooldownReducingTalent = 344359, cdReduction = 15 },
@@ -268,7 +268,7 @@ HasuCCData.SPEC_CC_DATA = {
     },
     [268] = { -- Brewmaster Monk
         { spellID = 116705,  name = "Spear Hand Strike",   baseCd = 15,
-          cooldownReducingTalent = 450631, cdReduction = 5 },
+          forceBaseCd = true }, -- always 15s, no talent reduction
         { spellID = 115078,  name = "Paralysis",           baseCd = 45,
           extraChargeTalent = 344359,
           cooldownReducingTalent = 344359, cdReduction = 15 },
@@ -377,7 +377,8 @@ HasuCCData.SPEC_CC_DATA = {
     -- Beast Mastery = 253 | Marksmanship = 254 | Survival = 255
     -- ─────────────────────────────────────────────────────────
     [253] = { -- Beast Mastery Hunter
-        { spellID = 147362,  name = "Counter Shot",        baseCd = 24  },
+        { spellID = 147362,  name = "Counter Shot",        baseCd = 24,
+          forceBaseCd = true }, -- prevent talent from incorrectly reducing CD
         { spellID = 19577,   name = "Intimidation",        baseCd = 60,
           cooldownReducingTalent = 459507, cdReduction = 20 },
         { spellID = 187650,  name = "Freezing Trap",       baseCd = 30,
@@ -387,7 +388,9 @@ HasuCCData.SPEC_CC_DATA = {
           cooldownReducingTalent = 343247, cdReduction = 5 },
     },
     [254] = { -- Marksmanship Hunter
-        { spellID = 147362,  name = "Counter Shot",        baseCd = 24  },
+        { spellID = 147362,  name = "Counter Shot",        baseCd = 24,
+          forceBaseCd = true }, -- prevent talent from incorrectly reducing CD
+        { spellID = 474421,  name = "Intimidation (MM)",   baseCd = 60  }, -- Marksmanship-specific Intimidation
         { spellID = 19577,   name = "Intimidation",        baseCd = 60,
           cooldownReducingTalent = 459507, cdReduction = 20 },
         { spellID = 187650,  name = "Freezing Trap",       baseCd = 30,
@@ -470,7 +473,7 @@ HasuCCData.SPEC_CC_DATA = {
           cooldownReducingTalent = 204268, cdReduction = 15 }, -- Voodoo Mastery
         { spellID = 192058,  name = "Capacitor Totem",     baseCd = 55,
           extraChargeTalent = 265046,
-          cooldownReducingTalent = 265046, cdReduction = 10 },
+          cooldownReducingTalent = 265046, cdReductionPerRank = 10 }, -- Charge statique: -10s par rang (rang 1 ou 2)
         { spellID = 51485,   name = "Earthgrab Totem",     baseCd = 25  },
         { spellID = 51490,   name = "Thunderstorm",        baseCd = 30  },
     },
@@ -480,7 +483,7 @@ HasuCCData.SPEC_CC_DATA = {
           cooldownReducingTalent = 204268, cdReduction = 15 }, -- Voodoo Mastery
         { spellID = 192058,  name = "Capacitor Totem",     baseCd = 55,
           extraChargeTalent = 265046,
-          cooldownReducingTalent = 265046, cdReduction = 10 },
+          cooldownReducingTalent = 265046, cdReductionPerRank = 10 }, -- Charge statique: -10s par rang (rang 1 ou 2)
         { spellID = 51485,   name = "Earthgrab Totem",     baseCd = 25  },
         { spellID = 51490,   name = "Thunderstorm",        baseCd = 30  },
     },
@@ -490,7 +493,7 @@ HasuCCData.SPEC_CC_DATA = {
           cooldownReducingTalent = 204268, cdReduction = 15 }, -- Voodoo Mastery
         { spellID = 192058,  name = "Capacitor Totem",     baseCd = 55,
           extraChargeTalent = 265046,
-          cooldownReducingTalent = 265046, cdReduction = 10 },
+          cooldownReducingTalent = 265046, cdReductionPerRank = 10 }, -- Charge statique: -10s par rang (rang 1 ou 2)
         { spellID = 51485,   name = "Earthgrab Totem",     baseCd = 25  },
         { spellID = 51490,   name = "Thunderstorm",        baseCd = 30  },
     },
@@ -554,6 +557,7 @@ for specID, list in pairs(HasuCCData.SPEC_CC_DATA) do
                 baseCd                  = entry.baseCd,
                 cooldownReducingTalent  = entry.cooldownReducingTalent,
                 cdReduction             = entry.cdReduction,
+                cdReductionPerRank      = entry.cdReductionPerRank,
                 cooldownReducingTalent2 = entry.cooldownReducingTalent2,
                 cdReduction2            = entry.cdReduction2,
                 cdNullifyTalent         = entry.cdNullifyTalent,
@@ -677,14 +681,16 @@ HasuCCData.FindMyCCAbilities = function(myName, myClass, ccAddonUsers)
                 -- use it (possibly reduced by talent). Otherwise use baseCd as fallback.
                 if ok_cd and ms and ms >= 5000 then
                     local cd = math.floor(ms / 1000 + 0.5)
-                    local talentCheck = entry.cooldownReducingTalent and IsPlayerTalent(entry.cooldownReducingTalent)
-                    local cdReducerActive = entry.cooldownReducingTalent and talentCheck
+                    local talentRank = entry.cooldownReducingTalent and GetPlayerTalentRank(entry.cooldownReducingTalent) or 0
+                    local cdReducerActive = entry.cooldownReducingTalent and talentRank > 0
                     local talent2Active = entry.cooldownReducingTalent2 and IsPlayerTalent(entry.cooldownReducingTalent2)
 
                     -- If talent reduces CD and is active, apply the reduction manually
                     -- in case GetSpellBaseCooldown doesn't reflect the talent
-                    if cdReducerActive and entry.cdReduction then
-                        actualCd = entry.baseCd - entry.cdReduction
+                    if cdReducerActive and (entry.cdReduction or entry.cdReductionPerRank) then
+                        local reduction = entry.cdReductionPerRank and (entry.cdReductionPerRank * talentRank)
+                                          or entry.cdReduction
+                        actualCd = entry.baseCd - reduction
                         -- Stack second talent reduction if active
                         if talent2Active and entry.cdReduction2 then
                             actualCd = actualCd - entry.cdReduction2
@@ -705,11 +711,13 @@ HasuCCData.FindMyCCAbilities = function(myName, myClass, ccAddonUsers)
                 else
                     -- GetSpellBaseCooldown failed, returned 0, or returned garbage.
                     -- Use baseCd as fallback, but check if talent reduces it.
-                    local talentCheck = entry.cooldownReducingTalent and IsPlayerTalent(entry.cooldownReducingTalent)
+                    local talentRank = entry.cooldownReducingTalent and GetPlayerTalentRank(entry.cooldownReducingTalent) or 0
                     local talent2Active = entry.cooldownReducingTalent2 and IsPlayerTalent(entry.cooldownReducingTalent2)
                     actualCd = entry.baseCd
-                    if talentCheck and entry.cdReduction then
-                        actualCd = actualCd - entry.cdReduction
+                    if talentRank > 0 then
+                        local reduction = entry.cdReductionPerRank and (entry.cdReductionPerRank * talentRank)
+                                          or entry.cdReduction or 0
+                        actualCd = actualCd - reduction
                     end
                     if talent2Active and entry.cdReduction2 then
                         actualCd = actualCd - entry.cdReduction2
@@ -802,6 +810,49 @@ HasuCCData.INTERRUPT_SPELL_IDS = {
 }
 
 -- ============================================================
+--  GetPlayerTalentRank(spellID)
+--  Returns the rank (0, 1, 2…) of the given talent. 0 if not active.
+-- ============================================================
+local function GetPlayerTalentRank(spellID)
+    if not (C_ClassTalents and C_ClassTalents.GetActiveConfigID) then
+        -- Fallback: only know if active (rank 1) or not (rank 0)
+        local ok1, r1 = pcall(IsPlayerSpell, spellID)
+        if ok1 and r1 then return 1 end
+        return 0
+    end
+    local okC, configID = pcall(C_ClassTalents.GetActiveConfigID)
+    if not okC or not configID then return 0 end
+    local okI, ci = pcall(C_Traits.GetConfigInfo, configID)
+    if not okI or not ci or not ci.treeIDs then return 0 end
+    local treeID = ci.treeIDs[1]
+    if not treeID then return 0 end
+    local okN, nodeIDs = pcall(C_Traits.GetTreeNodes, treeID)
+    if not okN or not nodeIDs then return 0 end
+
+    local target = tostring(spellID)
+    for _, nodeID in ipairs(nodeIDs) do
+        local ok3, ni = pcall(C_Traits.GetNodeInfo, configID, nodeID)
+        if ok3 and ni and ni.activeEntry and (ni.activeRank or 0) > 0 then
+            local ok4, ei = pcall(C_Traits.GetEntryInfo, configID, ni.activeEntry.entryID)
+            if ok4 and ei and ei.definitionID then
+                local ok5, di = pcall(C_Traits.GetDefinitionInfo, ei.definitionID)
+                if ok5 and di and di.spellID then
+                    local sok, s = pcall(tostring, di.spellID)
+                    local match = (sok and s == target)
+                    if not match then
+                        local nok, n = pcall(tonumber, di.spellID)
+                        if nok and n and n == spellID then match = true end
+                    end
+                    if match then return ni.activeRank or 1 end
+                end
+            end
+        end
+    end
+    return 0
+end
+HasuCCData.GetPlayerTalentRank = GetPlayerTalentRank
+
+-- ============================================================
 --  IsPlayerTalent(spellID)
 --  Returns true if the local player currently has this talent
 --  active. Uses IsPlayerSpell first (fast path), then falls
@@ -816,32 +867,6 @@ IsPlayerTalent = function(spellID)
     if ok2 and r2 then return true end
 
     -- Full talent-tree scan via C_Traits
-    if not (C_ClassTalents and C_ClassTalents.GetActiveConfigID) then return false end
-    local okC, configID = pcall(C_ClassTalents.GetActiveConfigID)
-    if not okC or not configID then return false end
-    local okI, ci = pcall(C_Traits.GetConfigInfo, configID)
-    if not okI or not ci or not ci.treeIDs then return false end
-    local treeID = ci.treeIDs[1]
-    if not treeID then return false end
-    local okN, nodeIDs = pcall(C_Traits.GetTreeNodes, treeID)
-    if not okN or not nodeIDs then return false end
-
-    local target = tostring(spellID)
-    for _, nodeID in ipairs(nodeIDs) do
-        local ok3, ni = pcall(C_Traits.GetNodeInfo, configID, nodeID)
-        if ok3 and ni and ni.activeEntry and (ni.activeRank or 0) > 0 then
-            local ok4, ei = pcall(C_Traits.GetEntryInfo, configID, ni.activeEntry.entryID)
-            if ok4 and ei and ei.definitionID then
-                local ok5, di = pcall(C_Traits.GetDefinitionInfo, ei.definitionID)
-                if ok5 and di and di.spellID then
-                    local sok, s = pcall(tostring, di.spellID)
-                    if sok and s == target then return true end
-                    local nok, n = pcall(tonumber, di.spellID)
-                    if nok and n and n == spellID then return true end
-                end
-            end
-        end
-    end
-    return false
+    return GetPlayerTalentRank(spellID) > 0
 end
 HasuCCData.IsPlayerTalent = IsPlayerTalent
