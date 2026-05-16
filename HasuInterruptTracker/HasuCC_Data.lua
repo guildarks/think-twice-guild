@@ -803,6 +803,7 @@ HasuCCData.FindMyCCAbilities = function(myName, myClass, ccAddonUsers)
                 cdEnd      = oldCcs[spellID] and oldCcs[spellID].cdEnd or 0,
                 maxCharges = maxCharges,
                 icon       = icon,
+                castTime   = entry.castTime,  -- For spells with incantation time
             }
             table.insert(newOrder, spellID)
 
