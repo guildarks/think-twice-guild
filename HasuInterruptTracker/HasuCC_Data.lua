@@ -338,7 +338,7 @@ HasuCCData.SPEC_CC_DATA = {
         { spellID = 5211,    name = "Mighty Bash",         baseCd = 60  },
         { spellID = 33786,   name = "Cyclone",             baseCd = 2,   -- 1.3s cast time
           requireTalent = 389625 },
-        { spellID = 339,     name = "Entangling Roots",    baseCd = 2,   -- 1.3s cast time
+        { spellID = 339,     name = "Entangling Roots",    baseCd = 0, castTime = 1.3,
           requireTalent = 389625 },
     },
     [103] = { -- Feral Druid
@@ -351,7 +351,7 @@ HasuCCData.SPEC_CC_DATA = {
         { spellID = 102793,  name = "Ursol's Vortex",      baseCd = 60  },
         { spellID = 99,      name = "Incapacitating Roar", baseCd = 30  },
         { spellID = 5211,    name = "Mighty Bash",         baseCd = 60  },
-        { spellID = 339,     name = "Entangling Roots",    baseCd = 2,   -- 1.3s cast time
+        { spellID = 339,     name = "Entangling Roots",    baseCd = 0, castTime = 1.3,
           requireTalent = 389625 },
     },
     [104] = { -- Guardian Druid
@@ -364,7 +364,7 @@ HasuCCData.SPEC_CC_DATA = {
         { spellID = 102793,  name = "Ursol's Vortex",      baseCd = 60  },
         { spellID = 99,      name = "Incapacitating Roar", baseCd = 30  },
         { spellID = 5211,    name = "Mighty Bash",         baseCd = 60  },
-        { spellID = 339,     name = "Entangling Roots",    baseCd = 2,   -- 1.3s cast time
+        { spellID = 339,     name = "Entangling Roots",    baseCd = 0, castTime = 1.3,
           requireTalent = 389625 },
     },
     [105] = { -- Restoration Druid (no Skull Bash in 12.0)
@@ -376,7 +376,7 @@ HasuCCData.SPEC_CC_DATA = {
         { spellID = 102793,  name = "Ursol's Vortex",      baseCd = 60  },
         { spellID = 99,      name = "Incapacitating Roar", baseCd = 30  },
         { spellID = 5211,    name = "Mighty Bash",         baseCd = 60  },
-        { spellID = 339,     name = "Entangling Roots",    baseCd = 2,   -- 1.3s cast time
+        { spellID = 339,     name = "Entangling Roots",    baseCd = 0, castTime = 1.3,
           requireTalent = 389625 },
     },
 
