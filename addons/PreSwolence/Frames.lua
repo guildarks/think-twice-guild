@@ -46,8 +46,8 @@ local DEFAULT_POSITIONS = {
     slot4     = { "CENTER", "UIParent", "CENTER", -100,   8 },
     cdTracker = { "CENTER", "UIParent", "CENTER", -100, -28 },
     -- Searing Scales tank bars
-    tank1    = { "CENTER", "UIParent", "CENTER", -100, -60 },
-    tank2    = { "CENTER", "UIParent", "CENTER", -100, -88 },
+    tank1     = { "CENTER", "UIParent", "CENTER", -100, -60 },
+    tank2     = { "CENTER", "UIParent", "CENTER", -100, -88 },
 }
 
 local function SaveFramePos(key, frame)
@@ -180,7 +180,8 @@ local function CreateEbonMightFrame(slot)
 
     -- Dark track
     local track = frame:CreateTexture(nil, "BACKGROUND")
-    track:SetTexture(FLAT_TEX); track:SetVertexColor(0.08, 0.05, 0.14, 1)
+    track:SetTexture(FLAT_TEX)
+    track:SetVertexColor(0.08, 0.05, 0.14, 1)
     track:SetPoint("TOPLEFT",     frame, "TOPLEFT",     2, -2)
     track:SetPoint("BOTTOMRIGHT", frame, "BOTTOMRIGHT", -2, 2)
 
@@ -189,7 +190,8 @@ local function CreateEbonMightFrame(slot)
     timerBar:SetPoint("TOPLEFT",     frame, "TOPLEFT",     2, -2)
     timerBar:SetPoint("BOTTOMRIGHT", frame, "BOTTOMRIGHT", -2, 2)
     timerBar:SetStatusBarTexture(ns:GetBarTexture(FLAT_TEX))
-    timerBar:SetMinMaxValues(0, 1); timerBar:SetValue(0)
+    timerBar:SetMinMaxValues(0, 1)
+    timerBar:SetValue(0)
     timerBar:SetStatusBarColor(S("emFullR",0.52), S("emFullG",0.18), S("emFullB",0.82), 0.75)
     timerBar:EnableMouse(false)
     frame.timerBar = timerBar
@@ -206,8 +208,10 @@ local function CreateEbonMightFrame(slot)
     local spark = timerBar:CreateTexture(nil, "OVERLAY")
     spark:SetSize(10, EM_BAR_HEIGHT() + 4)
     spark:SetPoint("CENTER", timerBar:GetStatusBarTexture(), "RIGHT", 0, 0)
-    spark:SetTexture(SPARK_TEX); spark:SetBlendMode("ADD")
-    spark:SetVertexColor(0.8, 0.4, 1.0, 1); spark:Hide()
+    spark:SetTexture(SPARK_TEX)
+    spark:SetBlendMode("ADD")
+    spark:SetVertexColor(0.8, 0.4, 1.0, 1)
+    spark:Hide()
     frame.spark = spark
 
     -- Name text (left)
@@ -223,7 +227,8 @@ local function CreateEbonMightFrame(slot)
     local timerText = timerBar:CreateFontString(nil, "OVERLAY")
     timerText:SetFont(ns:GetFontPath("Fonts\\FRIZQT__.TTF"), FONT_SIZE(), S("fontOutline","OUTLINE"))
     timerText:SetPoint("RIGHT", frame, "RIGHT", -5, 0)
-    timerText:SetJustifyH("RIGHT"); timerText:SetText("")
+    timerText:SetJustifyH("RIGHT")
+    timerText:SetText("")
     frame.timerText = timerText
 
     frame.buffDuration = nil
@@ -280,9 +285,11 @@ local function CreateEbonMightFrame(slot)
     frame:SetShown(false)
     return frame
 end
+
 ---------------------------------------------------------------------------
 -- Target slot frame (modern flat style)
 ---------------------------------------------------------------------------
+
 local function CreateTargetFrame(slot)
     local frame = _G["PreSwolenceFrame" .. slot] or CreateFrame("Button", "PreSwolenceFrame" .. slot, UIParent, "SecureUnitButtonTemplate")
     frame:SetParent(UIParent)
@@ -458,7 +465,11 @@ local function CreateCDTracker()
     cdTracker:SetParent(UIParent)
     cdTracker:ClearAllPoints()
     cdTracker:SetSize(BAR_WIDTH(), CD_ICON_SIZE())
-    if cdTracker.initialized then cdTracker:Show() RestoreFramePos("cdTracker", cdTracker, DEFAULT_POSITIONS.cdTracker) return cdTracker end
+    if cdTracker.initialized then
+        cdTracker:Show()
+        RestoreFramePos("cdTracker", cdTracker, DEFAULT_POSITIONS.cdTracker)
+        return cdTracker
+    end
     cdTracker.initialized = true
     cdTracker:EnableMouse(false)
     cdTracker:SetBackdrop({
@@ -621,16 +632,10 @@ local function CreateCDTracker()
 end
 
 ---------------------------------------------------------------------------
--- Initialize
+-- Tank frame (Searing Scales / Ecaille torride)
+-- Style: icon + name + timer + duration bar (like CDTracker)
 ---------------------------------------------------------------------------
 
----------------------------------------------------------------------------
--- Tank frame (Searing Scales / Écaille torride)
----------------------------------------------------------------------------
----------------------------------------------------------------------------
--- Tank icon tracker (Écaille Torride / Searing Scales)
--- Style: icône + nom + timer + barre de durée (comme CDTracker)
----------------------------------------------------------------------------
 local function CreateTankFrame(tankSlot)
     local posKey    = "tank" .. tankSlot
     local defaultPos = DEFAULT_POSITIONS[posKey] or DEFAULT_POSITIONS.tank1
@@ -684,7 +689,7 @@ local function CreateTankFrame(tankSlot)
     frame:SetBackdropBorderColor(S("ssInactiveBorderR",0.55), S("ssInactiveBorderG",0.22), S("ssInactiveBorderB",0.05), bi0)
 
     ---------------------------------------------------------------------------
-    -- Icône du sort
+    -- Spell icon
     ---------------------------------------------------------------------------
     local iconFrame = CreateFrame("Frame", nil, frame)
     iconFrame:SetSize(sz - 4, sz - 4)
@@ -696,7 +701,7 @@ local function CreateTankFrame(tankSlot)
     icon:SetTexCoord(0.08, 0.92, 0.08, 0.92)
     frame.icon = icon
 
-    -- Cadre de l'icône (border)
+    -- Icon border
     local iconBorder = iconFrame:CreateTexture(nil, "OVERLAY")
     iconBorder:SetTexture("Interface\\Buttons\\UI-Quickslot-Depress")
     iconBorder:SetAllPoints()
@@ -710,9 +715,9 @@ local function CreateTankFrame(tankSlot)
     frame.cooldown = cooldown
 
     ---------------------------------------------------------------------------
-    -- Textes à droite de l'icône
+    -- Text to the right of the icon
     ---------------------------------------------------------------------------
-    -- Nom du sort (en haut)
+    -- Spell name (top)
     local label = frame:CreateFontString(nil, "OVERLAY")
     label:SetFont(ns:GetFontPath("Fonts\\FRIZQT__.TTF"), FONT_SIZE(), S("fontOutline","OUTLINE"))
     label:SetPoint("TOPLEFT",  iconFrame, "TOPRIGHT", 5, -2)
@@ -721,7 +726,7 @@ local function CreateTankFrame(tankSlot)
     label:SetText("|cffff8833" .. (ns.SEARING_SCALES_NAME or "Écaille torride") .. "|r")
     frame.label = label
 
-    -- Nom du tank (en bas)
+    -- Tank name (bottom)
     local tankName = frame:CreateFontString(nil, "OVERLAY")
     tankName:SetFont(ns:GetFontPath("Fonts\\FRIZQT__.TTF"), FONT_SIZE() - 1, S("fontOutline","OUTLINE"))
     tankName:SetPoint("BOTTOMLEFT",  iconFrame, "BOTTOMRIGHT", 5, 2)
@@ -731,7 +736,7 @@ local function CreateTankFrame(tankSlot)
     tankName:SetText("")
     frame.tankName = tankName
 
-    -- Timer (à droite, en haut — aligné avec le label)
+    -- Timer (right, aligned with label)
     local timerText = frame:CreateFontString(nil, "OVERLAY")
     timerText:SetFont(ns:GetFontPath("Fonts\\FRIZQT__.TTF"), FONT_SIZE(), S("fontOutline","OUTLINE"))
     timerText:SetPoint("RIGHT", frame, "TOPRIGHT", -5, -(sz / 2) + 1)
@@ -740,7 +745,7 @@ local function CreateTankFrame(tankSlot)
     timerText:SetText("")
     frame.timerText = timerText
 
-    -- Stacks (à droite, en bas — sur l'icône corner)
+    -- Stack count (icon corner, bottom-right)
     local stackText = iconFrame:CreateFontString(nil, "OVERLAY")
     stackText:SetFont(ns:GetFontPath("Fonts\\FRIZQT__.TTF"), FONT_SIZE() + 1, "OUTLINE")
     stackText:SetPoint("BOTTOMRIGHT", iconFrame, "BOTTOMRIGHT", -1, 1)
@@ -749,7 +754,7 @@ local function CreateTankFrame(tankSlot)
     frame.stackText = stackText
 
     ---------------------------------------------------------------------------
-    -- Barre de durée (fine, sous les textes)
+    -- Duration bar (thin, below the text)
     ---------------------------------------------------------------------------
     local durationBarBg = frame:CreateTexture(nil, "ARTWORK")
     durationBarBg:SetTexture(FLAT_TEX)
@@ -775,7 +780,7 @@ local function CreateTankFrame(tankSlot)
     timerText:SetShown(S("ssShowTimer", true))
 
     ---------------------------------------------------------------------------
-    -- Résolution de l'icône du sort
+    -- Icon resolution
     ---------------------------------------------------------------------------
     local iconResolved = false
     local function TrySetIcon()
@@ -797,7 +802,6 @@ local function CreateTankFrame(tankSlot)
         local dur = self.buffDuration or ns.SEARING_SCALES_DURATION
         if remaining and remaining > 0 then
             local pct = (dur > 0) and math.min(remaining / dur, 1) or 1
-            -- Barre de durée
             self.durationBar:SetValue(pct)
             if pct > 0.5 then
                 self.durationBar:SetStatusBarColor(S("ssFullR",0.9), S("ssFullG",0.45), S("ssFullB",0.05), 0.9)
@@ -815,13 +819,13 @@ local function CreateTankFrame(tankSlot)
                     self.timerText:SetText(tostring(r))
                 end
             end
-            -- Bordure active (buff présent)
+            -- Active border (buff present)
             local ba = S("ssShowBorder", true) and 1 or 0
             self:SetBackdropBorderColor(S("ssActiveBorderR",0.9), S("ssActiveBorderG",0.55), S("ssActiveBorderB",0.1), ba)
         else
             self.durationBar:SetValue(0)
             self.timerText:SetText("")
-            -- Bordure inactive (buff absent)
+            -- Inactive border (buff absent)
             local bi = S("ssShowBorder", true) and 1 or 0
             self:SetBackdropBorderColor(S("ssInactiveBorderR",0.55), S("ssInactiveBorderG",0.22), S("ssInactiveBorderB",0.05), bi)
         end
@@ -871,6 +875,9 @@ local function CreateTankFrame(tankSlot)
     return frame
 end
 
+---------------------------------------------------------------------------
+-- Initialize
+---------------------------------------------------------------------------
 
 local function InitializeFrames()
     CreateContainer()  -- dummy for compat
@@ -977,11 +984,10 @@ function ns:RefreshSettings()
         end
     end
 
-    -- CD Tracker: taille icône + texture barre de recharge
+    -- CD Tracker: icon size + recharge bar texture
     if cdTracker then
         local iconSz = CD_ICON_SIZE()
         cdTracker:SetSize(BAR_WIDTH(), iconSz)
-        -- Resize the icon frame and cooldown overlay
         if cdTracker.iconFrame then
             cdTracker.iconFrame:SetSize(iconSz - 4, iconSz - 4)
         end
@@ -1042,17 +1048,33 @@ end
 function ns:DestroyFrames()
     if ns.emFrames then
         for i = 1, ns.NUM_SLOTS do
-            if ns.emFrames[i] then ns.emFrames[i]:Hide(); ns.emFrames[i]:SetParent(nil); ns.emFrames[i] = nil end
+            if ns.emFrames[i] then
+                ns.emFrames[i]:Hide()
+                ns.emFrames[i]:SetParent(nil)
+                ns.emFrames[i] = nil
+            end
         end
         ns.emFrames = nil
     end
-    if cdTracker    then cdTracker:Hide();    cdTracker:SetParent(nil);    cdTracker = nil end
+    if cdTracker then
+        cdTracker:Hide()
+        cdTracker:SetParent(nil)
+        cdTracker = nil
+    end
     for i = 1, ns.NUM_SLOTS do
-        if ns.frames[i] then ns.frames[i]:Hide(); ns.frames[i]:SetParent(nil); ns.frames[i] = nil end
+        if ns.frames[i] then
+            ns.frames[i]:Hide()
+            ns.frames[i]:SetParent(nil)
+            ns.frames[i] = nil
+        end
     end
     if ns.tankFrames then
         for i = 1, (ns.TANK_SLOTS or 1) do
-            if ns.tankFrames[i] then ns.tankFrames[i]:Hide(); ns.tankFrames[i]:SetParent(nil); ns.tankFrames[i] = nil end
+            if ns.tankFrames[i] then
+                ns.tankFrames[i]:Hide()
+                ns.tankFrames[i]:SetParent(nil)
+                ns.tankFrames[i] = nil
+            end
         end
         ns.tankFrames = nil
     end
