@@ -1,0 +1,6 @@
+<Bindings>
+  <Binding name="CLICK PreSwolenceButton1:LeftButton" />
+  <Binding name="CLICK PreSwolenceButton2:LeftButton" />
+  <Binding name="CLICK PreSwolenceButton3:LeftButton" />
+  <Binding name="CLICK PreSwolenceButton4:LeftButton" />
+</Bindings>
