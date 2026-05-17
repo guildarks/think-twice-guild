@@ -53,7 +53,7 @@ C_Timer.NewTicker(interval, callback, iterations)
 2. Éviter les globals : préfixer ou tout mettre en local
 3. Commenter les events WoW non évidents
 4. Respecter la limite de taille des messages addon (255 bytes pour SendAddonMessage)
-5. Tester la version d'interface dans le .toc (ex: `## Interface: 110007` pour The War Within 11.0.7)
+5. Tester la version d'interface dans le .toc (ex: `## Interface: 120005` pour Midnight 12.0.5)
 
 ## Format de réponse
 

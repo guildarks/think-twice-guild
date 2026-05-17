@@ -29,7 +29,7 @@ Utilise l'agent wow-api-expert pour trouver comment lire les auras d'un joueur
 ## Stack technique
 
 - **Portail web** : HTML/CSS/JS vanilla, Chart.js, Firebase Firestore
-- **Addons WoW** : Lua 5.1, API WoW The War Within (Interface 110007)
+- **Addons WoW** : Lua 5.1, API WoW Midnight (Interface 120005, patch 12.0.5.67602)
 - **Bibliothèques addons** : AceAddon-3.0, AceDB-3.0, AceEvent-3.0
 
 ## Addons Think Twice planifiés

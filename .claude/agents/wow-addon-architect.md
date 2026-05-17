@@ -45,7 +45,7 @@ MyAddon/
 
 ### Fichier .toc type
 ```ini
-## Interface: 110007
+## Interface: 120005
 ## Title: Think Twice — |cffA78BFaGuild Tools|r
 ## Notes: Outils de guilde pour Think Twice
 ## Author: Think Twice
