@@ -46,7 +46,7 @@ function ns:IsPrescience(val)
 end
 
 function ns:Print(msg)
-    print("|cff33ff99Augtracker|r: " .. msg)
+    print("|cffA78BFAAugtracker|r: " .. msg)
 end
 
 ---------------------------------------------------------------------------
