@@ -25,8 +25,16 @@ ns.SEARING_SCALES_DURATION = 30
 ns.SEARING_SCALES_NAME     = "Écailles torrides"
 
 -- Tank slots (separate from DPS slots)
-ns.TANK_SLOTS    = 1
-ns.tankTargets   = {}
+ns.TANK_SLOTS     = 1
+
+-- State
+ns.targets        = {}
+ns.unitTokens     = {}
+ns.buttons        = {}
+ns.frames         = {}
+ns.pendingChanges = {}
+ns.settings       = {}
+ns.tankTargets    = {}
 ns.tankUnitTokens = {}
 
 function ns:IsPrescience(val)
@@ -36,14 +44,6 @@ function ns:IsPrescience(val)
     end
     return val == self.PRESCIENCE_BUFF_ID
 end
-
--- State
-ns.targets        = {}
-ns.unitTokens     = {}
-ns.buttons        = {}
-ns.frames         = {}
-ns.pendingChanges = {}
-ns.settings       = {}
 
 function ns:Print(msg)
     print("|cff33ff99Augtracker|r: " .. msg)
@@ -59,8 +59,9 @@ function ns:ResolveNameToUnit(name)
     local function checkUnit(unit)
         local uName, uRealm = UnitName(unit)
         if not uName then return false end
-        local fullName = uRealm and uRealm ~= "" and (uName .. "-" .. uRealm) or uName
-        return fullName:lower() == searchName or uName:lower() == searchName
+        if uName:lower() == searchName then return true end
+        local fullName = (uRealm and uRealm ~= "") and (uName .. "-" .. uRealm) or uName
+        return fullName:lower() == searchName
     end
 
     if IsInRaid() then
@@ -172,6 +173,7 @@ function ns:AssignTarget(slot, name)
         ns:Print("Slot must be 1-" .. ns.NUM_SLOTS .. ".")
         return
     end
+    if not name or name == "" then return end
 
     -- Duplicate check — auto-move
     for i = 1, ns.NUM_SLOTS do
@@ -216,16 +218,15 @@ function ns:ClearTarget(slot)
     end
 
     local prev = ns.targets[slot]
-    ns.targets[slot] = nil
+    if not prev then return end
+
+    ns.targets[slot]    = nil
     ns.unitTokens[slot] = nil
     ns:UpdateButtonUnit(slot, nil)
     ns:UpdateFrameUnit(slot, nil)
     ns:SaveData()
     ns:NotifyBuffTracker(slot)
-
-    if prev then
-        ns:Print("Cleared slot " .. slot .. " (" .. prev.name .. ").")
-    end
+    ns:Print("Cleared slot " .. slot .. " (" .. prev.name .. ").")
 end
 
 ---------------------------------------------------------------------------
@@ -233,14 +234,13 @@ end
 ---------------------------------------------------------------------------
 function ns:AutoAssignDungeon()
     if not IsInGroup() then
-        if ns.autoAssigned then
-            for i = 1, ns.NUM_SLOTS do
-                if ns.targets[i] and ns.targets[i].auto then
-                    ns:ClearTarget(i)
-                end
+        if not ns.autoAssigned then return end
+        for i = 1, ns.NUM_SLOTS do
+            if ns.targets[i] and ns.targets[i].auto then
+                ns:ClearTarget(i)
             end
-            ns.autoAssigned = false
         end
+        ns.autoAssigned = false
         return
     end
 
@@ -442,9 +442,8 @@ local EVOKER_CLASS_ID         = 13
 local AUGMENTATION_SPEC_INDEX = 3
 
 local function IsAugmentationEvoker()
-    local _, _, classID = UnitClass("player")
-    if classID ~= EVOKER_CLASS_ID then return false end
-    return GetSpecialization() == AUGMENTATION_SPEC_INDEX
+    return select(3, UnitClass("player")) == EVOKER_CLASS_ID
+        and GetSpecialization() == AUGMENTATION_SPEC_INDEX
 end
 
 ---------------------------------------------------------------------------
@@ -494,16 +493,12 @@ eventFrame:SetScript("OnEvent", function(self, event, ...)
     if event == "ADDON_LOADED" then
         local loaded = ...
         if loaded ~= addonName then return end
+        self:UnregisterEvent("ADDON_LOADED")
 
-        local _, _, classID = UnitClass("player")
-        if classID ~= EVOKER_CLASS_ID then
-            self:UnregisterEvent("ADDON_LOADED")
-            return
-        end
+        if select(3, UnitClass("player")) ~= EVOKER_CLASS_ID then return end
 
         ns:LoadSavedVariables()
         self:RegisterEvent("PLAYER_SPECIALIZATION_CHANGED")
-        self:UnregisterEvent("ADDON_LOADED")
 
         if IsAugmentationEvoker() then
             EnableAddon()
@@ -513,9 +508,8 @@ eventFrame:SetScript("OnEvent", function(self, event, ...)
 
     elseif event == "PLAYER_LOGIN" then
         self:UnregisterEvent("PLAYER_LOGIN")
-        if IsAugmentationEvoker() then
-            EnableAddon()
-        end
+        if not IsAugmentationEvoker() then return end
+        EnableAddon()
 
     elseif event == "PLAYER_SPECIALIZATION_CHANGED" then
         if IsAugmentationEvoker() then
@@ -525,19 +519,18 @@ eventFrame:SetScript("OnEvent", function(self, event, ...)
         end
 
     elseif event == "GROUP_ROSTER_UPDATE" or event == "PLAYER_ENTERING_WORLD" then
-        if not InCombatLockdown() then
-            ns:AutoAssignDungeon()
-            ns:ResolveAllTargets()
-        else
+        if InCombatLockdown() then
             ns.resolveOnCombatEnd = true
+            return
         end
+        ns:AutoAssignDungeon()
+        ns:ResolveAllTargets()
 
     elseif event == "PLAYER_REGEN_ENABLED" then
         ns:FlushPendingChanges()
-        if ns.resolveOnCombatEnd then
-            ns.resolveOnCombatEnd = false
-            ns:AutoAssignDungeon()
-            ns:ResolveAllTargets()
-        end
+        if not ns.resolveOnCombatEnd then return end
+        ns.resolveOnCombatEnd = false
+        ns:AutoAssignDungeon()
+        ns:ResolveAllTargets()
     end
 end)

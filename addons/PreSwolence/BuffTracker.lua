@@ -3,10 +3,12 @@ local addonName, ns = ...
 local BuffTracker = {}
 ns.BuffTracker = BuffTracker
 
-local CAST_ID          = ns.PRESCIENCE_CAST_ID
-local BUFF_ID          = ns.PRESCIENCE_BUFF_ID
+-- Prescience IDs
+local CAST_ID           = ns.PRESCIENCE_CAST_ID
+local BUFF_ID           = ns.PRESCIENCE_BUFF_ID
 local FALLBACK_DURATION = ns.PRESCIENCE_DURATION
 
+-- Ebon Might IDs
 local EM_CAST_ID           = ns.EBON_MIGHT_CAST_ID
 local EM_BUFF_ID           = ns.EBON_MIGHT_BUFF_ID
 local EM_FALLBACK_DURATION = ns.EBON_MIGHT_DURATION
@@ -67,39 +69,49 @@ end
 -- Target changed (called by Core)
 ---------------------------------------------------------------------------
 function BuffTracker:OnTargetChanged(slot)
-    self.expirationTimes[slot] = nil
-    self.durations[slot]       = nil
-    self.castTimes[slot]       = nil
-    self.active[slot]          = false
+    self.expirationTimes[slot]   = nil
+    self.durations[slot]         = nil
+    self.castTimes[slot]         = nil
+    self.active[slot]            = false
     self.emExpirationTimes[slot] = nil
     self.emDurations[slot]       = nil
     self.emActive[slot]          = false
 
     local unit = ns.unitTokens[slot]
     if unit and UnitExists(unit) then
+        -- ScanUnit effectue les deux scans (Prescience + Ebon Might)
+        -- et appelle UpdateFrameStatus + UpdateEbonMightFrameStatus
         self:ScanUnit(slot, unit)
+        return
     end
 
+    -- Aucune unité : mettre à jour les frames avec l'état réinitialisé
     self:UpdateFrameStatus(slot)
     self:UpdateEbonMightFrameStatus(slot)
 end
 
 ---------------------------------------------------------------------------
 -- Aura scanning via C_UnitAuras (12.0 compatible)
+-- Single pass: detects Prescience and Ebon Might simultaneously.
 ---------------------------------------------------------------------------
 function BuffTracker:ScanUnit(slot, unit)
     local foundPrescience = false
+    local foundEbonMight  = false
     local anyReadable     = false
 
     local i = 1
     while true do
+        -- Stop early once both buffs have been found
+        if foundPrescience and foundEbonMight then break end
+
         local aura = C_UnitAuras.GetAuraDataByIndex(unit, i, "HELPFUL")
         if not aura then break end
 
         local spellId = aura.spellId
         if not issecretvalue(spellId) and spellId then
             anyReadable = true
-            if spellId == BUFF_ID or spellId == CAST_ID then
+
+            if not foundPrescience and (spellId == BUFF_ID or spellId == CAST_ID) then
                 foundPrescience = true
                 local exp = aura.expirationTime
                 if not issecretvalue(exp) and exp and exp > 0 then
@@ -109,44 +121,9 @@ function BuffTracker:ScanUnit(slot, unit)
                         self.durations[slot] = dur
                     end
                 end
-                break
-            end
-        end
 
-        i = i + 1
-    end
-
-    if foundPrescience then
-        self.active[slot]     = true
-        self.pendingCastTime  = nil
-        dbg("Scan: Prescience found on slot " .. slot)
-    elseif anyReadable then
-        if not self.castTimes[slot] then
-            self.active[slot]          = false
-            self.expirationTimes[slot] = nil
-            self.durations[slot]       = nil
-        end
-    end
-
-    -- Also scan for Ebon Might on the same unit
-    self:ScanUnitEbonMight(slot, unit)
-
-    self:UpdateFrameStatus(slot)
-end
-
----------------------------------------------------------------------------
--- Ebon Might aura scanning
----------------------------------------------------------------------------
-function BuffTracker:ScanUnitEbonMight(slot, unit)
-    local found = false
-    local i     = 1
-    while true do
-        local aura = C_UnitAuras.GetAuraDataByIndex(unit, i, "HELPFUL")
-        if not aura then break end
-        local sid = aura.spellId
-        if not issecretvalue(sid) and sid then
-            if sid == EM_BUFF_ID or sid == EM_CAST_ID then
-                found = true
+            elseif not foundEbonMight and (spellId == EM_BUFF_ID or spellId == EM_CAST_ID) then
+                foundEbonMight = true
                 local exp = aura.expirationTime
                 if not issecretvalue(exp) and exp and exp > 0 then
                     self.emExpirationTimes[slot] = exp
@@ -155,13 +132,25 @@ function BuffTracker:ScanUnitEbonMight(slot, unit)
                         self.emDurations[slot] = dur
                     end
                 end
-                break
             end
         end
+
         i = i + 1
     end
 
-    if found then
+    -- Prescience result
+    if foundPrescience then
+        self.active[slot]    = true
+        self.pendingCastTime = nil
+        dbg("Scan: Prescience found on slot " .. slot)
+    elseif anyReadable and not self.castTimes[slot] then
+        self.active[slot]          = false
+        self.expirationTimes[slot] = nil
+        self.durations[slot]       = nil
+    end
+
+    -- Ebon Might result
+    if foundEbonMight then
         self.emActive[slot] = true
         dbg("Scan: Ebon Might found on slot " .. slot)
     else
@@ -174,6 +163,7 @@ function BuffTracker:ScanUnitEbonMight(slot, unit)
         end
     end
 
+    self:UpdateFrameStatus(slot)
     self:UpdateEbonMightFrameStatus(slot)
 end
 
@@ -288,20 +278,18 @@ function BuffTracker:SlotForUnit(unit)
         end
     end
 
-    -- Fallback: GUID comparison for party/raid units
+    -- Fallback: GUID comparison for party/raid/player units only
     local prefix = unit and unit:match("^(%a+)")
     if prefix ~= "party" and prefix ~= "raid" and prefix ~= "player" then
         return nil
     end
     local guid = UnitGUID(unit)
     if not guid then return nil end
+
     for slot = 1, ns.NUM_SLOTS do
         local slotUnit = ns.unitTokens[slot]
-        if slotUnit then
-            local slotGUID = UnitGUID(slotUnit)
-            if slotGUID and slotGUID == guid then
-                return slot
-            end
+        if slotUnit and UnitGUID(slotUnit) == guid then
+            return slot
         end
     end
     return nil
@@ -421,6 +409,7 @@ function BuffTracker:UpdateTimers()
     local anyActive = false
 
     for slot = 1, ns.NUM_SLOTS do
+        -- Prescience timer
         if self.active[slot] then
             local remaining = self:GetRemainingTime(slot)
             if remaining then
@@ -452,21 +441,23 @@ function BuffTracker:UpdateTimers()
 
     -- Searing Scales timers
     for i = 1, (ns.TANK_SLOTS or 1) do
-        if self.ssActive[i] then
-            local rem = self:GetSSRemaining(i)
-            if rem then
-                anyActive = true
-                local frames = ns.tankFrames
-                if frames and frames[i] and frames[i].UpdateTimer then
-                    frames[i]:UpdateTimer(rem)
-                end
-            else
-                self.ssActive[i]          = false
-                self.ssExpirationTimes[i] = nil
-                self.ssDurations[i]       = nil
-                self:UpdateTankFrameStatus(i)
+        if not self.ssActive[i] then goto continue_ss end
+
+        local rem = self:GetSSRemaining(i)
+        if rem then
+            anyActive = true
+            local frames = ns.tankFrames
+            if frames and frames[i] and frames[i].UpdateTimer then
+                frames[i]:UpdateTimer(rem)
             end
+        else
+            self.ssActive[i]          = false
+            self.ssExpirationTimes[i] = nil
+            self.ssDurations[i]       = nil
+            self:UpdateTankFrameStatus(i)
         end
+
+        ::continue_ss::
     end
 
     if not anyActive then
