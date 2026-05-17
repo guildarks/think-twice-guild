@@ -440,23 +440,21 @@ function BuffTracker:UpdateTimers()
 
     -- Searing Scales timers
     for i = 1, (ns.TANK_SLOTS or 1) do
-        if not self.ssActive[i] then goto continue_ss end
-
-        local rem = self:GetSSRemaining(i)
-        if not rem then
-            self.ssActive[i]          = false
-            self.ssExpirationTimes[i] = nil
-            self.ssDurations[i]       = nil
-            self:UpdateTankFrameStatus(i)
-        else
-            anyActive = true
-            local frames = ns.tankFrames
-            if frames and frames[i] and frames[i].UpdateTimer then
-                frames[i]:UpdateTimer(rem)
+        if self.ssActive[i] then
+            local rem = self:GetSSRemaining(i)
+            if not rem then
+                self.ssActive[i]          = false
+                self.ssExpirationTimes[i] = nil
+                self.ssDurations[i]       = nil
+                self:UpdateTankFrameStatus(i)
+            else
+                anyActive = true
+                local frames = ns.tankFrames
+                if frames and frames[i] and frames[i].UpdateTimer then
+                    frames[i]:UpdateTimer(rem)
+                end
             end
         end
-
-        ::continue_ss::
     end
 
     if not anyActive then

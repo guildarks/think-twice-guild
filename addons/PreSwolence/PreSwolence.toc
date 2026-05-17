@@ -13,4 +13,3 @@ Frames.lua
 BuffTracker.lua
 Config.lua
 ElvUI.lua
-Bindings.xml

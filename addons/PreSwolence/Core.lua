@@ -317,37 +317,33 @@ function ns:AutoAssignDungeon()
         local current = ns.targets[i]
 
         -- Skip slots that are manually assigned and still in group
-        if current and not current.auto and manualNames[current.name:lower()] then
-            goto continue_slot
-        end
-
-        -- Advance past candidates already in manual slots
-        while autoIdx <= #allCandidates and manualNames[allCandidates[autoIdx].name:lower()] do
-            autoIdx = autoIdx + 1
-        end
-
-        if autoIdx <= #allCandidates then
-            if not current or current.name ~= allCandidates[autoIdx].name then
-                local c = allCandidates[autoIdx]
-                ns.targets[i] = {
-                    name     = c.name,
-                    class    = c.class,
-                    auto     = true,
-                    isHealer = c.isHealer,
-                    isTank   = c.isTank,
-                    isDPS    = c.isDPS,
-                }
-                changed = true
+        if not (current and not current.auto and manualNames[current.name:lower()]) then
+            -- Advance past candidates already in manual slots
+            while autoIdx <= #allCandidates and manualNames[allCandidates[autoIdx].name:lower()] do
+                autoIdx = autoIdx + 1
             end
-            autoIdx = autoIdx + 1
-        else
-            if current and current.auto then
-                ns.targets[i] = nil
-                changed = true
+
+            if autoIdx <= #allCandidates then
+                if not current or current.name ~= allCandidates[autoIdx].name then
+                    local c = allCandidates[autoIdx]
+                    ns.targets[i] = {
+                        name     = c.name,
+                        class    = c.class,
+                        auto     = true,
+                        isHealer = c.isHealer,
+                        isTank   = c.isTank,
+                        isDPS    = c.isDPS,
+                    }
+                    changed = true
+                end
+                autoIdx = autoIdx + 1
+            else
+                if current and current.auto then
+                    ns.targets[i] = nil
+                    changed = true
+                end
             end
         end
-
-        ::continue_slot::
     end
 
     ns.autoAssigned = true
