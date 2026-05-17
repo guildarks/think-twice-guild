@@ -190,7 +190,7 @@ function ns:AssignTarget(slot, name)
 
     if unit then
         local uName, uRealm = UnitName(unit)
-        displayName = uRealm and uRealm ~= "" and (uName .. "-" .. uRealm) or uName
+        displayName = (uRealm and uRealm ~= "") and (uName .. "-" .. uRealm) or uName
     end
 
     ns.targets[slot] = { name = displayName, class = class }
@@ -263,7 +263,7 @@ function ns:AutoAssignDungeon()
         if UnitIsUnit(unit, "player") then return end
         local uName, uRealm = UnitName(unit)
         if not uName then return end
-        local fullName = uRealm and uRealm ~= "" and (uName .. "-" .. uRealm) or uName
+        local fullName = (uRealm and uRealm ~= "") and (uName .. "-" .. uRealm) or uName
         if seen[fullName] then return end
         seen[fullName] = true
         local _, class = UnitClass(unit)
@@ -315,33 +315,39 @@ function ns:AutoAssignDungeon()
     local autoIdx = 1
     for i = 1, ns.NUM_SLOTS do
         local current = ns.targets[i]
+
+        -- Skip slots that are manually assigned and still in group
         if current and not current.auto and manualNames[current.name:lower()] then
-            -- keep manual slot
-        else
-            while autoIdx <= #allCandidates and manualNames[allCandidates[autoIdx].name:lower()] do
-                autoIdx = autoIdx + 1
+            goto continue_slot
+        end
+
+        -- Advance past candidates already in manual slots
+        while autoIdx <= #allCandidates and manualNames[allCandidates[autoIdx].name:lower()] do
+            autoIdx = autoIdx + 1
+        end
+
+        if autoIdx <= #allCandidates then
+            if not current or current.name ~= allCandidates[autoIdx].name then
+                local c = allCandidates[autoIdx]
+                ns.targets[i] = {
+                    name     = c.name,
+                    class    = c.class,
+                    auto     = true,
+                    isHealer = c.isHealer,
+                    isTank   = c.isTank,
+                    isDPS    = c.isDPS,
+                }
+                changed = true
             end
-            if autoIdx <= #allCandidates then
-                if not current or current.name ~= allCandidates[autoIdx].name then
-                    local c = allCandidates[autoIdx]
-                    ns.targets[i] = {
-                        name     = c.name,
-                        class    = c.class,
-                        auto     = true,
-                        isHealer = c.isHealer,
-                        isTank   = c.isTank,
-                        isDPS    = c.isDPS,
-                    }
-                    changed = true
-                end
-                autoIdx = autoIdx + 1
-            else
-                if current and current.auto then
-                    ns.targets[i] = nil
-                    changed = true
-                end
+            autoIdx = autoIdx + 1
+        else
+            if current and current.auto then
+                ns.targets[i] = nil
+                changed = true
             end
         end
+
+        ::continue_slot::
     end
 
     ns.autoAssigned = true
@@ -514,9 +520,9 @@ eventFrame:SetScript("OnEvent", function(self, event, ...)
     elseif event == "PLAYER_SPECIALIZATION_CHANGED" then
         if IsAugmentationEvoker() then
             if not ns.enabled then EnableAddon() end
-        else
-            if ns.enabled then DisableAddon() end
+            return
         end
+        if ns.enabled then DisableAddon() end
 
     elseif event == "GROUP_ROSTER_UPDATE" or event == "PLAYER_ENTERING_WORLD" then
         if InCombatLockdown() then

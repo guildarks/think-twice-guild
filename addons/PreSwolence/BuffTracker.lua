@@ -280,9 +280,8 @@ function BuffTracker:SlotForUnit(unit)
 
     -- Fallback: GUID comparison for party/raid/player units only
     local prefix = unit and unit:match("^(%a+)")
-    if prefix ~= "party" and prefix ~= "raid" and prefix ~= "player" then
-        return nil
-    end
+    if prefix ~= "party" and prefix ~= "raid" and prefix ~= "player" then return nil end
+
     local guid = UnitGUID(unit)
     if not guid then return nil end
 
@@ -412,29 +411,29 @@ function BuffTracker:UpdateTimers()
         -- Prescience timer
         if self.active[slot] then
             local remaining = self:GetRemainingTime(slot)
-            if remaining then
-                anyActive = true
-                self:UpdateFrameTimer(slot, remaining)
-            else
+            if not remaining then
                 self.active[slot]          = false
                 self.expirationTimes[slot] = nil
                 self.durations[slot]       = nil
                 self.castTimes[slot]       = nil
                 self:UpdateFrameStatus(slot)
+            else
+                anyActive = true
+                self:UpdateFrameTimer(slot, remaining)
             end
         end
 
         -- Ebon Might timer
         if self.emActive[slot] then
             local rem = self:GetEbonMightRemaining(slot)
-            if rem then
-                anyActive = true
-                self:UpdateEbonMightFrameTimer(slot, rem)
-            else
+            if not rem then
                 self.emActive[slot]          = false
                 self.emExpirationTimes[slot] = nil
                 self.emDurations[slot]       = nil
                 self:UpdateEbonMightFrameStatus(slot)
+            else
+                anyActive = true
+                self:UpdateEbonMightFrameTimer(slot, rem)
             end
         end
     end
@@ -444,17 +443,17 @@ function BuffTracker:UpdateTimers()
         if not self.ssActive[i] then goto continue_ss end
 
         local rem = self:GetSSRemaining(i)
-        if rem then
+        if not rem then
+            self.ssActive[i]          = false
+            self.ssExpirationTimes[i] = nil
+            self.ssDurations[i]       = nil
+            self:UpdateTankFrameStatus(i)
+        else
             anyActive = true
             local frames = ns.tankFrames
             if frames and frames[i] and frames[i].UpdateTimer then
                 frames[i]:UpdateTimer(rem)
             end
-        else
-            self.ssActive[i]          = false
-            self.ssExpirationTimes[i] = nil
-            self.ssDurations[i]       = nil
-            self:UpdateTankFrameStatus(i)
         end
 
         ::continue_ss::
