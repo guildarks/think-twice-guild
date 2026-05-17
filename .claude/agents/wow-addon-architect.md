@@ -94,13 +94,30 @@ local TTG = LibStub("AceAddon-3.0"):NewAddon("ThinkTwiceGuild",
 local RaidTracker = TTG:NewModule("RaidTracker", "AceEvent-3.0")
 ```
 
-### 3. Communication guilde via addon messages
+### 3. Communication guilde via addon messages (pattern Midnight)
 ```lua
 -- Enregistrer un préfixe (max 16 chars)
 C_ChatInfo.RegisterAddonMessagePrefix("TTG")
 
--- Envoyer à toute la guilde
-C_ChatInfo.SendAddonMessage("TTG", payload, "GUILD")
+-- MIDNIGHT : toujours vérifier IsCommRestricted() avant d'envoyer
+local TTG_queue = {}
+
+local function TTG_Send(payload, channel)
+    if IsCommRestricted() then
+        table.insert(TTG_queue, {payload, channel or "GUILD"})
+        return
+    end
+    C_ChatInfo.SendAddonMessage("TTG", payload, channel or "GUILD")
+end
+
+-- Flush automatique après encounter
+frame:RegisterEvent("ENCOUNTER_END")
+frame:SetScript("OnEvent", function()
+    for _, m in ipairs(TTG_queue) do
+        C_ChatInfo.SendAddonMessage("TTG", m[1], m[2])
+    end
+    wipe(TTG_queue)
+end)
 
 -- Recevoir
 frame:RegisterEvent("CHAT_MSG_ADDON")
