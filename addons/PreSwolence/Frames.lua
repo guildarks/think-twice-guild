@@ -192,7 +192,7 @@ local function CreateEbonMightFrame(slot)
     timerBar:SetStatusBarTexture(ns:GetBarTexture(FLAT_TEX))
     timerBar:SetMinMaxValues(0, 1)
     timerBar:SetValue(0)
-    timerBar:SetStatusBarColor(S("emFullR",0.52), S("emFullG",0.18), S("emFullB",0.82), 0.75)
+    timerBar:SetStatusBarColor(S("emFullR",0.957), S("emFullG",0.447), S("emFullB",0.714), 0.78)
     timerBar:EnableMouse(false)
     frame.timerBar = timerBar
 
@@ -220,7 +220,7 @@ local function CreateEbonMightFrame(slot)
     nameText:SetPoint("LEFT",  frame, "LEFT",  8, 0)
     nameText:SetPoint("RIGHT", frame, "RIGHT", -30, 0)
     nameText:SetJustifyH("LEFT")
-    nameText:SetText("|cffaa44ffEbon Might|r")
+    nameText:SetText("|cffF472B6Ebon Might|r")
     frame.nameText = nameText
 
     -- Timer text (right)
@@ -345,7 +345,7 @@ local function CreateTargetFrame(slot)
     timerBar:SetStatusBarTexture(ns:GetBarTexture(FLAT_TEX))
     timerBar:SetMinMaxValues(0, 1)
     timerBar:SetValue(0)
-    timerBar:SetStatusBarColor(0.12, 0.62, 0.18, 0.72)
+    timerBar:SetStatusBarColor(0.655, 0.545, 0.980, 0.72)
     timerBar:EnableMouse(false)
     frame.timerBar = timerBar
 
@@ -479,7 +479,7 @@ local function CreateCDTracker()
         insets = { left = 2, right = 2, top = 2, bottom = 2 },
     })
     cdTracker:SetBackdropColor(0.05, 0.05, 0.07, 0.88)
-    cdTracker:SetBackdropBorderColor(0.22, 0.52, 0.82, 0.9)
+    cdTracker:SetBackdropBorderColor(0.545, 0.360, 0.965, 0.9)
 
     -- Icon
     local iconFrame = CreateFrame("Frame", nil, cdTracker)
@@ -524,7 +524,7 @@ local function CreateCDTracker()
     chargeBarFill:SetStatusBarTexture(FLAT_TEX)
     chargeBarFill:SetMinMaxValues(0, 1)
     chargeBarFill:SetValue(0)
-    chargeBarFill:SetStatusBarColor(0.2, 0.55, 1.0, 0.9)
+    chargeBarFill:SetStatusBarColor(0.545, 0.360, 0.965, 0.9)
     cdTracker.chargeBarFill = chargeBarFill
 
     ---------------------------------------------------------------------------
