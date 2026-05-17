@@ -3,8 +3,6 @@ local addonName, ns = ...
 ---------------------------------------------------------------------------
 -- Default visual settings (merged into ns.settings on load)
 ---------------------------------------------------------------------------
-local SETTINGS_VERSION = 2
-
 local VISUAL_DEFAULTS = {
     -- Layout
     barWidth        = 160,
@@ -71,15 +69,8 @@ local VISUAL_DEFAULTS = {
     ssLowR    = 0.85, ssLowG  = 0.12, ssLowB  = 0.12,
 }
 
--- Merge defaults into saved settings
--- If the settings version changed, wipe visual keys so new palette is applied
+-- Merge defaults into saved settings (only fills missing keys)
 local function ApplyVisualDefaults()
-    if ns.settings.settingsVersion ~= SETTINGS_VERSION then
-        for k in pairs(VISUAL_DEFAULTS) do
-            ns.settings[k] = nil
-        end
-        ns.settings.settingsVersion = SETTINGS_VERSION
-    end
     for k, v in pairs(VISUAL_DEFAULTS) do
         if ns.settings[k] == nil then
             ns.settings[k] = v
@@ -118,13 +109,13 @@ end
 local function CreateHeader(parent, text, yOffset)
     local fs = parent:CreateFontString(nil, "OVERLAY")
     fs:SetFont("Fonts\\FRIZQT__.TTF", 12, "OUTLINE")
-    fs:SetTextColor(0.655, 0.545, 0.980, 1)
+    fs:SetTextColor(0.82, 0.68, 0.25, 1)
     fs:SetPoint("TOPLEFT", parent, "TOPLEFT", 10, yOffset)
     fs:SetText(text)
     -- Separator line
     local line = parent:CreateTexture(nil, "ARTWORK")
     line:SetTexture("Interface\\Buttons\\WHITE8X8")
-    line:SetVertexColor(0.655, 0.545, 0.980, 0.4)
+    line:SetVertexColor(0.82, 0.68, 0.25, 0.4)
     line:SetHeight(1)
     line:SetPoint("TOPLEFT",  fs, "BOTTOMLEFT",  0, -2)
     line:SetPoint("TOPRIGHT", parent, "TOPRIGHT", -10, 0)
@@ -275,7 +266,7 @@ local function BuildOptionsPanel()
         insets = { left = 5, right = 5, top = 5, bottom = 5 },
     })
     optionsFrame:SetBackdropColor(0.06, 0.06, 0.09, 0.97)
-    optionsFrame:SetBackdropBorderColor(0.655, 0.545, 0.980, 1)
+    optionsFrame:SetBackdropBorderColor(0.82, 0.68, 0.25, 1)
 
     -- Title bar
     local titleBar = optionsFrame:CreateTexture(nil, "ARTWORK")
@@ -286,9 +277,9 @@ local function BuildOptionsPanel()
     titleBar:SetHeight(28)
     local title = optionsFrame:CreateFontString(nil, "OVERLAY")
     title:SetFont("Fonts\\FRIZQT__.TTF", 14, "OUTLINE")
-    title:SetTextColor(0.655, 0.545, 0.980, 1)
+    title:SetTextColor(0.82, 0.68, 0.25, 1)
     title:SetPoint("TOP", optionsFrame, "TOP", 0, -14)
-    title:SetText("|cffA78BFAAugtracker|r  |cffF472B6Options|r")
+    title:SetText("Augtracker  |cffaaaaaaOptions|r")
 
     local closeBtn = CreateFrame("Button", nil, optionsFrame, "UIPanelCloseButton")
     closeBtn:SetPoint("TOPRIGHT", optionsFrame, "TOPRIGHT", -2, -2)
@@ -339,7 +330,7 @@ local function BuildOptionsPanel()
         bg:SetVertexColor(0.10, 0.10, 0.14, 1); btn.bg = bg
         local hl = btn:CreateTexture(nil, "HIGHLIGHT")
         hl:SetAllPoints(); hl:SetTexture("Interface\\Buttons\\WHITE8X8")
-        hl:SetVertexColor(0.655, 0.545, 0.980, 0.15); hl:SetBlendMode("ADD")
+        hl:SetVertexColor(0.82, 0.68, 0.25, 0.15); hl:SetBlendMode("ADD")
         local lbl = btn:CreateFontString(nil, "OVERLAY")
         lbl:SetFont("Fonts\\FRIZQT__.TTF", 10, "OUTLINE")
         lbl:SetAllPoints(); lbl:SetJustifyH("CENTER"); lbl:SetJustifyV("MIDDLE")
@@ -353,8 +344,8 @@ local function BuildOptionsPanel()
             p:SetShown(i == idx)
             if tabs[i] then
                 if i == idx then
-                    tabs[i].bg:SetVertexColor(0.10, 0.08, 0.20, 1)
-                    tabs[i].lbl:SetTextColor(0.82, 0.68, 1.0, 1)
+                    tabs[i].bg:SetVertexColor(0.18, 0.14, 0.06, 1)
+                    tabs[i].lbl:SetTextColor(1.0, 0.85, 0.30, 1)
                 else
                     tabs[i].bg:SetVertexColor(0.10, 0.10, 0.14, 1)
                     tabs[i].lbl:SetTextColor(0.75, 0.75, 0.75, 1)
@@ -375,7 +366,7 @@ local function BuildOptionsPanel()
     -- Vertical separator
     local sep = content:CreateTexture(nil, "ARTWORK")
     sep:SetTexture("Interface\\Buttons\\WHITE8X8")
-    sep:SetVertexColor(0.655, 0.545, 0.980, 0.35)
+    sep:SetVertexColor(0.82, 0.68, 0.25, 0.35)
     sep:SetWidth(1)
     sep:SetPoint("TOPLEFT",    content, "TOPLEFT",  tabW + 6, -4)
     sep:SetPoint("BOTTOMLEFT", content, "BOTTOMLEFT", tabW + 6, 4)
@@ -599,7 +590,7 @@ local function BuildOptionsPanel()
     -- Sub-tab separator line
     local subSep = subTabBar:CreateTexture(nil, "ARTWORK")
     subSep:SetTexture("Interface\\Buttons\\WHITE8X8")
-    subSep:SetVertexColor(0.655, 0.545, 0.980, 0.5)
+    subSep:SetVertexColor(0.82, 0.68, 0.25, 0.5)
     subSep:SetHeight(1)
     subSep:SetPoint("BOTTOMLEFT",  subTabBar, "BOTTOMLEFT",  0, 0)
     subSep:SetPoint("BOTTOMRIGHT", subTabBar, "BOTTOMRIGHT", 0, 0)
@@ -613,7 +604,7 @@ local function BuildOptionsPanel()
         bg:SetVertexColor(0.12, 0.12, 0.16, 1); btn.bg = bg
         local hl = btn:CreateTexture(nil, "HIGHLIGHT")
         hl:SetAllPoints(); hl:SetTexture("Interface\\Buttons\\WHITE8X8")
-        hl:SetVertexColor(0.655, 0.545, 0.980, 0.15); hl:SetBlendMode("ADD")
+        hl:SetVertexColor(0.82, 0.68, 0.25, 0.15); hl:SetBlendMode("ADD")
         local lbl = btn:CreateFontString(nil, "OVERLAY")
         lbl:SetFont("Fonts\\FRIZQT__.TTF", 9, "OUTLINE")
         lbl:SetAllPoints(); lbl:SetJustifyH("CENTER"); lbl:SetJustifyV("MIDDLE")
@@ -627,8 +618,8 @@ local function BuildOptionsPanel()
             sp:SetShown(i == idx)
             if subTabs[i] then
                 if i == idx then
-                    subTabs[i].bg:SetVertexColor(0.10, 0.08, 0.20, 1)
-                    subTabs[i].lbl:SetTextColor(0.82, 0.68, 1.0, 1)
+                    subTabs[i].bg:SetVertexColor(0.18, 0.14, 0.06, 1)
+                    subTabs[i].lbl:SetTextColor(1.0, 0.85, 0.30, 1)
                 else
                     subTabs[i].bg:SetVertexColor(0.12, 0.12, 0.16, 1)
                     subTabs[i].lbl:SetTextColor(0.75, 0.75, 0.75, 1)
@@ -742,7 +733,7 @@ local function BuildOptionsPanel()
         local bg = ob:CreateTexture(nil, "BACKGROUND"); bg:SetAllPoints()
         bg:SetTexture("Interface\\Buttons\\WHITE8X8"); bg:SetVertexColor(0.12, 0.12, 0.16, 1); ob.bg = bg
         local hl = ob:CreateTexture(nil, "HIGHLIGHT"); hl:SetAllPoints()
-        hl:SetTexture("Interface\\Buttons\\WHITE8X8"); hl:SetVertexColor(0.655, 0.545, 0.980, 0.15); hl:SetBlendMode("ADD")
+        hl:SetTexture("Interface\\Buttons\\WHITE8X8"); hl:SetVertexColor(0.82, 0.68, 0.25, 0.15); hl:SetBlendMode("ADD")
         local lbl = ob:CreateFontString(nil, "OVERLAY"); lbl:SetFont("Fonts\\FRIZQT__.TTF", 9, "OUTLINE")
         lbl:SetAllPoints(); lbl:SetJustifyH("CENTER"); lbl:SetJustifyV("MIDDLE")
         lbl:SetText(outlineLabels[i]); lbl:SetTextColor(0.75, 0.75, 0.75, 1); ob.lbl = lbl
@@ -752,7 +743,7 @@ local function BuildOptionsPanel()
             local cur = ns.settings.fontOutline or "OUTLINE"
             for _, b in ipairs(outlineBtns) do
                 if b.outlineVal == cur then
-                    b.bg:SetVertexColor(0.10, 0.08, 0.20, 1); b.lbl:SetTextColor(0.82, 0.68, 1.0, 1)
+                    b.bg:SetVertexColor(0.18, 0.14, 0.06, 1); b.lbl:SetTextColor(1.0, 0.85, 0.30, 1)
                 else
                     b.bg:SetVertexColor(0.12, 0.12, 0.16, 1); b.lbl:SetTextColor(0.75, 0.75, 0.75, 1)
                 end
@@ -863,7 +854,7 @@ local function BuildOptionsPanel()
         local bg = tb:CreateTexture(nil, "BACKGROUND"); bg:SetAllPoints()
         bg:SetTexture("Interface\\Buttons\\WHITE8X8"); bg:SetVertexColor(0.12, 0.12, 0.16, 1)
         local hl = tb:CreateTexture(nil, "HIGHLIGHT"); hl:SetAllPoints()
-        hl:SetTexture("Interface\\Buttons\\WHITE8X8"); hl:SetVertexColor(0.655, 0.545, 0.980, 0.15); hl:SetBlendMode("ADD")
+        hl:SetTexture("Interface\\Buttons\\WHITE8X8"); hl:SetVertexColor(0.82, 0.68, 0.25, 0.15); hl:SetBlendMode("ADD")
         local lbl = tb:CreateFontString(nil, "OVERLAY"); lbl:SetFont("Fonts\\FRIZQT__.TTF", 9, "OUTLINE")
         lbl:SetAllPoints(); lbl:SetJustifyH("CENTER"); lbl:SetJustifyV("MIDDLE")
         lbl:SetText(tex.name); lbl:SetTextColor(0.75, 0.75, 0.75, 1)
@@ -891,7 +882,7 @@ local function BuildOptionsPanel()
             local bg = lb:CreateTexture(nil, "BACKGROUND"); bg:SetAllPoints()
             bg:SetTexture("Interface\\Buttons\\WHITE8X8"); bg:SetVertexColor(0.12, 0.12, 0.16, 1)
             local hl = lb:CreateTexture(nil, "HIGHLIGHT"); hl:SetAllPoints()
-            hl:SetTexture("Interface\\Buttons\\WHITE8X8"); hl:SetVertexColor(0.655, 0.545, 0.980, 0.15); hl:SetBlendMode("ADD")
+            hl:SetTexture("Interface\\Buttons\\WHITE8X8"); hl:SetVertexColor(0.82, 0.68, 0.25, 0.15); hl:SetBlendMode("ADD")
             local lbl = lb:CreateFontString(nil, "OVERLAY"); lbl:SetFont("Fonts\\FRIZQT__.TTF", 9, "OUTLINE")
             lbl:SetAllPoints(); lbl:SetJustifyH("CENTER"); lbl:SetJustifyV("MIDDLE")
             lbl:SetText(name); lbl:SetTextColor(0.75, 0.75, 0.75, 1)
