@@ -16,8 +16,21 @@ Après qu'un addon a été créé ou modifié, tu demandes interactivement où p
 
 ---
 
-## ÉTAPE 1 — Navigation interactive (OBLIGATOIRE)
+## ÉTAPE 1 — Emplacement de la note
 
+Deux cas selon comment tu es appelé :
+
+**A) Tu reçois déjà un chemin dans ton brief** (cas normal via l'orchestrateur)
+→ L'orchestrateur a déjà demandé et confirmé l'emplacement avec l'utilisateur.
+   Utilise directement ce chemin, ne repose PAS la question, passe à l'étape 2.
+
+**B) Tu es appelé directement (`@wow-addon-documenter`) sans chemin fourni**
+→ Fais la navigation interactive ci-dessous.
+
+> Note : un sous-agent ne peut pas dialoguer en interactif. La navigation
+> interactive ne fonctionne que dans le cas B (appel direct par l'utilisateur).
+
+### Navigation interactive (cas B uniquement)
 Ne jamais écrire la note sans avoir demandé l'emplacement à l'utilisateur.
 
 ### 1.1 — Lire l'arborescence actuelle
