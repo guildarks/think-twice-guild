@@ -63,9 +63,26 @@ N'écrire la note QUE si l'utilisateur confirme.
 
 ---
 
+## RÈGLE CRITIQUE — Connexion dans le graph Obsidian
+
+Le graph Obsidian ne relie QUE les **notes** (`.md`) entre elles, jamais les dossiers.
+Un lien `[[wow]]` ou `[[Addons]]` ne connecte RIEN car ce sont des dossiers.
+
+Pour qu'une fiche addon ne soit pas isolée, il faut un lien **bidirectionnel** avec
+une note hub réelle, `_index.md` :
+- la fiche addon contient `[[_index]]`
+- `_index.md` contient `[[<NomAddon>]]`
+
+C'est ce double lien qui crée la connexion visible dans le graph.
+
+---
+
 ## ÉTAPE 3 — Écriture de la note
 
-Écris la note via MCP obsidian à l'emplacement confirmé.
+D'abord, garantis que la note hub `wow/Addons/_index.md` existe (voir ÉTAPE 4) —
+le lien `[[_index]]` de la fiche doit pointer vers une note réelle.
+
+Écris ensuite la note via MCP obsidian à l'emplacement confirmé.
 
 ### Format de fiche
 ```markdown
@@ -122,7 +139,7 @@ Chemin : `Interface/AddOns/<NomAddon>/`
 \```
 
 ## Liens
-- [[wow]] · [[<dossier parent>]] · [[_index]]
+- Index : [[_index]]
 
 ## Changelog
 - <YYYY-MM-DD> v<x.y.z> — <résumé>
@@ -130,12 +147,17 @@ Chemin : `Interface/AddOns/<NomAddon>/`
 
 ---
 
-## ÉTAPE 4 — Mise à jour de l'index
+## ÉTAPE 4 — Note hub `_index.md` (garantit la connexion du graph)
 
-Après avoir écrit la fiche :
-1. Lis `wow/Addons/_index.md` (crée-la si elle n'existe pas).
-2. Ajoute une ligne : `- [[<NomAddon>]] — <description courte> · <chemin> · <date>`
-3. Sauvegarde l'index via MCP obsidian.
+L'index `wow/Addons/_index.md` est la note hub qui relie tous les addons.
+Il DOIT contenir un lien `[[<NomAddon>]]` vers chaque fiche — c'est ce qui
+empêche les fiches d'être isolées dans le graph.
+
+1. Lis `wow/Addons/_index.md` via MCP obsidian (crée-la si elle n'existe pas).
+2. Si l'addon n'y figure pas encore, ajoute la ligne :
+   `- [[<NomAddon>]] — <description courte> · wow/<chemin>/<NomAddon>.md · <date>`
+3. Ne supprime jamais les entrées existantes.
+4. Sauvegarde l'index via MCP obsidian.
 
 Format de l'index si à créer :
 ```markdown
@@ -147,13 +169,17 @@ Liste de tous les addons WoW de la guilde Think Twice.
 - [[<NomAddon>]] — <description courte> · wow/<chemin>/<NomAddon>.md · <date>
 ```
 
+Vérification finale : la fiche addon contient `[[_index]]` ET `_index.md` contient
+`[[<NomAddon>]]`. Les deux liens doivent exister pour que le graph soit connecté.
+
 ---
 
 ## Règles
 - **Ne jamais écrire sans confirmation** de l'emplacement par l'utilisateur.
 - Toujours en français.
 - Ne jamais inventer une API ou une commande : si absente du code, ne pas la lister.
-- Liens Obsidian : utiliser `[[wiki-links]]` pour référencer d'autres notes du vault.
+- Liens Obsidian : ne JAMAIS lier un dossier (`[[wow]]`, `[[Addons]]`) — ça ne connecte rien. Lier uniquement des notes réelles (`[[_index]]`, autres fiches).
+- Connexion graph : chaque fiche DOIT avoir le lien bidirectionnel avec `_index.md`.
 - Contenu des fichiers : toujours intégral, jamais tronqué.
 - Le dossier `wow/` est la racine de tout — ne jamais poser une note hors de `wow/`.
 
