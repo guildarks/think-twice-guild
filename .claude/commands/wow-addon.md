@@ -53,8 +53,8 @@ Délègue à **wow-addon-documenter** en lui passant EXPLICITEMENT le chemin con
 à l'étape 0. Exemple de brief :
 
 > Documente l'addon <NomAddon>. Emplacement imposé : `wow/Addons/Combat/<NomAddon>.md`.
-> Ne repose pas la question de l'emplacement, utilise ce chemin directement.
-> Inclus le code source complet et le lien bidirectionnel avec `[[_index]]`.
+> UNE seule note tout-en-un : doc + code source complet de TOUS les fichiers embarqué.
+> PAS de note _index, PAS de [[wiki-links]] — un addon = un seul point dans le graph.
 
 ---
 
