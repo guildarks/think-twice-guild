@@ -17,7 +17,12 @@ Valide toutes les APIs utilisées par l'architect.
 Vérifie : Secret Values, CLEU supprimé, comms restreintes, APIs renommées.
 Corrige avant de passer à la suite.
 
-## 3. wow-lua-coder
+## 3. wow-ui-designer (si UI nécessaire)
+Uniquement si l'addon a une interface (fenêtre, boutons, barres...).
+Conçoit et code les frames avec la palette Think Twice.
+Respecte : InCombatLockdown(), nommage TTG_, ancres relatives.
+
+## 4. wow-lua-coder
 Implémente le code Lua complet dans les fichiers créés par l'architect.
 Applique toutes les corrections de l'api-expert.
 Respecte : Lua 5.1, préfixe TTG_, palette Think Twice.
