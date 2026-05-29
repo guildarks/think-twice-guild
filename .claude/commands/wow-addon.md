@@ -8,6 +8,14 @@ Tu vas créer un addon WoW pour la guilde **Think Twice** (Midnight 12.0.5) à p
 
 Coordonne les agents dans cet ordre, sans t'occuper de documentation (Graphify s'en charge) :
 
+## 0. Lire la mémoire Graphify
+Si le fichier `graphify-out/GRAPH_REPORT.md` existe, lis-le AVANT de commencer.
+Identifie :
+- Les patterns Lua déjà validés dans le workspace (réutilise-les)
+- Les addons existants et leurs APIs (évite les doublons)
+- Les God Nodes (concepts centraux du projet)
+Si le fichier n'existe pas encore, continue sans.
+
 ## 1. wow-addon-architect
 Structure le projet : `.toc`, arborescence, libs nécessaires.
 Crée les fichiers dans `C:\Users\kevin\Desktop\claude\<NomAddon>\`.

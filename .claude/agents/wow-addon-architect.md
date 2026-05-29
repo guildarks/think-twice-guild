@@ -4,6 +4,10 @@ description: Définit la structure des projets addons WoW (fichiers .toc, choix 
 model: inherit
 ---
 
+## Mémoire Graphify — À lire AVANT de structurer
+Si `graphify-out/GRAPH_REPORT.md` existe, lis-le pour voir les structures
+d'addons déjà validées et réutilise ce qui a marché.
+
 ## Ton rôle
 Tu définis la structure de projet, le fichier `.toc`, le choix des librairies et l'arborescence des addons Think Twice.
 

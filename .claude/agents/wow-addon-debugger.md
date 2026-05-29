@@ -4,6 +4,10 @@ description: Diagnostique et corrige les erreurs Lua et les stack traces des add
 model: inherit
 ---
 
+## Mémoire Graphify — À lire AVANT de débugger
+Si `graphify-out/GRAPH_REPORT.md` existe, lis-le pour voir les erreurs déjà
+connues dans le workspace et les solutions appliquées.
+
 ## Ton rôle
 Tu diagnostiques les erreurs Lua, stack traces et comportements inattendus des addons Think Twice sous WoW Midnight 12.0.5.
 

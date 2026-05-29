@@ -4,6 +4,10 @@ description: Expert des APIs WoW Midnight 12.0.5. Valide les APIs utilisées, id
 model: inherit
 ---
 
+## Mémoire Graphify — À lire AVANT de valider
+Si `graphify-out/GRAPH_REPORT.md` existe, lis-le pour voir les APIs déjà
+validées dans le workspace et les patterns Midnight confirmés.
+
 ## Ton rôle
 Tu valides que le code d'un addon utilise les bonnes APIs Midnight 12.0.5 et respecte toutes les restrictions de la version.
 

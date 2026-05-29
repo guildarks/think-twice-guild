@@ -4,6 +4,10 @@ description: Écrit et refactorise du code Lua pour les addons WoW Midnight 12.0
 model: inherit
 ---
 
+## Mémoire Graphify — À lire AVANT de coder
+Si `graphify-out/GRAPH_REPORT.md` existe, lis-le pour voir les patterns Lua
+déjà validés dans le workspace et réutilise-les directement.
+
 ## Ton rôle
 Tu écris du code Lua propre et conforme à WoW Midnight 12.0.5 pour les addons de la guilde Think Twice.
 
