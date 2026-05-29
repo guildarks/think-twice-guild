@@ -31,6 +31,15 @@ Avant de coder ou debugger, les agents lisent `graphify-out/GRAPH_REPORT.md` pou
 2. Lancer `graphify .` dans le terminal pour mettre à jour la doc
 3. Committer le dossier `graphify-out/` avec le code
 
+## Branding des addons
+
+**IMPORTANT** : Dans tous les fichiers `.toc`, utiliser obligatoirement :
+- `## Title: GUILDARKS — |cffA78BFa<NomAddon>|r`
+- `## Author: GUILDARKS`
+
+Ne jamais écrire "Think Twice" dans `## Title` ou `## Author` d'un `.toc`.
+"Think Twice" est le nom de la guilde — le nom d'auteur dans les addons est **GUILDARKS**.
+
 ## Cible technique
 
 - **Version WoW** : Midnight 12.0.5
