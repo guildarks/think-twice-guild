@@ -82,8 +82,8 @@ local BG_DARK    = {0.04, 0.04, 0.06, 0.95}  -- #0A0A0F
 ### .toc type
 ```ini
 ## Interface: 120005
-## Title: Think Twice — |cffA78BFa<Nom>|r
-## Author: Think Twice
+## Title: GUILDARKS — |cffA78BFa<Nom>|r
+## Author: GUILDARKS
 ## Version: 1.0.0
 ## SavedVariables: <Nom>DB
 ## SavedVariablesPerCharacter: <Nom>CharDB

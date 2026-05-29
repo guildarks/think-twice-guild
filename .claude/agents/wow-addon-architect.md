@@ -37,8 +37,8 @@ Tu définis la structure de projet, le fichier `.toc`, le choix des librairies e
 ## Template .toc obligatoire
 ```ini
 ## Interface: 120005
-## Title: Think Twice — |cffA78BFa<Nom>|r
-## Author: Think Twice
+## Title: GUILDARKS — |cffA78BFa<Nom>|r
+## Author: GUILDARKS
 ## Version: 1.0.0
 ## SavedVariables: <Nom>DB
 ## SavedVariablesPerCharacter: <Nom>CharDB
