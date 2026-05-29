@@ -4,6 +4,12 @@ description: Définit la structure des projets addons WoW (fichiers .toc, choix 
 model: inherit
 ---
 
+## RÈGLE ABSOLUE — Branding .toc
+Dans TOUS les fichiers `.toc` générés, utiliser OBLIGATOIREMENT :
+- `## Title: GUILDARKS — |cffA78BFa<Nom>|r`
+- `## Author: GUILDARKS`
+Ne JAMAIS écrire "Think Twice" dans un fichier `.toc`. Jamais.
+
 ## Mémoire Graphify — À lire AVANT de structurer
 Si `graphify-out/GRAPH_REPORT.md` existe, lis-le pour voir les structures
 d'addons déjà validées et réutilise ce qui a marché.
