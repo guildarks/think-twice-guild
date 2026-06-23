@@ -1,0 +1,17 @@
+## Interface: 120000, 120001, 120100
+## Title: |cFF00DDDDHasu's Interrupt Tracker|r
+## IconTexture: Interface\\Icons\\ability_kick
+## Notes: Party interrupt & CC cooldown tracker for M+ dungeons
+## Notes-ruRU: Отслеживание кулдаунов прерываний и CC группы в М+ подземельях
+## Notes-koKR: 쐐기돌 던전용 파티 차단기 및 CC 쿨다운 추적기
+## Notes-zhCN: 大秘境地下城团队打断与CC冷却追踪器
+## Notes-zhTW: 傳奇鑰石地城隊伍斷法與CC冷卻追蹤器
+## Author: Hasu (base by Loxxar)
+## Version: 2.0.0.0
+## SavedVariables: HasuSavedVars
+## SavedVariablesPerAccount: HasuAccountVars
+
+localization.lua
+HasuCC_Data.lua
+RotationManager.lua
+HasuInterruptTracker.lua
