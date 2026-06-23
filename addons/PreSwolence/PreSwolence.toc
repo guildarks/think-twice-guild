@@ -1,0 +1,15 @@
+## Interface: 120005
+## Title: Augtracker
+## Notes: Prescience target management for Augmentation Evoker
+## Author: Guildarks
+## Version: 1.3.0
+## SavedVariablesPerCharacter: PreSwolenceDB
+
+## OptionalDeps: ElvUI
+
+Core.lua
+Options.lua
+Frames.lua
+BuffTracker.lua
+Config.lua
+ElvUI.lua
