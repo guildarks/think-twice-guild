@@ -1,0 +1,50 @@
+PreSwolence v1.3.0
+
+New Features
+- Added Ebon Might self-buff tracker bar (ID 395296) — shows remaining duration with purple fill, spark, and colour gradient (purple → orange → red as it expires).
+- Modern flat UI redesign: all bars use a dark flat style with class-coloured left accent lines, a thin gold separator on top of the container, and a sleeker overall look.
+
+Changes
+- BAR_WIDTH increased from 140 to 160 for better readability.
+- Prescience CD tracker redesigned as a wide bar (matches other frames) with icon, label, and a thin recharge progress strip.
+- Ebon Might bar sits at the top of the container, always visible when showFrames is enabled.
+
+PreSwolence v1.2.0
+
+Bug Fixes
+- Fixed issecretvalue() guard order — truthiness was tested before the secret check, causing Lua errors that broke buff tracking and auto-assign during M+ and boss encounters.
+- Fixed auto-assign not triggering when stale manual targets from a previous group were saved.
+- Fixed Prescience cast activating timer bars on all tracked slots instead of only the actual target.
+- Fixed CD tracker not working during boss encounters and M+ — C_Spell.GetSpellCharges returns secret values during encounters. Replaced with hybrid timer-based tracking from UNIT_SPELLCAST_SUCCEEDED.
+- Fixed UnitGroupRolesAssigned not guarded against secret values, which could abort the GROUP_ROSTER_UPDATE handler during M+.
+
+New Features
+- Added /swole icon command to toggle the Prescience CD tracker icon visibility.
+- Added range fade indicator — target frames fade to 40% opacity when the target is out of Prescience range.
+- Added PLAYER_ENTERING_WORLD event to re-resolve targets after loading screens (e.g., zoning into an instance).
+
+PreSwolence v1.1.0
+
+Bug Fixes
+- Fixed a bug where casting Prescience on one target would show timers on all tracked targets instead of just the one you buffed.
+- Fixed Sense Power flash being permanently active in town and other non-combat situations.
+- Fixed secret value errors from spell cooldown and charge data in Midnight 12.0.
+- Fixed Prescience not tracking when the player is assigned to a target slot.
+- Added secret value protection to spellcast event handler to prevent taint errors during encounters.
+
+New Features
+- Added Prescience cooldown/charge icon tracker with native cooldown swipe and charge count display.
+- Addon now automatically enables/disables when you swap to or from Augmentation spec - no reload needed.
+- Right-click assign menu now works on raid frames, not just party frames.
+
+Changes
+- Removed Sense Power flash/alert system - was causing more problems than it solved with secret value taint issues.
+- Removed the Sense Power self-cast button and its glow overlay.
+
+Improvements
+- Timer bar now uses the actual aura duration from the game instead of guessing from remaining time, so the progress bar is accurate even when loading mid-buff.
+- Aura scan breaks early once Prescience is found instead of iterating all buffs.
+- Timer OnUpdate only runs when a slot is actively tracking a buff, stops automatically when all buffs expire.
+- Consolidated timer bar updates to a single code path, fixing a brief green flash on every aura event.
+- Better handling of raid unit tracking when players get shuffled around in groups.
+- Taller target bars for better readability.
